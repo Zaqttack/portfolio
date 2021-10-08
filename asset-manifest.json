@@ -1,0 +1,33 @@
+{
+  "files": {
+    "main.css": "/portfolio/static/css/main.5f5c4e68.chunk.css",
+    "main.js": "/portfolio/static/js/main.1346a927.chunk.js",
+    "main.js.map": "/portfolio/static/js/main.1346a927.chunk.js.map",
+    "runtime-main.js": "/portfolio/static/js/runtime-main.0a162c52.js",
+    "runtime-main.js.map": "/portfolio/static/js/runtime-main.0a162c52.js.map",
+    "static/js/2.1485938b.chunk.js": "/portfolio/static/js/2.1485938b.chunk.js",
+    "static/js/2.1485938b.chunk.js.map": "/portfolio/static/js/2.1485938b.chunk.js.map",
+    "index.html": "/portfolio/index.html",
+    "precache-manifest.2d264c8e9bf27b2ef9f1f9f168513869.js": "/portfolio/precache-manifest.2d264c8e9bf27b2ef9f1f9f168513869.js",
+    "service-worker.js": "/portfolio/service-worker.js",
+    "static/css/main.5f5c4e68.chunk.css.map": "/portfolio/static/css/main.5f5c4e68.chunk.css.map",
+    "static/js/2.1485938b.chunk.js.LICENSE.txt": "/portfolio/static/js/2.1485938b.chunk.js.LICENSE.txt",
+    "static/media/style.scss": "/portfolio/static/media/illustration-section-02.7593fba7.svg",
+    "static/media/feature-acm-wiki.png": "/portfolio/static/media/feature-acm-wiki.b7a9d36a.png",
+    "static/media/feature-roadrunner-cycling.jpg": "/portfolio/static/media/feature-roadrunner-cycling.975539bb.jpg",
+    "static/media/feature-rowdyhacks.png": "/portfolio/static/media/feature-rowdyhacks.2e478bc1.png",
+    "static/media/feature-tile-icon-01.svg": "/portfolio/static/media/feature-tile-icon-01.a520cf52.svg",
+    "static/media/feature-tile-icon-02.svg": "/portfolio/static/media/feature-tile-icon-02.5111bcd5.svg",
+    "static/media/feature-tile-icon-03.svg": "/portfolio/static/media/feature-tile-icon-03.198608f5.svg",
+    "static/media/feature-tile-icon-04.svg": "/portfolio/static/media/feature-tile-icon-04.dc69dedd.svg",
+    "static/media/feature-tile-icon-06.svg": "/portfolio/static/media/feature-tile-icon-06.af818383.svg",
+    "static/media/video-placeholder.png": "/portfolio/static/media/video-placeholder.8a9d1399.png",
+    "static/media/z-logo.svg": "/portfolio/static/media/z-logo.4359350e.svg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.0a162c52.js",
+    "static/js/2.1485938b.chunk.js",
+    "static/css/main.5f5c4e68.chunk.css",
+    "static/js/main.1346a927.chunk.js"
+  ]
+}
