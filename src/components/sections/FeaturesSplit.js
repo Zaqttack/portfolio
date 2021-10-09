@@ -67,7 +67,7 @@ const FeaturesSplit = ({
             <div className="split-item">
               <div className="split-item-content center-content-mobile reveal-from-left" data-reveal-container=".split-item">
                 <div className="text-xxs text-color-primary fw-600 tt-u mb-8">
-                  <a href="https://wiki.acmutsa.org">officer</a> // acm utsa
+                  <a href="https://wiki.acmutsa.org">technical officer</a> // acm utsa
                   </div>
                 <h3 className="mt-0 mb-12">
                   ACM Wiki
@@ -99,7 +99,7 @@ const FeaturesSplit = ({
                   RowdyHacks Website
                   </h3>
                 <p className="m-0">
-                  Taking over the reigns from RowdyHacks 2020 was no joke but Brent, Chris and I are making it happen. The site has gone through a slight revamp to get updated with a fresh coat of paint. Hopefully showing off everything (and everyone) that RowdyHacks has to offer!
+                  Taking over the reigns from RowdyHacks 2020 was no joke but Brent, Chris and I are making it happen. The site has gone through a revamp to get updated with a fresh coat of paint. Showing off everything (and everyone) that <a href="https://2021.rowdyhacks.org">RowdyHacks 2021</a> has to offer!
                   </p>
               </div>
               <div className={
