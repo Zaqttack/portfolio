@@ -1,6 +1,5 @@
 import React from 'react';
 import classNames from 'classnames';
-import { Link } from 'react-router-dom';
 
 const FooterNav = ({
   className,
@@ -19,7 +18,7 @@ const FooterNav = ({
     >
       <ul className="list-reset">
         <li>
-          <a href="https://tinyurl.com/1gqqzucp">Resume</a>
+          <a href="https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view?usp=sharing">Resume</a>
         </li>
         <li>
           <a href="https://github.com/Zaqttack">GitHub</a>
@@ -28,10 +27,7 @@ const FooterNav = ({
           <a href="https://www.linkedin.com/in/zaquariah-holland/">LinkdIn</a>
         </li>
         <li>
-          <a href="https://www.instagram.com/president.zaquariah/">Instagram</a>
-        </li>
-        <li>
-          <a href="mailto:president.zaquairah@gmail.com?subject=Contacting you about how great of a President you would be?">Contact</a>
+          <a href="mailto:zaquariah@gmail.com">Contact</a>
         </li>
       </ul>
     </nav>

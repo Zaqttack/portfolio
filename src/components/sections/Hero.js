@@ -61,14 +61,14 @@ const Hero = ({
         <div className={innerClasses}>
           <div className="hero-content">
             <h1 className="mt-0 mb-16 reveal-from-bottom" data-reveal-delay="200">
-              Holland, <span className="text-color-primary">Zaquariah</span>
+              <span className="text-color-primary">Zaq</span>uariah Holland
             </h1>
             <div className="container-xs">
               <p className="m-0 mb-32 reveal-from-bottom" data-reveal-delay="400">
-                The great Technical Officer of ACM from 20-21 brings you a new change of pace! A chance for him to lead.
+                A Junior Software Develop at <a href="https://www.swbc.com/">SWBC</a>.
               </p>
               <p className="m-0 mb-32 reveal-from-bottom" data-reveal-delay="500">
-                Let me be your next <span className="text-color-primary">ACM President</span>.
+                Studying for my Bachelor's of Computer Science at <span className="text-color-primary">The University of San Antonio at Texas</span>.
               </p>
               <div className="reveal-from-bottom" data-reveal-delay="600">
                 <ButtonGroup>
@@ -82,27 +82,27 @@ const Hero = ({
               </div>
             </div>
           </div>
-          <div className="hero-figure reveal-from-bottom illustration-element-01" data-reveal-value="20px" data-reveal-delay="800">
-            <a
-              data-video="https://player.vimeo.com/video/495209065"
-              href="#0"
-              aria-controls="video-modal"
-              onClick={openModal}
-            >
-              <Image
-                className="has-shadow"
-                src={require('./../../assets/images/video-placeholder.png')}
-                alt="Hero"
-                width={896}
-                height={504} />
-            </a>
-          </div>
-          <Modal
-            id="video-modal"
-            show={videoModalActive}
-            handleClose={closeModal}
-            video="https://player.vimeo.com/video/495209065"
-            videoTag="iframe" />
+          {/*<div className="hero-figure reveal-from-bottom illustration-element-01" data-reveal-value="20px" data-reveal-delay="800">*/}
+          {/*  <a*/}
+          {/*    data-video="https://player.vimeo.com/video/495209065"*/}
+          {/*    href="#0"*/}
+          {/*    aria-controls="video-modal"*/}
+          {/*    onClick={openModal}*/}
+          {/*  >*/}
+          {/*    <Image*/}
+          {/*      className="has-shadow"*/}
+          {/*      src={require('./../../assets/images/video-placeholder.png')}*/}
+          {/*      alt="Hero"*/}
+          {/*      width={896}*/}
+          {/*      height={504} />*/}
+          {/*  </a>*/}
+          {/*</div>*/}
+          {/*<Modal*/}
+          {/*  id="video-modal"*/}
+          {/*  show={videoModalActive}*/}
+          {/*  handleClose={closeModal}*/}
+          {/*  video="https://player.vimeo.com/video/495209065"*/}
+          {/*  videoTag="iframe" />*/}
         </div>
       </div>
     </section>
