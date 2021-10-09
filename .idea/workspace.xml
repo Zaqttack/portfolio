@@ -20,13 +20,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="70c103f5-7465-41a1-8fc5-9bc75c0b08ea" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/CNAME" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/partials/FooterNav.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/partials/FooterNav.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/sections/Hero.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/sections/Hero.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/assets/scss/core/sections/_hero.scss" beforeDir="false" afterPath="$PROJECT_DIR$/src/assets/scss/core/sections/_hero.scss" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,7 +77,7 @@
       <workItem from="1613009810724" duration="2205000" />
       <workItem from="1613077477981" duration="5082000" />
       <workItem from="1633667500304" duration="6561000" />
-      <workItem from="1633757786161" duration="2256000" />
+      <workItem from="1633757786161" duration="2546000" />
     </task>
     <servers />
   </component>
