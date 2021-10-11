@@ -7,15 +7,12 @@
 }
 
 .hero-inner {
-
 	// Affects only hero full
 	> .hero-content + .hero-figure,
 	> .hero-figure + .hero-content {
 		margin-top: $hero--inner-padding-v_mobile;
 	}
-
 	> .hero-figure {
-
 		> a {
 			display: inline-flex;
 			// prevents stretching
@@ -28,20 +25,14 @@
 @include media( '<=medium' ) {
 
 	.hero {
-
 		.split-wrap {
-
 			.split-item {
-
 				.split-item-content {
 					margin-bottom: $hero--inner-padding-v_mobile;
 				}
 			}
-
 			&.invert-mobile {
-
 				.split-item {
-
 					.split-item-image {
 						margin-bottom: $hero--inner-padding-v_mobile;
 					}
@@ -52,17 +43,13 @@
 }
 
 @include media( '>medium' ) {
-
 	.hero {
-
 		.section-inner {
 			padding-top: $hero--padding-t__desktop;
 			padding-bottom: $hero--padding-b__desktop;
 		}
 	}
-
 	.hero-inner {
-
 		// Affects only hero full
 		> .hero-content + .hero-figure,
 		> .hero-figure + .hero-content {

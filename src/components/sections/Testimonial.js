@@ -45,7 +45,7 @@ const Testimonial = ({
 
   const sectionHeader = {
     title: 'Friends and Coworkers',
-    paragraph: 'Not impressed yet? Well, don\'t just take my word for it, see what people have to say about me!'
+    paragraph: 'See what others have been saying about me!'
   };
 
   return (

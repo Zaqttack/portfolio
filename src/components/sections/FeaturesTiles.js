@@ -44,8 +44,8 @@ const FeaturesTiles = ({
   );
 
   const sectionHeader = {
-    title: 'Know my background',
-    paragraph: 'Take a peek into the leadership that I can offer. These skills all came with the support of my team and with them, I will help lead!'
+    title: 'My Skills',
+    paragraph: 'Take a look at my most prominent skills!'
   };
 
   return (
@@ -71,10 +71,10 @@ const FeaturesTiles = ({
                 </div>
                 <div className="features-tiles-item-content">
                   <h4 className="mt-0 mb-8">
-                    Leadership
+                    AWS
                     </h4>
                   <p className="m-0 text-sm">
-                    Whether it is a group project in class or creating a Wiki for the largest CS club on campus, you can always rely on me to get the ball rolling!
+                    After learning several front-end skills I turned my attention to learning skills in the cloud. Having my recent internship at SWBC I was able to acquire a load of knew knowledge.
                     </p>
                 </div>
               </div>
@@ -93,10 +93,10 @@ const FeaturesTiles = ({
                 </div>
                 <div className="features-tiles-item-content">
                   <h4 className="mt-0 mb-8">
-                    Teamwork
+                    HTML5/CSS
                     </h4>
                   <p className="m-0 text-sm">
-                    Effectively and efficiently setting and completing task is my status quo.
+                    After winning the Learner's Track at RowdyHacks 2020 with a basic understanding of HTML and CSS, I continued to learn about front-end web development in my free time and starting up several projects.
                     </p>
                 </div>
               </div>
@@ -115,10 +115,10 @@ const FeaturesTiles = ({
                 </div>
                 <div className="features-tiles-item-content">
                   <h4 className="mt-0 mb-8">
-                    Coding Skills
+                    JavaScript/Node/npm
                     </h4>
                   <p className="m-0 text-sm">
-                    Although I am still growing, this is my future and it is what I am passionate about now.
+                    After learning the fundamentals I advanced my skills by taking more classes and learning about the future of web development!
                     </p>
                 </div>
               </div>
@@ -137,10 +137,10 @@ const FeaturesTiles = ({
                 </div>
                 <div className="features-tiles-item-content">
                   <h4 className="mt-0 mb-8">
-                    Self Learner
+                    Linux Administration
                     </h4>
                   <p className="m-0 text-sm">
-                    I would not be here now if it was not for need to be constantly acquiring new skills to help myself and my friends succeed.
+                    It is where I first started my interest in computer science, the command line. First learning about basic commands and later learning how to go from new OS installations and start up my own home servers.
                     </p>
                 </div>
               </div>
@@ -181,10 +181,10 @@ const FeaturesTiles = ({
                 </div>
                 <div className="features-tiles-item-content">
                   <h4 className="mt-0 mb-8">
-                    Dependable
+                    Git/GitLab
                     </h4>
                   <p className="m-0 text-sm">
-                    Always around when a task needs to be completed and will ensure that time can be set aside for just about any problem.
+                    Learning about Version Control was crucial, not only have I utilized it in my own personal projects but learned the importance of it while working with git at a enterprise level.
                     </p>
                 </div>
               </div>

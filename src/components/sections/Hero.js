@@ -57,7 +57,7 @@ const Hero = ({
       {...props}
       className={outerClasses}
     >
-      <div className="container-sm">
+      <div className="container">
         <div className={innerClasses}>
           <div className="hero-content">
             <h1 className="mt-0 mb-16 reveal-from-bottom" data-reveal-delay="200">
@@ -65,10 +65,10 @@ const Hero = ({
             </h1>
             <div className="container-xs">
               <p className="m-0 mb-32 reveal-from-bottom" data-reveal-delay="400">
-                A Junior Software Develop at <a href="https://www.swbc.com/"><span className="text-color-primary">SWBC</span></a>.
+                A Junior Software Developer at <a href="https://www.swbc.com/"><span className="text-color-primary">SWBC</span></a>.
               </p>
               <p className="m-0 mb-32 reveal-from-bottom" data-reveal-delay="500">
-                Studying for my Bachelor's of <span className="text-color-primary">Computer Science</span> at <span className="text-color-primary">The University of San Antonio at Texas</span>.
+                Studying for my <span className="text-color-primary">Bachelor's of Computer Science</span> at <span className="text-color-primary">The University of San Antonio at Texas</span>.
               </p>
               <div className="reveal-from-bottom" data-reveal-delay="600">
                 <ButtonGroup>
