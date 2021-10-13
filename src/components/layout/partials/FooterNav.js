@@ -27,7 +27,7 @@ const FooterNav = ({
           <a href="https://www.linkedin.com/in/zaquariah-holland/">LinkdIn</a>
         </li>
         <li>
-          <a href="mailto:zaquariah@gmail.com">Contact</a>
+          <a href="mailto:zaquariah@gmail.com">Email Me</a>
         </li>
       </ul>
     </nav>

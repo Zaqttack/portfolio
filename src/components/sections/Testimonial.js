@@ -52,6 +52,7 @@ const Testimonial = ({
     <section
       {...props}
       className={outerClasses}
+      id="friends-and-coworkers"
     >
       <div className="container">
         <div className={innerClasses}>

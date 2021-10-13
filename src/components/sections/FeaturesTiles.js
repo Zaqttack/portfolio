@@ -52,6 +52,7 @@ const FeaturesTiles = ({
     <section
       {...props}
       className={outerClasses}
+      id="skills"
     >
       <div className="container">
         <div className={innerClasses}>

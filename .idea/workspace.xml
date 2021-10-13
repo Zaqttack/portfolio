@@ -21,14 +21,14 @@
   <component name="ChangeListManager">
     <list default="true" id="70c103f5-7465-41a1-8fc5-9bc75c0b08ea" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/assets/scss/core/sections/_hero.scss" beforeDir="false" afterPath="$PROJECT_DIR$/src/assets/scss/core/sections/_hero.scss" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/layout/Footer.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/Footer.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/Header.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/Header.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/partials/FooterNav.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/partials/FooterNav.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/partials/FooterSocial.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/partials/FooterSocial.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/sections/FeaturesSplit.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/sections/FeaturesSplit.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/sections/FeaturesTiles.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/sections/FeaturesTiles.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/sections/Hero.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/sections/Hero.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/sections/Testimonial.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/sections/Testimonial.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/views/Home.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/views/Home.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,7 +86,8 @@
       <workItem from="1613077477981" duration="5082000" />
       <workItem from="1633667500304" duration="6561000" />
       <workItem from="1633757786161" duration="4234000" />
-      <workItem from="1633920507940" duration="1755000" />
+      <workItem from="1633920507940" duration="2828000" />
+      <workItem from="1634098766507" duration="758000" />
     </task>
     <servers />
   </component>
