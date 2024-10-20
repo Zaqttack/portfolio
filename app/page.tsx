@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import anime from 'animejs'
-import { Github, Linkedin, Mail, Code, Server, Cloud, Database, Globe, ChevronLeft, ChevronRight } from 'lucide-react'
-import { GitBranch } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { SectionSolid, SectionClear, RecommendationCard } from './components'
+import { skills, projects, contacts } from './data'
 
 export default function Portfolio() {
   const heroRef = useRef(null)
@@ -13,7 +13,6 @@ export default function Portfolio() {
   const [subtitle, setSubtitle] = useState('')
   const fullSubtitle = "Software Engineer at SWIVEL"
   const [scrollY, setScrollY] = useState(0)
-  const [currentRecommendation, setCurrentRecommendation] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
@@ -101,81 +100,6 @@ export default function Portfolio() {
     }
   }, [])
 
-  const contacts = [
-    { name: 'Github', icon: <Github className="w-6 h-6" />, link: 'https://github.com/Zaqttack' },
-    { name: 'LinkedIn', icon: <Linkedin className="w-6 h-6" />, link: 'https://www.linkedin.com/in/zaquariah-holland/' },
-    { name: 'Email', icon: <Mail className="w-6 h-6" />, link: 'mailto:zaquariah@gmail.com' },
-  ]
-
-  const skills = [
-    { name: 'React', icon: <Code className="w-6 h-6" /> },
-    { name: 'Node.js', icon: <Server className="w-6 h-6" /> },
-    { name: 'AWS', icon: <Cloud className="w-6 h-6" /> },
-    { name: 'JavaScript', icon: <Code className="w-6 h-6" /> },
-    { name: 'TypeScript', icon: <Code className="w-6 h-6" /> },
-    { name: 'HTML/CSS', icon: <Globe className="w-6 h-6" /> },
-    { name: 'Git', icon: <GitBranch className="w-6 h-6" /> },
-    { name: 'RESTful APIs', icon: <Database className="w-6 h-6" /> },
-  ]
-
-  const projects = [
-    { 
-      title: 'FinTech Dashboard', 
-      description: 'A comprehensive dashboard for financial data visualization',
-      image: '/placeholder.svg?height=300&width=400'
-    },
-    { 
-      title: 'E-commerce Platform', 
-      description: 'Scalable online shopping solution with AWS integration',
-      image: '/placeholder.svg?height=300&width=400'
-    },
-    { 
-      title: 'Real-time Chat App', 
-      description: 'Secure messaging application built with React and Node.js',
-      image: '/placeholder.svg?height=300&width=400'
-    },
-    { 
-      title: 'Portfolio Tracker', 
-      description: 'Investment portfolio management tool with real-time updates',
-      image: '/placeholder.svg?height=300&width=400'
-    }
-  ]
-
-  const recommendations = [
-    { 
-      name: 'Jane Doe', 
-      position: 'Senior Developer', 
-      text: 'Zaquariah is an exceptional engineer with a keen eye for detail. His ability to solve complex problems and deliver high-quality code consistently impresses me.',
-      linkedin: 'https://www.linkedin.com/in/janedoe'
-    },
-    { 
-      name: 'John Smith', 
-      position: 'Project Manager', 
-      text: 'His ability to tackle complex problems and deliver results is outstanding. Zaquariah\'s technical expertise and leadership skills make him an invaluable asset to any team.',
-      linkedin: 'https://www.linkedin.com/in/johnsmith'
-    },
-    { 
-      name: 'Emily Brown', 
-      position: 'UX Designer', 
-      text: 'Working with Zaquariah has been a pleasure. His technical skills are top-notch, and he has a great understanding of user experience, which makes our collaboration seamless.',
-      linkedin: 'https://www.linkedin.com/in/emilybrown'
-    },
-    { 
-      name: 'Michael Johnson', 
-      position: 'Tech Lead', 
-      text: 'Zaquariah\'s innovative approach to problem-solving and his dedication to staying current with emerging technologies make him a standout engineer.',
-      linkedin: 'https://www.linkedin.com/in/michaeljohnson'
-    }
-  ]
-
-  const nextRecommendation = () => {
-    setCurrentRecommendation((prev) => (prev + 1) % recommendations.length)
-  }
-
-  const prevRecommendation = () => {
-    setCurrentRecommendation((prev) => (prev - 1 + recommendations.length) % recommendations.length)
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white overflow-hidden">
       {/* Stars */}
@@ -222,83 +146,48 @@ export default function Portfolio() {
         </section>
 
         {/* Skills Section */}
-        <section ref={skillsRef} className="py-20 bg-gray-800 bg-opacity-50 backdrop-blur-sm">
-          <div className="container mx-auto px-4">
-            <h2 className="text-5xl font-bold mb-12 text-center bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Skills</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <SectionSolid ref={skillsRef} title="Skills">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {skills.map((skill) => (
                 <div key={skill.name} className="skill-card bg-gray-700 bg-opacity-50 rounded-lg p-6 text-center shadow-lg hover:shadow-orange-500/20 transition-all duration-300 transform hover:-translate-y-1">
                   <div className="skill-icon flex justify-center mb-4 text-orange-400">{skill.icon}</div>
                   <p>{skill.name}</p>
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        </section>
+        </SectionSolid>
 
         {/* Projects Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <h2 className="text-5xl font-bold mb-12 text-center bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Projects</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {projects.map((project, index) => (
-                <div key={index} className="flex flex-col items-center text-center">
-                  <div className="w-full max-w-md relative overflow-hidden rounded-lg shadow-lg group">
-                    <Image 
-                      src={project.image} 
-                      width={400} 
-                      height={300} 
-                      alt={project.title} 
-                      className="w-full h-auto transition-transform duration-300 project-image"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 opacity-0 group-hover:opacity-75 transition-opacity duration-300"></div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <Link href="#" className="bg-white text-orange-600 px-4 py-2 rounded-full font-bold hover:bg-orange-100 transition-colors">
-                        Learn More
-                      </Link>
-                    </div>
+        <SectionClear title="Projects">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {projects.map((project, index) => (
+              <div key={index} className="flex flex-col items-center text-center">
+                <div className="w-full max-w-md relative overflow-hidden rounded-lg shadow-lg group">
+                  <Image 
+                    src={project.image} 
+                    width={400} 
+                    height={300} 
+                    alt={project.title} 
+                    className="w-full h-auto transition-transform duration-300 project-image"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 opacity-0 group-hover:opacity-75 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Link href="#" className="bg-white text-orange-600 px-4 py-2 rounded-full font-bold hover:bg-orange-100 transition-colors">
+                      Learn More
+                    </Link>
                   </div>
-                  <h3 className="text-2xl font-semibold mt-4">{project.title}</h3>
-                  <p className="text-gray-400 mt-2">{project.description}</p>
                 </div>
-              ))}
-            </div>
+                <h3 className="text-2xl font-semibold mt-4">{project.title}</h3>
+                <p className="text-gray-400 mt-2">{project.description}</p>
+              </div>
+            ))}
           </div>
-        </section>
+        </SectionClear>
 
         {/* Friends and Coworkers Section */}
-        <section className="py-20 bg-gray-800 bg-opacity-50 backdrop-blur-sm">
-          <div className="container mx-auto px-4">
-            <h2 className="text-5xl font-bold mb-12 text-center bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Friends and Coworkers</h2>
-            <div className="relative max-w-4xl mx-auto">
-              <div className="overflow-hidden">
-                <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${currentRecommendation * 50}%)` }}>
-                  {recommendations.map((rec, index) => (
-                    <div key={index} className="w-1/2 flex-shrink-0 px-4">
-                      <div className="bg-gray-700 bg-opacity-50 rounded-lg p-6 shadow-lg hover:shadow-orange-500/20 transition-all duration-300 h-64 flex flex-col justify-between">
-                        <p className="mb-4 italic text-sm">&ldquo;{rec.text}&rdquo;</p>
-                        <div>
-                          <p className="font-semibold text-lg">{rec.name}</p>
-                          <p className="text-sm text-gray-400 mb-2">{rec.position}</p>
-                          <a href={rec.linkedin} target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:text-orange-300 transition-colors inline-flex items-center">
-                
-                            <Linkedin className="w-5 h-5" />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <button onClick={prevRecommendation} className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75 transition-colors">
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button onClick={nextRecommendation} className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75 transition-colors">
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-        </section>
+        <SectionSolid title="Friends and Coworkers">
+          <RecommendationCard />
+        </SectionSolid>
 
         {/* Footer */}
         <footer className="bg-gray-900 bg-opacity-50 py-8 text-center">
