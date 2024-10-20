@@ -11,7 +11,7 @@ export default function Portfolio() {
   const heroRef = useRef(null)
   const skillsRef = useRef(null)
   const [subtitle, setSubtitle] = useState('')
-  const fullSubtitle = "Full Stack Engineer at FinTech"
+  const fullSubtitle = "Software Engineer at SWIVEL"
   const [scrollY, setScrollY] = useState(0)
   const [currentRecommendation, setCurrentRecommendation] = useState(0)
 
@@ -100,6 +100,12 @@ export default function Portfolio() {
       window.removeEventListener('scroll', handleScroll)
     }
   }, [])
+
+  const contacts = [
+    { name: 'Github', icon: <Github className="w-6 h-6" />, link: 'https://github.com/Zaqttack' },
+    { name: 'LinkedIn', icon: <Linkedin className="w-6 h-6" />, link: 'https://www.linkedin.com/in/zaquariah-holland/' },
+    { name: 'Email', icon: <Mail className="w-6 h-6" />, link: 'mailto:zaquariah@gmail.com' },
+  ]
 
   const skills = [
     { name: 'React', icon: <Code className="w-6 h-6" /> },
@@ -209,9 +215,9 @@ export default function Portfolio() {
           </h1>
           <p className="hero-text text-2xl mb-8 h-8">{subtitle}</p>
           <div className="hero-text flex justify-center space-x-4">
-            <a href="#" className="text-orange-400 hover:text-orange-300 transition-colors"><Github className="w-6 h-6" /></a>
-            <a href="#" className="text-orange-400 hover:text-orange-300 transition-colors"><Linkedin className="w-6 h-6" /></a>
-            <a href="#" className="text-orange-400 hover:text-orange-300 transition-colors"><Mail className="w-6 h-6" /></a>
+            {contacts.map((contact) => (
+              <a key={contact.name} href={contact.link} className="text-orange-400 hover:text-orange-300 transition-colors">{contact.icon}</a>
+            ))}
           </div>
         </section>
 
@@ -298,9 +304,9 @@ export default function Portfolio() {
         <footer className="bg-gray-900 bg-opacity-50 py-8 text-center">
           <div className="container mx-auto px-4">
             <div className="flex justify-center space-x-6 mb-4">
-              <a href="#" className="text-orange-400 hover:text-orange-300 transition-colors"><Github className="w-6 h-6" /></a>
-              <a href="#" className="text-orange-400 hover:text-orange-300 transition-colors"><Linkedin className="w-6 h-6" /></a>
-              <a href="#" className="text-orange-400 hover:text-orange-300 transition-colors"><Mail className="w-6 h-6" /></a>
+              {contacts.map((contact) => (
+                <a key={contact.name} href={contact.link} className="text-orange-400 hover:text-orange-300 transition-colors">{contact.icon}</a>
+              ))}
             </div>
             <p>&copy; 2024 Zaquariah Holland. All rights reserved.</p>
           </div>
