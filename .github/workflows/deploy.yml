@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy
+    name: Build and Deploy
     permissions:
       contents: read
       deployments: write
@@ -16,20 +16,23 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
+      - name: Setup Node.js 🔐
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Install and Build 🔧
         run: |
-          npm ci
+          npm install
           npm run pages:build
 
       - name: Deploy 🚀
-        uses: cloudflare/wrangler-action@v3.14.1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.0.0"
-          command: |
-            pages project list
-            pages deploy .vercel/output/static --project-name=portfolio --branch=feature/github-actions
+          command: pages deploy .vercel/output/static --project-name=portfolio
       #   env:
       #     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       #     CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
