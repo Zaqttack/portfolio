@@ -28,11 +28,13 @@ jobs:
 
       - name: Deploy 🚀
         uses: cloudflare/wrangler-action@v3
+        env:
+          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.0.0"
-          command: pages deploy .vercel/output/static --project-name=portfolio
+          command: pages deploy .vercel/output/static --project-name $CLOUDFLARE_PROJECT_NAME
       #   env:
       #     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       #     CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
