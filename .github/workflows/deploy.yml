@@ -25,7 +25,7 @@ jobs:
           npm ci
           npm run pages:build
 
-      # - name: Deploy 🚀
-      #   uses: cloudflare/wrangler-action@v3
-      #   with:
-      #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Deploy 🚀
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
