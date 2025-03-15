@@ -22,16 +22,21 @@ jobs:
           npm run pages:build
 
       - name: Deploy 🚀
-        uses: cloudflare/wrangler-action@v3
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy .vercel/output/static --project-name=portfolio
-          # Optional: Enable this if you want to have GitHub Deployments triggered
-          # gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: |
+            pages project list
+            pages deploy .vercel/output/static --project-name=portfolio --branch=feature/github-actions
+      #   env:
+      #     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      #     CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      #   with:
+      #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      #     command: pages deploy .vercel/output/static/ --project-name=portfolio
+      #     # Optional: Enable this if you want to have GitHub Deployments triggered
+      #     # gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
 # permissions:
 #   contents: write
