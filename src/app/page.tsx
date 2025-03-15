@@ -62,6 +62,7 @@ export default function Home() {
           }),
         }}
       />
+      {/* Hero section */}
       <Column fillWidth paddingY="l" gap="m">
         <Column maxWidth="s">
           <RevealFx translateY="4" fillWidth horizontal="start" paddingBottom="m">
@@ -97,9 +98,11 @@ export default function Home() {
           </RevealFx>
         </Column>
       </Column>
-      <RevealFx translateY="16" delay={0.6}>
+
+      {routes["/work"] && (<RevealFx translateY="16" delay={0.6}>
         <Projects range={[1, 1]} />
-      </RevealFx>
+      </RevealFx>)}
+
       {routes["/blog"] && (
         <Flex fillWidth gap="24" mobileDirection="column">
           <Flex flex={1} paddingLeft="l">
@@ -112,7 +115,9 @@ export default function Home() {
           </Flex>
         </Flex>
       )}
-      <Projects range={[2]} />
+
+      {routes["/work"] && (<Projects range={[2]} />)}
+
       {newsletter.display && <Mailchimp newsletter={newsletter} />}
     </Column>
   );

@@ -1,24 +1,24 @@
 import { InlineCode } from "@/once-ui/components";
 
 const person = {
-  firstName: "Selene",
-  lastName: "Yu",
+  firstName: "Zaquariah",
+  lastName: "Holland",
+  title: "Software Engineer",
   get name() {
     return `${this.firstName} ${this.lastName}`;
   },
   role: "Design Engineer",
   avatar: "/images/avatar.jpg",
-  location: "Asia/Jakarta", // Expecting the IANA time zone identifier, e.g., 'Europe/Vienna'
-  languages: ["English", "Bahasa"], // optional: Leave the array empty if you don't want to display languages
+  location: "America/Chicago", // Expecting the IANA time zone identifier, e.g., 'Europe/Vienna'
+  languages: [], // optional: Leave the array empty if you don't want to display languages
 };
 
 const newsletter = {
-  display: true,
+  display: false,
   title: <>Subscribe to {person.firstName}'s Newsletter</>,
   description: (
     <>
-      I occasionally write about design, technology, and share thoughts on the intersection of
-      creativity and engineering.
+      I occasionally write about design, technology, and share thoughts on the intersection of creativity and engineering.
     </>
   ),
 };
@@ -29,12 +29,12 @@ const social = [
   {
     name: "GitHub",
     icon: "github",
-    link: "https://github.com/once-ui-system/nextjs-starter",
+    link: "https://github.com/Zaqttack",
   },
   {
     name: "LinkedIn",
     icon: "linkedin",
-    link: "https://www.linkedin.com/company/once-ui/",
+    link: "https://www.linkedin.com/in/zaquariah-holland/",
   },
   {
     name: "X",
@@ -44,7 +44,7 @@ const social = [
   {
     name: "Email",
     icon: "email",
-    link: "mailto:example@gmail.com",
+    link: "mailto:zaquariah@gmail.com",
   },
 ];
 
@@ -52,11 +52,11 @@ const home = {
   label: "Home",
   title: `${person.name}'s Portfolio`,
   description: `Portfolio website showcasing my work as a ${person.role}`,
-  headline: <>Design engineer and builder</>,
+  headline: <>Engineer and Community Builder</>,
   subline: (
     <>
-      I'm Selene, a design engineer at <InlineCode>FLY</InlineCode>, where I craft intuitive
-      <br /> user experiences. After hours, I build my own projects.
+      I'm {person.firstName}, a {person.title} at <InlineCode>SWIVEL</InlineCode>, where I build
+      <br /> and maintain full-stack fintech applications with AWS.
     </>
   ),
 };
@@ -73,17 +73,17 @@ const about = {
     display: true,
   },
   calendar: {
-    display: true,
-    link: "https://cal.com",
+    display: false,
+    link: "https://cal.com/zaquariah/collaboration",
   },
   intro: {
     display: true,
     title: "Introduction",
     description: (
       <>
-        Selene is a Jakarta-based design engineer with a passion for transforming complex challenges
-        into simple, elegant design solutions. Her work spans digital interfaces, interactive
-        experiences, and the convergence of design and technology.
+        {person.firstName} is a San Antonio based {person.title} who designs, develops, and maintain full-stack 
+        fintech applications, leveraging front-end frameworks, custom testing tools, and AWS cloud architecture 
+        while contributing to team leadership and community engagement.
       </>
     ),
   },
@@ -92,41 +92,75 @@ const about = {
     title: "Work Experience",
     experiences: [
       {
-        company: "FLY",
-        timeframe: "2022 - Present",
-        role: "Senior Design Engineer",
+        company: "SWIVEL",
+        timeframe: "Apr 2024 - Present",
+        role: "Software Engineer",
         achievements: [
           <>
-            Redesigned the UI/UX for the FLY platform, resulting in a 20% increase in user
-            engagement and 30% faster load times.
-          </>,
-          <>
-            Spearheaded the integration of AI tools into design workflows, enabling designers to
-            iterate 50% faster.
+            Designed and developed user flow solutions with Figma for Apple Pay and other payment method
+            integrations for several hundred clients.
           </>,
         ],
         images: [
           // optional: leave the array empty if you don't want to display images
-          {
-            src: "/images/projects/project-01/cover-01.jpg",
-            alt: "Once UI Project",
-            width: 16,
-            height: 9,
-          },
+          // {
+          //   src: "/images/projects/project-01/cover-01.jpg",
+          //   alt: "Once UI Project",
+          //   width: 16,
+          //   height: 9,
+          // },
         ],
       },
       {
-        company: "Creativ3",
-        timeframe: "2018 - 2022",
-        role: "Lead Designer",
+        company: "SWIVEL",
+        timeframe: "Aug 2021 - Apr 2024",
+        role: "Junior Software Engineer",
         achievements: [
           <>
-            Developed a design system that unified the brand across multiple platforms, improving
-            design consistency by 40%.
+            Implemented Google Analytics in the core application, enabling data-driven decisions for future feature development.
           </>,
           <>
-            Led a cross-functional team to launch a new product line, contributing to a 15% increase
-            in overall company revenue.
+            Developed and integrated ADA-compliant components to improve accessibility and ensure compliance with industry standards.
+          </>,
+          <>
+            Enhanced and expanded the primary application by adding support for new clients and implementing new feature sets.
+          </>,
+          <>
+            Assisted in a full application rebuild, modernizing the frontend by migrating to React.js for improved performance and maintainability.
+          </>,
+        ],
+        images: [],
+      },
+      {
+        company: "SWBC",
+        timeframe: "May 2021 - Aug 2021",
+        role: "Web Development Intern",
+        achievements: [
+          <>
+            Researched and implemented accessibility standards to better improve clients banking experiences.
+          </>,
+          <>
+            Focused on cloud infrastructure to build out applications and improve performance.
+          </>,
+          <>
+            Practiced agile methodology with scrum teams.
+          </>,
+        ],
+        images: [],
+      },
+      {
+        company: "UTSA RowdyHacks",
+        timeframe: "Aug 2020 - Mar 2021",
+        role: "Logistics Web Developer",
+        achievements: [
+          <>
+            Worked as part of a team to design, develop, and launch a website for a hackathon.
+          </>,
+          <>
+            Utilized HTML, CSS, and JavaScript to create a visually appealing and functional website.
+          </>,
+          <>
+            Received positive feedback from users and sponsors.
           </>,
         ],
         images: [],
@@ -138,17 +172,13 @@ const about = {
     title: "Studies",
     institutions: [
       {
-        name: "University of Jakarta",
-        description: <>Studied software engineering.</>,
-      },
-      {
-        name: "Build the Future",
-        description: <>Studied online marketing and personal branding.</>,
+        name: "The University of Texas at San Antonio",
+        description: <>Bachelors of Computer Science with a concentration in Software Engineering</>,
       },
     ],
   },
   technical: {
-    display: true, // set to false to hide this section
+    display: false, // set to false to hide this section
     title: "Technical skills",
     skills: [
       {
