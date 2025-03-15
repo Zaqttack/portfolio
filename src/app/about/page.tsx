@@ -9,6 +9,7 @@ import {
   SmartImage,
   Tag,
   Text,
+  Line,
 } from "@/once-ui/components";
 import { baseURL } from "@/app/resources";
 import TableOfContents from "@/components/about/TableOfContents";
@@ -65,6 +66,11 @@ export default function About() {
       title: about.technical.title,
       display: about.technical.display,
       items: about.technical.skills.map((skill) => skill.title),
+    },
+    {
+      title: about.involvement.title,
+      display: about.involvement.display,
+      items: about.involvement.experiences.map((experiences) => experiences.title),
     },
   ];
   return (
@@ -211,9 +217,10 @@ export default function About() {
 
           {about.work.display && (
             <>
-              <Heading as="h2" id={about.work.title} variant="display-strong-s" marginBottom="m">
+              <Heading as="h2" id={about.work.title} variant="display-strong-s" marginTop="m">
                 {about.work.title}
               </Heading>
+              <Line marginBottom="m"/>
               <Column fillWidth gap="l" marginBottom="40">
                 {about.work.experiences.map((experience, index) => (
                   <Column key={`${experience.company}-${experience.role}-${index}`} fillWidth>
@@ -273,9 +280,10 @@ export default function About() {
 
           {about.studies.display && (
             <>
-              <Heading as="h2" id={about.studies.title} variant="display-strong-s" marginBottom="m">
+              <Heading as="h2" id={about.studies.title} variant="display-strong-s" marginTop="m">
                 {about.studies.title}
               </Heading>
+              <Line marginBottom="m"/>
               <Column fillWidth gap="l" marginBottom="40">
                 {about.studies.institutions.map((institution, index) => (
                   <Column key={`${institution.name}-${index}`} fillWidth gap="4">
@@ -293,14 +301,10 @@ export default function About() {
 
           {about.technical.display && (
             <>
-              <Heading
-                as="h2"
-                id={about.technical.title}
-                variant="display-strong-s"
-                marginBottom="40"
-              >
+              <Heading as="h2" id={about.technical.title} variant="display-strong-s" marginTop="m">
                 {about.technical.title}
               </Heading>
+              <Line marginBottom="m" />
               <Column fillWidth gap="l">
                 {about.technical.skills.map((skill, index) => (
                   <Column key={`${skill}-${index}`} fillWidth gap="4">
@@ -311,6 +315,69 @@ export default function About() {
                     {skill.images && skill.images.length > 0 && (
                       <Flex fillWidth paddingTop="m" gap="12" wrap>
                         {skill.images.map((image, index) => (
+                          <Flex
+                            key={index}
+                            border="neutral-medium"
+                            radius="m"
+                            //@ts-ignore
+                            minWidth={image.width}
+                            //@ts-ignore
+                            height={image.height}
+                          >
+                            <SmartImage
+                              enlarge
+                              radius="m"
+                              //@ts-ignore
+                              sizes={image.width.toString()}
+                              //@ts-ignore
+                              alt={image.alt}
+                              //@ts-ignore
+                              src={image.src}
+                            />
+                          </Flex>
+                        ))}
+                      </Flex>
+                    )}
+                  </Column>
+                ))}
+              </Column>
+            </>
+          )}
+
+          {about.involvement.display && (
+            <>
+              <Heading as="h2" id={about.involvement.title} variant="display-strong-s" marginTop="m">
+                {about.involvement.title}
+              </Heading>
+              <Line marginBottom="m"/>
+              <Column fillWidth gap="l" marginBottom="40">
+                {about.involvement.experiences.map((experience, index) => (
+                  <Column key={`${experience.company}-${experience.role}-${index}`} fillWidth>
+                    <Flex fillWidth horizontal="space-between" vertical="end" marginBottom="4">
+                      <Text id={experience.company} variant="heading-strong-l">
+                        {experience.company}
+                      </Text>
+                      <Text variant="heading-default-xs" onBackground="neutral-weak">
+                        {experience.timeframe}
+                      </Text>
+                    </Flex>
+                    <Text variant="body-default-s" onBackground="brand-weak" marginBottom="m">
+                      {experience.role}
+                    </Text>
+                    <Column as="ul" gap="16">
+                      {experience.achievements.map((achievement: JSX.Element, index: number) => (
+                        <Text
+                          as="li"
+                          variant="body-default-m"
+                          key={`${experience.company}-${index}`}
+                        >
+                          {achievement}
+                        </Text>
+                      ))}
+                    </Column>
+                    {experience.images.length > 0 && (
+                      <Flex fillWidth paddingTop="m" paddingLeft="40" wrap>
+                        {experience.images.map((image, index) => (
                           <Flex
                             key={index}
                             border="neutral-medium"
