@@ -16,24 +16,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js 🔐
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20.18.0'
 
-      - name: Install and Build 🔧
-        run: |
-          npm ci
-          npm run pages:build
+      - name: Install 🔧
+        run: npm ci
 
-      - name: Deploy to Pages 🚀
+      - name: Build and Deploy to Pages 🚀
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-        run: |
-          npx wrangler pages deploy .vercel/output/static \
-            --project-name $CLOUDFLARE_PROJECT_NAME \
-            --branch $GITHUB_REF_NAME
+        run: npm run deploy
+        # run: |
+        #   npx wrangler pages deploy .vercel/output/static \
+        #     --project-name $CLOUDFLARE_PROJECT_NAME \
+        #     --branch $GITHUB_REF_NAME
 
       # - name: Deploy 🚀
       #   uses: cloudflare/wrangler-action@v3
