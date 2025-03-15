@@ -3,11 +3,10 @@ import { InlineCode } from "@/once-ui/components";
 const person = {
   firstName: "Zaquariah",
   lastName: "Holland",
-  title: "Software Engineer",
   get name() {
     return `${this.firstName} ${this.lastName}`;
   },
-  role: "Design Engineer",
+  role: "Software Engineer",
   avatar: "/images/avatar.jpg",
   location: "America/Chicago", // Expecting the IANA time zone identifier, e.g., 'Europe/Vienna'
   languages: [], // optional: Leave the array empty if you don't want to display languages
@@ -55,7 +54,7 @@ const home = {
   headline: <>Engineer and Community Builder</>,
   subline: (
     <>
-      I'm {person.firstName}, a {person.title} at <InlineCode>SWIVEL</InlineCode>, where I build
+      I'm {person.firstName}, a {person.role} at <InlineCode>SWIVEL</InlineCode>, where I build
       <br /> and maintain full-stack fintech applications with AWS.
     </>
   ),
@@ -81,7 +80,7 @@ const about = {
     title: "Introduction",
     description: (
       <>
-        {person.firstName} is a San Antonio based {person.title} who designs, develops, and maintain full-stack 
+        {person.firstName} is a San Antonio based {person.role} who designs, develops, and maintain full-stack 
         fintech applications, leveraging front-end frameworks, custom testing tools, and AWS cloud architecture 
         while contributing to team leadership and community engagement.
       </>
