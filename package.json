@@ -22,7 +22,7 @@
     "next": "^14.2.16",
     "next-mdx-remote": "^5.0.0",
     "postcss": "^8.4.39",
-    "postcss-preset-env": "^9.5.15",
+    "postcss-preset-env": "^10.2.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
