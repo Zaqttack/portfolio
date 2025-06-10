@@ -103,7 +103,7 @@ const about = {
           <>Contributed to full-stack development of fintech applications, shipping 5+ major features that improved transaction processing efficiency and customer engagement.</>,
           <>Built reusable front-end components in React, improving development speed and consistency across multiple internal and client facing products.</>,
           <>Spearheaded community initiatives by organizing 3+ industry events, including hackathons and workshops, expanding SWIVEL’s developer outreach in San Antonio.</>,
-          <>Mentored onboarding developers and conducted internal training sessions, improving team efficiency and onboarding time a full two weeks.</>,
+          <>Championed and developed multiple new features for SWIVEL's flagship application, designed with a modular deployment strategy to enable a seamless final launch with a single activation switch.</>,
           <>Co-organized with the Engineering Director and SWIVEL Executive team to host SWIVEL's first engineering-wide hackathon with 40+ participants and 5 projects, leading to a larger event the following year.</>,
         ],
         images: [
@@ -121,8 +121,8 @@ const about = {
         timeframe: "Aug 2021 - Apr 2024",
         role: "Junior Software Engineer",
         achievements: [
-          <>Implemented Google Analytics in the core application, enabling data-driven decisions for future feature development.</>,
-          <>Developed and integrated ADA-compliant components to improve accessibility and ensure compliance with industry standards.</>,
+          <>Implemented Google Analytics in the core application, enabling data-driven decisions for future feature development that impacts over 1 million monthly active users.</>,
+          <>Developed and integrated ADA-compliant components to improve accessibility and ensure compliance with industry standards for hundreds of clients.</>,
           <>Contributed to the growth of our redesigned application by adding support for new clients and implementing new features to enhance functionality.</>,
           <>Assisted in a full application rebuild, modernizing the frontend by migrating to React.js for improved performance and maintainability.</>,
         ],
@@ -167,7 +167,7 @@ const about = {
       },
       {
         title: "Cloud & DevOps",
-        description: <>AWS (Lambda, S3, EC2, CloudFormation, etc), Docker, GitHub Actions, Vercel, Netlify</>,
+        description: <>AWS (Lambda, S3, EC2, CloudFormation, etc), Cloudflare, Docker, GitHub Actions, Vercel, Netlify</>,
       },
       {
         title: "Testing & Quality",
@@ -209,8 +209,8 @@ const about = {
           <>Co-founded ACM San Antonio, establishing its mission to grow the local tech community through events, networking, and education.</>,
           <>Organize and host meetings ranging from 10 to 30 attendees, ensuring valuable discussions and knowledge sharing.</>,
           <>Designed and implemented a year-long strategic roadmap for two consecutive years, driving growth and scalability.</>,
-          <>Launched a membership system to fund operations and provide members with exclusive ACM national resources.</>,
-          <>Develop and execute strategic advertisement plans to increase community engagement and event attendance.</>,
+          <>Leads weekly meetings with the board to align on monthly, quarterly and yearly goals.</>,
+          <>Develop and execute strategic advertisement plans to increase community engagement and event attendance while launching a membership system to fund operations.</>,
         ],
         images: [],
       },
@@ -221,7 +221,6 @@ const about = {
         achievements: [
           <>Maintain and update the organization's event calendar, ensuring alignment with the San Antonio tech community.</>,
           <>Foster cross-organization collaboration by staying engaged with local tech events and initiatives.</>,
-          <>Support the founder, Jesse Hernandez, with administrative tasks, including paperwork and operational processes.</>,
           <>Assist in moderating the DEV SA Discord community of 500+ members, ensuring an active, inclusive, and well-managed environment.</>,
         ],
         images: [],
