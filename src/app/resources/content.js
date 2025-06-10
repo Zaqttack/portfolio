@@ -24,14 +24,14 @@ const social = [
   // Links are automatically displayed.
   // Import new icons in /once-ui/icons.ts
   {
-    name: "GitHub",
-    icon: "github",
-    link: "https://github.com/Zaqttack",
-  },
-  {
     name: "LinkedIn",
     icon: "linkedin",
     link: "https://www.linkedin.com/in/zaquariah-holland/",
+  },
+  {
+    name: "GitHub",
+    icon: "github",
+    link: "https://github.com/Zaqttack",
   },
   {
     name: "X",
@@ -103,8 +103,8 @@ const about = {
           <>Contributed to full-stack development of fintech applications, shipping 5+ major features that improved transaction processing efficiency and customer engagement.</>,
           <>Built reusable front-end components in React, improving development speed and consistency across multiple internal and client facing products.</>,
           <>Spearheaded community initiatives by organizing 3+ industry events, including hackathons and workshops, expanding SWIVEL’s developer outreach in San Antonio.</>,
-          <>Mentored onboarding developers and conducted internal training sessions, improving team efficiency and onboarding time by 25%.</>,
-          <>Co-organized with the Engineering Director and SWIVEL Executive team to host SWIVEL's first engineering-wide hackathon with 40+ participants and 5 projects, leading to a larger event the next year.</>,
+          <>Mentored onboarding developers and conducted internal training sessions, improving team efficiency and onboarding time a full two weeks.</>,
+          <>Co-organized with the Engineering Director and SWIVEL Executive team to host SWIVEL's first engineering-wide hackathon with 40+ participants and 5 projects, leading to a larger event the following year.</>,
         ],
         images: [
           // optional: leave the array empty if you don't want to display images
@@ -133,9 +133,11 @@ const about = {
         timeframe: "May 2021 - Aug 2021",
         role: "Web Development Intern",
         achievements: [
-          <>Researched and implemented accessibility standards to better improve clients banking experiences.</>,
-          <>Focused on cloud infrastructure to build out applications and improve performance.</>,
-          <>Practiced agile methodology with scrum teams.</>,
+          <>Audited web components for accessibility issues and recommended improvements, resulting in a more inclusive user experience.          </>,
+          <>Enhanced application performance by optimizing cloud-based deployment pipelines and integrating containerization best practices.</>,
+          <>Worked in an Agile environment, gaining hands-on experience with sprint cycles, Azure's ticket management, and continuous integration workflows.</>,
+          <>Contributed to front-end features using HTML, CSS, and JavaScript, improving visual consistency and maintainability across client portals.</>,
+          <>Created technical documentation for deployment and accessibility standards, supporting long-term team adoption.</>
         ],
         images: [],
       },
@@ -151,44 +153,49 @@ const about = {
       },
     ],
   },
-  // TODO: add technical skills
   technical: {
-    display: false, // set to false to hide this section
-    title: "Technical skills",
+    display: true, // set to false to hide this section
+    title: "Technical Skills",
     skills: [
       {
-        title: "Figma",
-        description: <>Able to prototype in Figma with Once UI with unnatural speed.</>,
-        // optional: leave the array empty if you don't want to display images
-        images: [
-          {
-            src: "/images/projects/project-01/cover-02.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-          {
-            src: "/images/projects/project-01/cover-03.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-        ],
+        title: "Programming Languages",
+        description: <>JavaScript, TypeScript, Python, HTML/CSS</>,
       },
       {
-        title: "Next.js",
-        description: <>Building next gen apps with Next.js + Once UI + Supabase.</>,
-        // optional: leave the array empty if you don't want to display images
-        images: [
-          {
-            src: "/images/projects/project-01/cover-04.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-        ],
+        title: "Frameworks & Libraries",
+        description: <>React, Next.js, Node.js, Express, Tailwind CSS</>,
       },
+      {
+        title: "Cloud & DevOps",
+        description: <>AWS (Lambda, S3, EC2, CloudFormation, etc), Docker, GitHub Actions, Vercel, Netlify</>,
+      },
+      {
+        title: "Testing & Quality",
+        description: <>Jest, Mocha, Cypress</>,
+      },
+      {
+        title: "Tools & Collaboration",
+        description: <>Git, Azure, GitHub, Atlassian Products, Figma, Postman, Slack, Notion</>,
+      }
     ],
+  },
+  soft: {
+    display: true, // set to false to hide this section
+    title: "Soft Skills",
+    skills: [
+      {
+        title: "Development Practices",
+        description: <>Agile/Scrum methodology, code reviews, pair programming, CI/CD</>,
+      },
+      {
+        title: "Communication & Leadership",
+        description: <>Technical writing, workshop facilitation, mentoring, cross-functional collaboration</>
+      },
+      {
+        title: "Learning & Growth",
+        description: <>Self-driven learning, course creation, hackathon participation/organization</>
+      },
+    ]
   },
   involvement: {
     display: true,
