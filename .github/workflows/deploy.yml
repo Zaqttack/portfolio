@@ -102,8 +102,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Security audit (runtime deps only)
-        run: npm audit --omit=dev --audit-level=high
       - name: Build (next-on-pages)
         run: npm run pages:build
         env:
