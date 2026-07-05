@@ -1,18 +1,18 @@
-import { supabase } from './supabase';
 import type {
-  Profile,
-  Experience,
-  InvolvementOrg,
   Achievement,
-  Skill,
-  Project,
-  Post,
+  AdminActivity,
+  BotSignature,
+  Experience,
   GalleryImage,
   ImportStaging,
+  InvolvementOrg,
   PageView,
-  BotSignature,
-  AdminActivity,
+  Post,
+  Profile,
+  Project,
+  Skill,
 } from '@/types';
+import { supabase } from './supabase';
 
 export async function getProfile(): Promise<Profile> {
   const { data, error } = await supabase.from('profile').select('*').single();
@@ -49,10 +49,7 @@ export async function getAchievements(): Promise<Achievement[]> {
 }
 
 export async function getSkills(): Promise<Skill[]> {
-  const { data, error } = await supabase
-    .from('skills')
-    .select('*')
-    .order('display_order');
+  const { data, error } = await supabase.from('skills').select('*').order('display_order');
   if (error) throw error;
   return data;
 }
@@ -78,10 +75,7 @@ export async function getPosts(): Promise<Post[]> {
 }
 
 export async function getGallery(): Promise<GalleryImage[]> {
-  const { data, error } = await supabase
-    .from('gallery_images')
-    .select('*')
-    .order('display_order');
+  const { data, error } = await supabase.from('gallery_images').select('*').order('display_order');
   if (error) throw error;
   return data;
 }

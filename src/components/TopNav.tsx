@@ -20,8 +20,12 @@ export default function TopNav({ onCmdK }: TopNavProps) {
           color: active ? 'var(--accent)' : 'var(--text-2)',
           transition: 'color .3s',
         }}
-        onMouseEnter={e => { if (!active) (e.target as HTMLElement).style.color = 'var(--text-1)'; }}
-        onMouseLeave={e => { if (!active) (e.target as HTMLElement).style.color = 'var(--text-2)'; }}
+        onMouseEnter={(e) => {
+          if (!active) (e.target as HTMLElement).style.color = 'var(--text-1)';
+        }}
+        onMouseLeave={(e) => {
+          if (!active) (e.target as HTMLElement).style.color = 'var(--text-2)';
+        }}
       >
         {label}
       </Link>
@@ -29,15 +33,17 @@ export default function TopNav({ onCmdK }: TopNavProps) {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      borderBottom: '1px solid var(--border-1)',
-      padding: '13px 40px',
-      font: "500 11.5px var(--font-mono), monospace",
-      letterSpacing: '.02em',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid var(--border-1)',
+        padding: '13px 40px',
+        font: '500 11.5px var(--font-mono), monospace',
+        letterSpacing: '.02em',
+      }}
+    >
       <Link href="/" style={{ textDecoration: 'none', color: 'var(--text-4)' }}>
         zaquariah.dev
       </Link>
@@ -54,14 +60,14 @@ export default function TopNav({ onCmdK }: TopNavProps) {
             padding: '5px 9px',
             cursor: 'pointer',
             color: 'var(--text-3)',
-            font: "500 10px var(--font-mono), monospace",
+            font: '500 10px var(--font-mono), monospace',
             transition: 'border-color .3s, color .3s',
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--text-4)';
             (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-1)';
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-3)';
             (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)';
           }}

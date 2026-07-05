@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test('admin gate blocks unauthenticated access', async ({ page }) => {
   await page.goto('/admin');

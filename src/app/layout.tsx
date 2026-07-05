@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 
 const spaceGrotesk = Space_Grotesk({
@@ -18,7 +18,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'Zaquariah Holland',
-  description: 'Software engineer — San Antonio, TX. Full-stack, backend-leaning. Fintech and cloud infrastructure.',
+  description:
+    'Software engineer — San Antonio, TX. Full-stack, backend-leaning. Fintech and cloud infrastructure.',
   metadataBase: new URL('https://zaquariah.dev'),
   openGraph: {
     title: 'Zaquariah Holland',

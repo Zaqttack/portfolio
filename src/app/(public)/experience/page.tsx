@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import TopNav from '@/components/TopNav';
-import LeftRail from '@/components/LeftRail';
+import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
+import LeftRail from '@/components/LeftRail';
+import TopNav from '@/components/TopNav';
 
 const WORK_HISTORY = [
   {
@@ -53,7 +53,7 @@ const LEADERSHIP = [
   {
     role: 'Board Member — DEV SA',
     period: 'OCT 2024 — PRESENT',
-    desc: 'Part of the organizing body for one of SA\'s largest developer communities.',
+    desc: "Part of the organizing body for one of SA's largest developer communities.",
   },
   {
     role: 'Build Committee — Code:You SA',
@@ -68,7 +68,9 @@ const LEADERSHIP = [
 ];
 
 export default function ExperiencePage() {
-  const [activeSection, setActiveSection] = useState<'history' | 'community' | 'education'>('history');
+  const [activeSection, setActiveSection] = useState<'history' | 'community' | 'education'>(
+    'history',
+  );
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
   const spineRef = useRef<HTMLSpanElement>(null);
@@ -76,35 +78,44 @@ export default function ExperiencePage() {
   // Timeline draw-in animation
   useEffect(() => {
     if (!timelineRef.current || !spineRef.current) return;
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        if (spineRef.current) spineRef.current.style.transform = 'scaleY(1)';
-        timelineRef.current?.querySelectorAll('[data-tl]').forEach((node, i) => {
-          setTimeout(() => {
-            (node as HTMLElement).style.opacity = '1';
-            (node as HTMLElement).style.transform = 'none';
-          }, 200 + i * 200);
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          if (spineRef.current) spineRef.current.style.transform = 'scaleY(1)';
+          timelineRef.current?.querySelectorAll('[data-tl]').forEach((node, i) => {
+            setTimeout(
+              () => {
+                (node as HTMLElement).style.opacity = '1';
+                (node as HTMLElement).style.transform = 'none';
+              },
+              200 + i * 200,
+            );
+          });
+          obs.unobserve(e.target);
         });
-        obs.unobserve(e.target);
-      });
-    }, { rootMargin: '0px 0px -18% 0px' });
+      },
+      { rootMargin: '0px 0px -18% 0px' },
+    );
     obs.observe(timelineRef.current);
     return () => obs.disconnect();
   }, []);
 
   // Scroll reveals
   useEffect(() => {
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          (e.target as HTMLElement).style.opacity = '1';
-          (e.target as HTMLElement).style.transform = 'none';
-          obs.unobserve(e.target);
-        }
-      });
-    }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('[data-reveal]').forEach(el => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).style.opacity = '1';
+            (e.target as HTMLElement).style.transform = 'none';
+            obs.unobserve(e.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px' },
+    );
+    document.querySelectorAll('[data-reveal]').forEach((el) => {
       const elem = el as HTMLElement;
       elem.style.opacity = '0';
       elem.style.transform = 'translateY(14px)';
@@ -117,12 +128,15 @@ export default function ExperiencePage() {
   // Scroll-spy for active section
   useEffect(() => {
     const sectionIds = ['history', 'community', 'education'] as const;
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) setActiveSection(e.target.id as typeof sectionIds[number]);
-      });
-    }, { rootMargin: '0px 0px -60% 0px' });
-    sectionIds.forEach(id => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveSection(e.target.id as (typeof sectionIds)[number]);
+        });
+      },
+      { rootMargin: '0px 0px -60% 0px' },
+    );
+    sectionIds.forEach((id) => {
       const el = document.getElementById(id);
       if (el) obs.observe(el);
     });
@@ -138,10 +152,15 @@ export default function ExperiencePage() {
       const r = el.getBoundingClientRect();
       el.style.transform = `translate(${(e.clientX - (r.left + r.width / 2)) * 0.28}px, ${(e.clientY - (r.top + r.height / 2)) * 0.34}px)`;
     };
-    const reset = () => { el.style.transform = 'translate(0,0)'; };
+    const reset = () => {
+      el.style.transform = 'translate(0,0)';
+    };
     el.addEventListener('mousemove', move);
     el.addEventListener('mouseleave', reset);
-    return () => { el.removeEventListener('mousemove', move); el.removeEventListener('mouseleave', reset); };
+    return () => {
+      el.removeEventListener('mousemove', move);
+      el.removeEventListener('mouseleave', reset);
+    };
   }, []);
 
   // ⌘K shortcut
@@ -149,7 +168,7 @@ export default function ExperiencePage() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setCmdkOpen(v => !v);
+        setCmdkOpen((v) => !v);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -171,16 +190,51 @@ export default function ExperiencePage() {
         <TopNav onCmdK={() => setCmdkOpen(true)} />
 
         <header style={{ padding: '56px 56px 12px 40px' }}>
-          <Link href="/" style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-3)', textDecoration: 'none', transition: 'color .3s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+          <Link
+            href="/"
+            style={{
+              font: '500 11px var(--font-mono), monospace',
+              color: 'var(--text-3)',
+              textDecoration: 'none',
+              transition: 'color .3s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+          >
             ← index
           </Link>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px', marginTop: '16px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              flexWrap: 'wrap',
+              gap: '16px',
+              marginTop: '16px',
+            }}
+          >
             <div>
-              <h1 style={{ fontWeight: 700, fontSize: '46px', letterSpacing: '-.03em', margin: '0 0 12px' }}>Experience</h1>
-              <p style={{ fontSize: '16px', lineHeight: 1.6, color: 'var(--text-2)', maxWidth: '40em', margin: 0 }}>
-                The résumé, on the page. Five years of shipping backend-leaning software — mostly fintech — plus the community work I do on the side.
+              <h1
+                style={{
+                  fontWeight: 700,
+                  fontSize: '46px',
+                  letterSpacing: '-.03em',
+                  margin: '0 0 12px',
+                }}
+              >
+                Experience
+              </h1>
+              <p
+                style={{
+                  fontSize: '16px',
+                  lineHeight: 1.6,
+                  color: 'var(--text-2)',
+                  maxWidth: '40em',
+                  margin: 0,
+                }}
+              >
+                The résumé, on the page. Five years of shipping backend-leaning software — mostly
+                fintech — plus the community work I do on the side.
               </p>
             </div>
             <a
@@ -194,15 +248,15 @@ export default function ExperiencePage() {
                 gap: '8px',
                 background: 'var(--accent)',
                 color: 'var(--canvas)',
-                font: "600 13px var(--font-space), sans-serif",
+                font: '600 13px var(--font-space), sans-serif',
                 textDecoration: 'none',
                 padding: '13px 20px',
                 borderRadius: '8px',
                 whiteSpace: 'nowrap',
                 transition: 'box-shadow .3s',
               }}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')}
+              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
             >
               Download résumé ↓
             </a>
@@ -211,8 +265,23 @@ export default function ExperiencePage() {
 
         {/* WORK HISTORY */}
         <section id="history" style={{ scrollMarginTop: '20px', padding: '44px 56px 30px 40px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }}>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>/ WORK HISTORY</div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              / WORK HISTORY
+            </div>
             <div ref={timelineRef} style={{ position: 'relative', paddingLeft: '30px' }}>
               <span
                 ref={spineRef}
@@ -240,26 +309,63 @@ export default function ExperiencePage() {
                     transition: 'opacity .5s ease, transform .5s ease',
                   }}
                 >
-                  <span style={{
-                    position: 'absolute',
-                    left: '-30px',
-                    top: job.accent ? '3px' : '4px',
-                    width: job.accent ? '12px' : '10px',
-                    height: job.accent ? '12px' : '10px',
-                    borderRadius: '50%',
-                    background: job.accent ? 'var(--accent)' : 'var(--canvas)',
-                    border: job.accent ? 'none' : '1.5px solid var(--text-4)',
-                    boxShadow: '0 0 0 4px var(--canvas)',
-                  }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      left: '-30px',
+                      top: job.accent ? '3px' : '4px',
+                      width: job.accent ? '12px' : '10px',
+                      height: job.accent ? '12px' : '10px',
+                      borderRadius: '50%',
+                      background: job.accent ? 'var(--accent)' : 'var(--canvas)',
+                      border: job.accent ? 'none' : '1.5px solid var(--text-4)',
+                      boxShadow: '0 0 0 4px var(--canvas)',
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      flexWrap: 'wrap',
+                      gap: '6px',
+                      marginBottom: '4px',
+                    }}
+                  >
                     <div style={{ fontWeight: 600, fontSize: '20px' }}>
                       {job.role} <span style={{ color: 'var(--text-3)' }}>— {job.org}</span>
                     </div>
-                    <div style={{ font: "500 11px var(--font-mono), monospace", color: job.accent ? 'var(--accent)' : 'var(--text-4)' }}>{job.period}</div>
+                    <div
+                      style={{
+                        font: '500 11px var(--font-mono), monospace',
+                        color: job.accent ? 'var(--accent)' : 'var(--text-4)',
+                      }}
+                    >
+                      {job.period}
+                    </div>
                   </div>
-                  <div style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-4)', marginBottom: '12px' }}>{job.location}</div>
-                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '14.5px', lineHeight: 1.7, color: 'var(--text-2)', maxWidth: '48em' }}>
-                    {job.bullets.map(b => <li key={b}>{b}</li>)}
+                  <div
+                    style={{
+                      font: '500 11px var(--font-mono), monospace',
+                      color: 'var(--text-4)',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    {job.location}
+                  </div>
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: '18px',
+                      fontSize: '14.5px',
+                      lineHeight: 1.7,
+                      color: 'var(--text-2)',
+                      maxWidth: '48em',
+                    }}
+                  >
+                    {job.bullets.map((b) => (
+                      <li key={b}>{b}</li>
+                    ))}
                   </ul>
                 </div>
               ))}
@@ -268,21 +374,68 @@ export default function ExperiencePage() {
         </section>
 
         {/* LEADERSHIP */}
-        <section id="community" style={{ scrollMarginTop: '20px', padding: '36px 56px 30px 40px', borderTop: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }}>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>/ LEADERSHIP &amp; COMMUNITY</div>
+        <section
+          id="community"
+          style={{
+            scrollMarginTop: '20px',
+            padding: '36px 56px 30px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              / LEADERSHIP &amp; COMMUNITY
+            </div>
             <div style={{ borderTop: '1px solid var(--border-2)' }}>
-              {LEADERSHIP.map(item => (
+              {LEADERSHIP.map((item) => (
                 <div
                   key={item.role}
                   data-reveal
-                  style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '20px', padding: '22px 0', borderBottom: '1px solid var(--border-1)' }}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr auto',
+                    gap: '20px',
+                    padding: '22px 0',
+                    borderBottom: '1px solid var(--border-1)',
+                  }}
                 >
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>{item.role}</div>
-                    <div style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--text-2)', maxWidth: '46em' }}>{item.desc}</div>
+                    <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>
+                      {item.role}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '14px',
+                        lineHeight: 1.55,
+                        color: 'var(--text-2)',
+                        maxWidth: '46em',
+                      }}
+                    >
+                      {item.desc}
+                    </div>
                   </div>
-                  <div style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-4)', whiteSpace: 'nowrap' }}>{item.period}</div>
+                  <div
+                    style={{
+                      font: '500 11px var(--font-mono), monospace',
+                      color: 'var(--text-4)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {item.period}
+                  </div>
                 </div>
               ))}
             </div>
@@ -290,18 +443,69 @@ export default function ExperiencePage() {
         </section>
 
         {/* EDUCATION */}
-        <section id="education" style={{ scrollMarginTop: '20px', padding: '36px 56px 80px 40px', borderTop: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 1fr', gap: '48px', alignItems: 'start' }}>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>/ EDUCATION</div>
-            <div data-reveal>
-              <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>B.S. Computer Science</div>
-              <div style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--text-2)' }}>University of Texas at San Antonio</div>
-              <div style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-4)', marginTop: '6px' }}>2018 — DEC 2022</div>
+        <section
+          id="education"
+          style={{
+            scrollMarginTop: '20px',
+            padding: '36px 56px 80px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              / EDUCATION
             </div>
             <div data-reveal>
-              <div style={{ font: "500 10.5px var(--font-mono), monospace", letterSpacing: '.08em', color: 'var(--text-4)', marginBottom: '12px' }}>CERTIFICATIONS</div>
-              <div style={{ fontSize: '14px', lineHeight: 1.9, color: '#C7CBD1', fontFamily: "var(--font-mono), monospace" }}>
-                AWS Solutions Architect — Assoc.<br />
+              <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>
+                B.S. Computer Science
+              </div>
+              <div style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--text-2)' }}>
+                University of Texas at San Antonio
+              </div>
+              <div
+                style={{
+                  font: '500 11px var(--font-mono), monospace',
+                  color: 'var(--text-4)',
+                  marginTop: '6px',
+                }}
+              >
+                2018 — DEC 2022
+              </div>
+            </div>
+            <div data-reveal>
+              <div
+                style={{
+                  font: '500 10.5px var(--font-mono), monospace',
+                  letterSpacing: '.08em',
+                  color: 'var(--text-4)',
+                  marginBottom: '12px',
+                }}
+              >
+                CERTIFICATIONS
+              </div>
+              <div
+                style={{
+                  fontSize: '14px',
+                  lineHeight: 1.9,
+                  color: '#C7CBD1',
+                  fontFamily: 'var(--font-mono), monospace',
+                }}
+              >
+                AWS Solutions Architect — Assoc.
+                <br />
                 AWS Developer — Associate
               </div>
             </div>

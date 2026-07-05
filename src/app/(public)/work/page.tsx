@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import TopNav from '@/components/TopNav';
-import LeftRail from '@/components/LeftRail';
+import { useEffect, useState } from 'react';
 import CmdK from '@/components/CmdK';
+import LeftRail from '@/components/LeftRail';
+import TopNav from '@/components/TopNav';
 
 type Tag = 'all' | 'product' | 'side';
 
@@ -15,7 +15,8 @@ const PROJECTS = [
     tag: 'product' as const,
     year: "'24",
     stack: ['React', 'TypeScript', 'AWS', 'Node.js'],
-    blurb: 'Full-stack fintech application development. Shipped 5+ major features improving transaction processing efficiency. Includes Google Analytics integration, ADA-compliant components, and a full application rebuild with React.',
+    blurb:
+      'Full-stack fintech application development. Shipped 5+ major features improving transaction processing efficiency. Includes Google Analytics integration, ADA-compliant components, and a full application rebuild with React.',
     link: null,
     linkLabel: null,
   },
@@ -25,7 +26,8 @@ const PROJECTS = [
     tag: 'product' as const,
     year: "'23",
     stack: ['React', 'Supabase'],
-    blurb: 'Events, RSVPs, and a member directory for the chapter. Quietly runs every meetup we host — and forced me to get good at boring reliability.',
+    blurb:
+      'Events, RSVPs, and a member directory for the chapter. Quietly runs every meetup we host — and forced me to get good at boring reliability.',
     link: 'https://acmsa.org',
     linkLabel: 'visit ↗',
   },
@@ -35,7 +37,8 @@ const PROJECTS = [
     tag: 'product' as const,
     year: "'21",
     stack: ['HTML', 'CSS', 'JavaScript'],
-    blurb: 'Hackathon logistics website coordinating 300+ participants. Received positive feedback from users and sponsors for design and implementation.',
+    blurb:
+      'Hackathon logistics website coordinating 300+ participants. Received positive feedback from users and sponsors for design and implementation.',
     link: null,
     linkLabel: null,
   },
@@ -45,7 +48,8 @@ const PROJECTS = [
     tag: 'side' as const,
     year: 'annual',
     stack: ['community', 'organizing'],
-    blurb: 'A month-long game jam I organize. The theme rotates every year. The theme is also, non-negotiably, always dinosaurs. 40+ entries last year and counting.',
+    blurb:
+      'A month-long game jam I organize. The theme rotates every year. The theme is also, non-negotiably, always dinosaurs. 40+ entries last year and counting.',
     link: null,
     linkLabel: null,
   },
@@ -55,7 +59,8 @@ const PROJECTS = [
     tag: 'side' as const,
     year: "'23",
     stack: ['organizing', 'leadership'],
-    blurb: "Co-organized SWIVEL's first engineering-wide hackathon with 40+ participants and 5 projects. Led to a larger event the following year.",
+    blurb:
+      "Co-organized SWIVEL's first engineering-wide hackathon with 40+ participants and 5 projects. Led to a larger event the following year.",
     link: null,
     linkLabel: null,
   },
@@ -67,16 +72,19 @@ export default function WorkPage() {
 
   // Scroll reveals
   useEffect(() => {
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          (e.target as HTMLElement).style.opacity = '1';
-          (e.target as HTMLElement).style.transform = 'none';
-          obs.unobserve(e.target);
-        }
-      });
-    }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('[data-reveal]').forEach(el => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).style.opacity = '1';
+            (e.target as HTMLElement).style.transform = 'none';
+            obs.unobserve(e.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px' },
+    );
+    document.querySelectorAll('[data-reveal]').forEach((el) => {
       (el as HTMLElement).style.opacity = '0';
       (el as HTMLElement).style.transform = 'translateY(14px)';
       obs.observe(el);
@@ -89,7 +97,7 @@ export default function WorkPage() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setCmdkOpen(v => !v);
+        setCmdkOpen((v) => !v);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -97,16 +105,40 @@ export default function WorkPage() {
   }, []);
 
   const railItems = [
-    { href: '#', label: 'all', active: filter === 'all', onClick: (e: React.MouseEvent) => { e.preventDefault(); setFilter('all'); } },
-    { href: '#', label: 'product', active: filter === 'product', onClick: (e: React.MouseEvent) => { e.preventDefault(); setFilter('product'); } },
-    { href: '#', label: 'side', active: filter === 'side', onClick: (e: React.MouseEvent) => { e.preventDefault(); setFilter('side'); } },
+    {
+      href: '#',
+      label: 'all',
+      active: filter === 'all',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        setFilter('all');
+      },
+    },
+    {
+      href: '#',
+      label: 'product',
+      active: filter === 'product',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        setFilter('product');
+      },
+    },
+    {
+      href: '#',
+      label: 'side',
+      active: filter === 'side',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        setFilter('side');
+      },
+    },
     { href: '/', label: '← index', active: false, isBack: true },
   ];
 
-  const visible = PROJECTS.filter(p => filter === 'all' || p.tag === filter);
+  const visible = PROJECTS.filter((p) => filter === 'all' || p.tag === filter);
 
   const pillStyle = (t: Tag): React.CSSProperties => ({
-    font: "500 11px var(--font-mono), monospace",
+    font: '500 11px var(--font-mono), monospace',
     letterSpacing: '.03em',
     color: filter === t ? 'var(--canvas)' : 'var(--text-2)',
     background: filter === t ? 'var(--accent)' : 'transparent',
@@ -125,25 +157,57 @@ export default function WorkPage() {
         <TopNav onCmdK={() => setCmdkOpen(true)} />
 
         <header style={{ padding: '56px 56px 30px 40px' }}>
-          <Link href="/" style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-3)', textDecoration: 'none', transition: 'color .3s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+          <Link
+            href="/"
+            style={{
+              font: '500 11px var(--font-mono), monospace',
+              color: 'var(--text-3)',
+              textDecoration: 'none',
+              transition: 'color .3s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+          >
             ← index
           </Link>
-          <h1 style={{ fontWeight: 700, fontSize: '46px', letterSpacing: '-.03em', margin: '16px 0 12px' }}>Work</h1>
-          <p style={{ fontSize: '16px', lineHeight: 1.6, color: 'var(--text-2)', maxWidth: '40em', margin: '0 0 26px' }}>
-            Things I've shipped — professionally and for the sheer fun of it. The side projects get documented with the same rigor as the paid work, on purpose.
+          <h1
+            style={{
+              fontWeight: 700,
+              fontSize: '46px',
+              letterSpacing: '-.03em',
+              margin: '16px 0 12px',
+            }}
+          >
+            Work
+          </h1>
+          <p
+            style={{
+              fontSize: '16px',
+              lineHeight: 1.6,
+              color: 'var(--text-2)',
+              maxWidth: '40em',
+              margin: '0 0 26px',
+            }}
+          >
+            Things I've shipped — professionally and for the sheer fun of it. The side projects get
+            documented with the same rigor as the paid work, on purpose.
           </p>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button onClick={() => setFilter('all')} style={pillStyle('all')}>All</button>
-            <button onClick={() => setFilter('product')} style={pillStyle('product')}>Product</button>
-            <button onClick={() => setFilter('side')} style={pillStyle('side')}>Side projects</button>
+            <button onClick={() => setFilter('all')} style={pillStyle('all')}>
+              All
+            </button>
+            <button onClick={() => setFilter('product')} style={pillStyle('product')}>
+              Product
+            </button>
+            <button onClick={() => setFilter('side')} style={pillStyle('side')}>
+              Side projects
+            </button>
           </div>
         </header>
 
         <div style={{ padding: '0 56px 80px 40px' }}>
           <div style={{ borderTop: '1px solid var(--border-2)' }}>
-            {visible.map(p => (
+            {visible.map((p) => (
               <div
                 key={p.id}
                 data-reveal
@@ -157,34 +221,89 @@ export default function WorkPage() {
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 600, fontSize: '24px', letterSpacing: '-.01em' }}>{p.title}</span>
-                    <span style={{
-                      font: "500 9px var(--font-mono), monospace",
-                      letterSpacing: '.06em',
-                      color: p.tag === 'product' ? 'var(--accent)' : 'var(--text-3)',
-                      border: p.tag === 'product' ? '1px solid #3a2a1e' : '1px solid var(--border-3)',
-                      background: p.tag === 'product' ? '#1a1310' : 'transparent',
-                      borderRadius: '20px',
-                      padding: '2px 9px',
-                    }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, fontSize: '24px', letterSpacing: '-.01em' }}>
+                      {p.title}
+                    </span>
+                    <span
+                      style={{
+                        font: '500 9px var(--font-mono), monospace',
+                        letterSpacing: '.06em',
+                        color: p.tag === 'product' ? 'var(--accent)' : 'var(--text-3)',
+                        border:
+                          p.tag === 'product' ? '1px solid #3a2a1e' : '1px solid var(--border-3)',
+                        background: p.tag === 'product' ? '#1a1310' : 'transparent',
+                        borderRadius: '20px',
+                        padding: '2px 9px',
+                      }}
+                    >
                       {p.tag.toUpperCase()}
                     </span>
                   </div>
-                  <p style={{ fontSize: '14.5px', lineHeight: 1.6, color: 'var(--text-2)', maxWidth: '46em', margin: '0 0 12px' }}>{p.blurb}</p>
+                  <p
+                    style={{
+                      fontSize: '14.5px',
+                      lineHeight: 1.6,
+                      color: 'var(--text-2)',
+                      maxWidth: '46em',
+                      margin: '0 0 12px',
+                    }}
+                  >
+                    {p.blurb}
+                  </p>
                   <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap' }}>
-                    {p.stack.map(s => (
-                      <span key={s} style={{ font: "500 10.5px var(--font-mono), monospace", color: 'var(--text-3)', border: '1px solid var(--border-2)', borderRadius: '5px', padding: '3px 8px' }}>{s}</span>
+                    {p.stack.map((s) => (
+                      <span
+                        key={s}
+                        style={{
+                          font: '500 10.5px var(--font-mono), monospace',
+                          color: 'var(--text-3)',
+                          border: '1px solid var(--border-2)',
+                          borderRadius: '5px',
+                          padding: '3px 8px',
+                        }}
+                      >
+                        {s}
+                      </span>
                     ))}
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', gap: '14px', paddingTop: '4px' }}>
-                  <span style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-4)' }}>{p.year}</span>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
+                    gap: '14px',
+                    paddingTop: '4px',
+                  }}
+                >
+                  <span
+                    style={{ font: '500 11px var(--font-mono), monospace', color: 'var(--text-4)' }}
+                  >
+                    {p.year}
+                  </span>
                   {p.link && (
-                    <a href={p.link} target="_blank" rel="noopener noreferrer"
-                      style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-2)', textDecoration: 'none', transition: 'color .3s' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}>
+                    <a
+                      href={p.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        font: '500 11px var(--font-mono), monospace',
+                        color: 'var(--text-2)',
+                        textDecoration: 'none',
+                        transition: 'color .3s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                    >
                       {p.linkLabel}
                     </a>
                   )}

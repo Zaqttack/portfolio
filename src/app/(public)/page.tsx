@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import TopNav from '@/components/TopNav';
-import LeftRail from '@/components/LeftRail';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
+import LeftRail from '@/components/LeftRail';
+import TopNav from '@/components/TopNav';
 
 const SECTIONS = ['intro', 'skills', 'work', 'writing', 'experience', 'contact'] as const;
-type Section = typeof SECTIONS[number];
+type Section = (typeof SECTIONS)[number];
 
 const RAIL_LABELS: Record<Section, string> = {
   intro: 'intro',
@@ -33,7 +33,7 @@ export default function Home() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setCmdkOpen(v => !v);
+        setCmdkOpen((v) => !v);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -44,8 +44,10 @@ export default function Home() {
   useEffect(() => {
     const glow = glowRef.current;
     if (!glow) return;
-    let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
-    let cx = tx, cy = ty;
+    let tx = window.innerWidth / 2,
+      ty = window.innerHeight / 2;
+    let cx = tx,
+      cy = ty;
     const loop = () => {
       cx += (tx - cx) * 0.14;
       cy += (ty - cy) * 0.14;
@@ -57,19 +59,28 @@ export default function Home() {
       }
     };
     const onMove = (e: MouseEvent) => {
-      tx = e.clientX; ty = e.clientY;
+      tx = e.clientX;
+      ty = e.clientY;
       if (!rafRef.current) rafRef.current = requestAnimationFrame(loop);
     };
     window.addEventListener('mousemove', onMove);
-    return () => { window.removeEventListener('mousemove', onMove); if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   // Scroll-spy
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) setActiveSection(e.target.id as Section); });
-    }, { rootMargin: '-45% 0px -45% 0px' });
-    SECTIONS.forEach(id => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveSection(e.target.id as Section);
+        });
+      },
+      { rootMargin: '-45% 0px -45% 0px' },
+    );
+    SECTIONS.forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     });
@@ -78,16 +89,19 @@ export default function Home() {
 
   // Scroll reveals
   useEffect(() => {
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          (e.target as HTMLElement).style.opacity = '1';
-          (e.target as HTMLElement).style.transform = 'none';
-          obs.unobserve(e.target);
-        }
-      });
-    }, { rootMargin: '0px 0px -12% 0px' });
-    document.querySelectorAll('[data-reveal]').forEach(el => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).style.opacity = '1';
+            (e.target as HTMLElement).style.transform = 'none';
+            obs.unobserve(e.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -12% 0px' },
+    );
+    document.querySelectorAll('[data-reveal]').forEach((el) => {
       (el as HTMLElement).style.opacity = '0';
       (el as HTMLElement).style.transform = 'translateY(14px)';
       obs.observe(el);
@@ -99,21 +113,27 @@ export default function Home() {
   useEffect(() => {
     const section = document.getElementById('experience');
     if (!section) return;
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          const spine = document.getElementById('tl-spine');
-          if (spine) spine.style.transform = 'scaleY(1)';
-          document.querySelectorAll('#timeline [data-tl]').forEach((n, i) => {
-            setTimeout(() => {
-              (n as HTMLElement).style.opacity = '1';
-              (n as HTMLElement).style.transform = 'none';
-            }, 240 + i * 200);
-          });
-          obs.unobserve(e.target);
-        }
-      });
-    }, { rootMargin: '0px 0px -20% 0px' });
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            const spine = document.getElementById('tl-spine');
+            if (spine) spine.style.transform = 'scaleY(1)';
+            document.querySelectorAll('#timeline [data-tl]').forEach((n, i) => {
+              setTimeout(
+                () => {
+                  (n as HTMLElement).style.opacity = '1';
+                  (n as HTMLElement).style.transform = 'none';
+                },
+                240 + i * 200,
+              );
+            });
+            obs.unobserve(e.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -20% 0px' },
+    );
     obs.observe(section);
     return () => obs.disconnect();
   }, []);
@@ -121,7 +141,7 @@ export default function Home() {
   // Magnetic buttons
   useEffect(() => {
     const cleanup: Array<() => void> = [];
-    document.querySelectorAll('[data-magnetic]').forEach(el => {
+    document.querySelectorAll('[data-magnetic]').forEach((el) => {
       const move = (e: Event) => {
         const me = e as MouseEvent;
         const r = (el as HTMLElement).getBoundingClientRect();
@@ -129,12 +149,17 @@ export default function Home() {
         const dy = (me.clientY - (r.top + r.height / 2)) * 0.34;
         (el as HTMLElement).style.transform = `translate(${dx}px,${dy}px)`;
       };
-      const reset = () => { (el as HTMLElement).style.transform = 'translate(0,0)'; };
+      const reset = () => {
+        (el as HTMLElement).style.transform = 'translate(0,0)';
+      };
       el.addEventListener('mousemove', move);
       el.addEventListener('mouseleave', reset);
-      cleanup.push(() => { el.removeEventListener('mousemove', move); el.removeEventListener('mouseleave', reset); });
+      cleanup.push(() => {
+        el.removeEventListener('mousemove', move);
+        el.removeEventListener('mouseleave', reset);
+      });
     });
-    return () => cleanup.forEach(fn => fn());
+    return () => cleanup.forEach((fn) => fn());
   }, []);
 
   // Typing terminal
@@ -142,7 +167,8 @@ export default function Home() {
     const out = termRef.current;
     if (!out) return;
     out.innerHTML = '';
-    const accent = 'var(--accent)', txt = '#C7CBD1';
+    const accent = 'var(--accent)',
+      txt = '#C7CBD1';
     const seq = [
       { t: 'whoami', prompt: true },
       { t: '\nzaquariah — software engineer\n', color: txt },
@@ -184,14 +210,22 @@ export default function Home() {
         tt = setTimeout(run, 120);
         return;
       }
-      if (item.prompt) { promptSpan(); typeStr(item.t, txt, run); }
-      else { const s = document.createElement('span'); s.style.color = item.color; s.textContent = item.t; out.appendChild(s); tt = setTimeout(run, 200); }
+      if (item.prompt) {
+        promptSpan();
+        typeStr(item.t, txt, run);
+      } else {
+        const s = document.createElement('span');
+        s.style.color = item.color;
+        s.textContent = item.t;
+        out.appendChild(s);
+        tt = setTimeout(run, 200);
+      }
     };
     tt = setTimeout(run, 550);
     return () => clearTimeout(tt);
   }, []);
 
-  const railItems = SECTIONS.map(id => ({
+  const railItems = SECTIONS.map((id) => ({
     href: `#${id}`,
     label: RAIL_LABELS[id],
     active: activeSection === id,
@@ -202,9 +236,24 @@ export default function Home() {
   }));
 
   const extraCmds = [
-    { label: 'Skills', kind: 'section' as const, hint: 'this page', run: () => document.getElementById('skills')?.scrollIntoView({ behavior: 'smooth' }) },
-    { label: 'Recent work', kind: 'section' as const, hint: 'this page', run: () => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' }) },
-    { label: 'Contact', kind: 'section' as const, hint: 'this page', run: () => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) },
+    {
+      label: 'Skills',
+      kind: 'section' as const,
+      hint: 'this page',
+      run: () => document.getElementById('skills')?.scrollIntoView({ behavior: 'smooth' }),
+    },
+    {
+      label: 'Recent work',
+      kind: 'section' as const,
+      hint: 'this page',
+      run: () => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' }),
+    },
+    {
+      label: 'Contact',
+      kind: 'section' as const,
+      hint: 'this page',
+      run: () => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }),
+    },
   ];
 
   return (
@@ -247,14 +296,42 @@ export default function Home() {
           }}
         >
           <div>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.14em', color: 'var(--text-3)', marginBottom: '26px' }}>
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.14em',
+                color: 'var(--text-3)',
+                marginBottom: '26px',
+              }}
+            >
               SOFTWARE ENGINEER — SAN ANTONIO, TX
             </div>
-            <h1 style={{ fontWeight: 700, fontSize: '54px', lineHeight: 1.04, letterSpacing: '-.03em', margin: '0 0 22px', textWrap: 'balance' } as React.CSSProperties}>
+            <h1
+              style={
+                {
+                  fontWeight: 700,
+                  fontSize: '54px',
+                  lineHeight: 1.04,
+                  letterSpacing: '-.03em',
+                  margin: '0 0 22px',
+                  textWrap: 'balance',
+                } as React.CSSProperties
+              }
+            >
               I'm Zaquariah. I build precise, well-architected software.
             </h1>
-            <p style={{ fontSize: '17px', lineHeight: 1.65, color: 'var(--text-2)', maxWidth: '33em', margin: '0 0 32px' }}>
-              Full-stack, backend-leaning — fintech and cloud infrastructure by trade. Clean TypeScript, boring reliability, systems that hold up. I also run a month-long dinosaur game jam, because someone has to.
+            <p
+              style={{
+                fontSize: '17px',
+                lineHeight: 1.65,
+                color: 'var(--text-2)',
+                maxWidth: '33em',
+                margin: '0 0 32px',
+              }}
+            >
+              Full-stack, backend-leaning — fintech and cloud infrastructure by trade. Clean
+              TypeScript, boring reliability, systems that hold up. I also run a month-long dinosaur
+              game jam, because someone has to.
             </p>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <Link
@@ -266,14 +343,16 @@ export default function Home() {
                   gap: '8px',
                   background: 'var(--accent)',
                   color: 'var(--canvas)',
-                  font: "600 13px var(--font-space), sans-serif",
+                  font: '600 13px var(--font-space), sans-serif',
                   textDecoration: 'none',
                   padding: '13px 20px',
                   borderRadius: '8px',
                   transition: 'transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .3s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')}
-                onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')
+                }
+                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
               >
                 View work ↗
               </Link>
@@ -286,19 +365,20 @@ export default function Home() {
                   alignItems: 'center',
                   gap: '8px',
                   color: 'var(--text-1)',
-                  font: "600 13px var(--font-space), sans-serif",
+                  font: '600 13px var(--font-space), sans-serif',
                   textDecoration: 'none',
                   padding: '13px 20px',
                   borderRadius: '8px',
                   border: '1px solid var(--border-3)',
-                  transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, color .3s',
+                  transition:
+                    'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, color .3s',
                 }}
-                onMouseEnter={e => {
+                onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.borderColor = 'var(--accent)';
                   e.currentTarget.style.color = 'var(--accent)';
                 }}
-                onMouseLeave={e => {
+                onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.borderColor = 'var(--border-3)';
                   e.currentTarget.style.color = 'var(--text-1)';
@@ -308,113 +388,229 @@ export default function Home() {
               </a>
               <a
                 href="#contact"
-                onClick={e => { e.preventDefault(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
                   color: 'var(--text-2)',
-                  font: "600 13px var(--font-space), sans-serif",
+                  font: '600 13px var(--font-space), sans-serif',
                   textDecoration: 'none',
                   padding: '13px 6px',
                   transition: 'color .3s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-1)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-1)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
               >
                 Get in touch
               </a>
             </div>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '22px', font: "500 12px var(--font-mono), monospace", color: 'var(--text-3)' }}>
-              <a href="https://github.com/Zaqttack" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', transition: 'color .3s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>GitHub ↗</a>
+            <div
+              style={{
+                display: 'flex',
+                gap: '16px',
+                alignItems: 'center',
+                marginTop: '22px',
+                font: '500 12px var(--font-mono), monospace',
+                color: 'var(--text-3)',
+              }}
+            >
+              <a
+                href="https://github.com/Zaqttack"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none', transition: 'color .3s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+              >
+                GitHub ↗
+              </a>
               <span style={{ color: 'var(--border-3)' }}>/</span>
-              <a href="https://www.linkedin.com/in/zaquariah-holland/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', transition: 'color .3s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>LinkedIn ↗</a>
+              <a
+                href="https://www.linkedin.com/in/zaquariah-holland/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none', transition: 'color .3s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+              >
+                LinkedIn ↗
+              </a>
               <span style={{ color: 'var(--border-3)' }}>/</span>
-              <a href="mailto:zaquariah@gmail.com" style={{ textDecoration: 'none', transition: 'color .3s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>zaquariah@gmail.com</a>
+              <a
+                href="mailto:zaquariah@gmail.com"
+                style={{ textDecoration: 'none', transition: 'color .3s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+              >
+                zaquariah@gmail.com
+              </a>
             </div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: '10px',
-              marginTop: '26px',
-              paddingTop: '22px',
-              borderTop: '1px solid var(--border-1)',
-              font: "500 11.5px var(--font-mono), monospace",
-              maxWidth: '36em',
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '10px',
+                marginTop: '26px',
+                paddingTop: '22px',
+                borderTop: '1px solid var(--border-1)',
+                font: '500 11.5px var(--font-mono), monospace',
+                maxWidth: '36em',
+              }}
+            >
               <span style={{ color: 'var(--accent)', whiteSpace: 'nowrap' }}>// now</span>
               <span style={{ color: 'var(--text-2)', lineHeight: 1.65 }}>
-                Building payments infrastructure at SWIVEL, running ACM San Antonio, and reading too much about consensus protocols.
+                Building payments infrastructure at SWIVEL, running ACM San Antonio, and reading too
+                much about consensus protocols.
               </span>
             </div>
           </div>
 
           {/* Terminal + avatar */}
           <div style={{ position: 'relative', paddingTop: '34px' }}>
-            <div style={{
-              border: '1px solid var(--border-2)',
-              borderRadius: '11px',
-              overflow: 'hidden',
-              background: 'var(--panel-1)',
-              boxShadow: '0 24px 60px rgba(0,0,0,.5)',
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '9px 12px',
-                borderBottom: '1px solid var(--border-1)',
-                background: 'var(--panel-2)',
-              }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--border-3)' }} />
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--border-3)' }} />
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--border-3)' }} />
-                <span style={{ marginLeft: '6px', font: "500 9.5px var(--font-mono), monospace", color: 'var(--text-4)' }}>
+            <div
+              style={{
+                border: '1px solid var(--border-2)',
+                borderRadius: '11px',
+                overflow: 'hidden',
+                background: 'var(--panel-1)',
+                boxShadow: '0 24px 60px rgba(0,0,0,.5)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 12px',
+                  borderBottom: '1px solid var(--border-1)',
+                  background: 'var(--panel-2)',
+                }}
+              >
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'var(--border-3)',
+                  }}
+                />
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'var(--border-3)',
+                  }}
+                />
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'var(--border-3)',
+                  }}
+                />
+                <span
+                  style={{
+                    marginLeft: '6px',
+                    font: '500 9.5px var(--font-mono), monospace',
+                    color: 'var(--text-4)',
+                  }}
+                >
                   zaquariah — zsh
                 </span>
               </div>
-              <div style={{ padding: '16px 15px', font: "500 12px/1.85 var(--font-mono), monospace", minHeight: '120px' }}>
-                <div ref={termRef} style={{ whiteSpace: 'pre-wrap', color: '#C7CBD1', display: 'inline' }} />
-                <span style={{
-                  display: 'inline-block',
-                  width: '7px',
-                  height: '1.05em',
-                  transform: 'translateY(2px)',
-                  background: 'var(--accent)',
-                  animation: 'blink 1.05s steps(1) infinite',
-                }} />
+              <div
+                style={{
+                  padding: '16px 15px',
+                  font: '500 12px/1.85 var(--font-mono), monospace',
+                  minHeight: '120px',
+                }}
+              >
+                <div
+                  ref={termRef}
+                  style={{ whiteSpace: 'pre-wrap', color: '#C7CBD1', display: 'inline' }}
+                />
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '7px',
+                    height: '1.05em',
+                    transform: 'translateY(2px)',
+                    background: 'var(--accent)',
+                    animation: 'blink 1.05s steps(1) infinite',
+                  }}
+                />
               </div>
             </div>
             {/* Circular avatar */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              right: '22px',
-              width: '84px',
-              height: '84px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              boxShadow: '0 0 0 4px var(--canvas), 0 8px 22px rgba(0,0,0,.5)',
-              background: 'var(--border-2)',
-            }}>
-              <Image src="/images/avatar.jpg" alt="Zaquariah Holland" width={84} height={84} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: '22px',
+                width: '84px',
+                height: '84px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                boxShadow: '0 0 0 4px var(--canvas), 0 8px 22px rgba(0,0,0,.5)',
+                background: 'var(--border-2)',
+              }}
+            >
+              <Image
+                src="/images/avatar.jpg"
+                alt="Zaquariah Holland"
+                width={84}
+                height={84}
+                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+              />
             </div>
           </div>
         </section>
 
         {/* SKILLS */}
-        <section id="skills" data-section style={{ scrollMarginTop: '20px', padding: '80px 56px 80px 40px', borderTop: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }}>
+        <section
+          id="skills"
+          data-section
+          style={{
+            scrollMarginTop: '20px',
+            padding: '80px 56px 80px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
             <div>
-              <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>01 / SKILLS</div>
-              <div style={{ font: "500 10.5px var(--font-mono), monospace", color: 'var(--text-4)', marginTop: '10px', lineHeight: 1.6 }}>
-                what I reach<br />for, day to day.
+              <div
+                style={{
+                  font: '500 11px var(--font-mono), monospace',
+                  letterSpacing: '.12em',
+                  color: 'var(--accent)',
+                }}
+              >
+                01 / SKILLS
+              </div>
+              <div
+                style={{
+                  font: '500 10.5px var(--font-mono), monospace',
+                  color: 'var(--text-4)',
+                  marginTop: '10px',
+                  lineHeight: 1.6,
+                }}
+              >
+                what I reach
+                <br />
+                for, day to day.
               </div>
             </div>
             <div style={{ borderTop: '1px solid var(--border-2)' }}>
@@ -425,9 +621,29 @@ export default function Home() {
                 ['DATA', 'Postgres · Redis · event-driven pipelines'],
                 ['DOMAINS', 'fintech · payments · developer tooling'],
               ].map(([cat, val]) => (
-                <div key={cat} data-reveal style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '20px', padding: '15px 0', borderBottom: '1px solid var(--border-1)' }}>
-                  <span style={{ font: "500 10.5px var(--font-mono), monospace", letterSpacing: '.08em', color: 'var(--text-4)' }}>{cat}</span>
-                  <span style={{ font: "500 13px var(--font-mono), monospace", color: '#C7CBD1' }}>{val}</span>
+                <div
+                  key={cat}
+                  data-reveal
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '160px 1fr',
+                    gap: '20px',
+                    padding: '15px 0',
+                    borderBottom: '1px solid var(--border-1)',
+                  }}
+                >
+                  <span
+                    style={{
+                      font: '500 10.5px var(--font-mono), monospace',
+                      letterSpacing: '.08em',
+                      color: 'var(--text-4)',
+                    }}
+                  >
+                    {cat}
+                  </span>
+                  <span style={{ font: '500 13px var(--font-mono), monospace', color: '#C7CBD1' }}>
+                    {val}
+                  </span>
                 </div>
               ))}
             </div>
@@ -435,23 +651,77 @@ export default function Home() {
         </section>
 
         {/* RECENT WORK */}
-        <section id="work" data-section style={{ scrollMarginTop: '20px', padding: '80px 56px 80px 40px', borderTop: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }}>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>02 / RECENT WORK</div>
+        <section
+          id="work"
+          data-section
+          style={{
+            scrollMarginTop: '20px',
+            padding: '80px 56px 80px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              02 / RECENT WORK
+            </div>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                <h2 style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}>Latest projects</h2>
-                <Link href="/work" style={{ font: "500 12px var(--font-mono), monospace", color: 'var(--text-2)', textDecoration: 'none', transition: 'color .3s' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginBottom: '6px',
+                }}
+              >
+                <h2
+                  style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}
+                >
+                  Latest projects
+                </h2>
+                <Link
+                  href="/work"
+                  style={{
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-2)',
+                    textDecoration: 'none',
+                    transition: 'color .3s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                >
                   view all →
                 </Link>
               </div>
               <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
                 {[
-                  { n: '01', title: 'SWIVEL — Fintech Platform', desc: 'Full-stack fintech application development. Shipped 5+ major features improving transaction processing. Built with React, TypeScript, and AWS.', year: "'24", stack: 'React · TypeScript · AWS' },
-                  { n: '02', title: 'ACM SA Portal', desc: 'Events, RSVPs, and a member directory for the chapter. Quietly runs every meetup we host.', year: "'23", stack: 'React · Supabase' },
-                ].map(p => (
+                  {
+                    n: '01',
+                    title: 'SWIVEL — Fintech Platform',
+                    desc: 'Full-stack fintech application development. Shipped 5+ major features improving transaction processing. Built with React, TypeScript, and AWS.',
+                    year: "'24",
+                    stack: 'React · TypeScript · AWS',
+                  },
+                  {
+                    n: '02',
+                    title: 'ACM SA Portal',
+                    desc: 'Events, RSVPs, and a member directory for the chapter. Quietly runs every meetup we host.',
+                    year: "'23",
+                    stack: 'React · Supabase',
+                  },
+                ].map((p) => (
                   <Link
                     key={p.n}
                     href="/work"
@@ -466,17 +736,72 @@ export default function Home() {
                       borderBottom: '1px solid var(--border-1)',
                       transition: 'padding .35s cubic-bezier(.34,1.56,.64,1), background .3s',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.paddingLeft = '16px'; e.currentTarget.style.background = '#101114'; }}
-                    onMouseLeave={e => { e.currentTarget.style.paddingLeft = '4px'; e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.paddingLeft = '16px';
+                      e.currentTarget.style.background = '#101114';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.paddingLeft = '4px';
+                      e.currentTarget.style.background = 'transparent';
+                    }}
                   >
-                    <span style={{ font: "500 12px var(--font-mono), monospace", color: 'var(--text-4)' }}>{p.n}</span>
-                    <span>
-                      <span style={{ display: 'block', fontWeight: 600, fontSize: '22px', letterSpacing: '-.01em', marginBottom: '6px' }}>{p.title}</span>
-                      <span style={{ display: 'block', fontSize: '14.5px', lineHeight: 1.55, color: 'var(--text-2)', maxWidth: '44em' }}>{p.desc}</span>
+                    <span
+                      style={{
+                        font: '500 12px var(--font-mono), monospace',
+                        color: 'var(--text-4)',
+                      }}
+                    >
+                      {p.n}
                     </span>
-                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', textAlign: 'right' }}>
-                      <span style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-4)' }}>{p.year}</span>
-                      <span style={{ font: "500 10.5px var(--font-mono), monospace", color: 'var(--text-3)' }}>{p.stack}</span>
+                    <span>
+                      <span
+                        style={{
+                          display: 'block',
+                          fontWeight: 600,
+                          fontSize: '22px',
+                          letterSpacing: '-.01em',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        {p.title}
+                      </span>
+                      <span
+                        style={{
+                          display: 'block',
+                          fontSize: '14.5px',
+                          lineHeight: 1.55,
+                          color: 'var(--text-2)',
+                          maxWidth: '44em',
+                        }}
+                      >
+                        {p.desc}
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        gap: '8px',
+                        textAlign: 'right',
+                      }}
+                    >
+                      <span
+                        style={{
+                          font: '500 11px var(--font-mono), monospace',
+                          color: 'var(--text-4)',
+                        }}
+                      >
+                        {p.year}
+                      </span>
+                      <span
+                        style={{
+                          font: '500 10.5px var(--font-mono), monospace',
+                          color: 'var(--text-3)',
+                        }}
+                      >
+                        {p.stack}
+                      </span>
                     </span>
                   </Link>
                 ))}
@@ -486,23 +811,75 @@ export default function Home() {
         </section>
 
         {/* RECENT WRITING */}
-        <section id="writing" data-section style={{ scrollMarginTop: '20px', padding: '80px 56px 80px 40px', borderTop: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }}>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>03 / WRITING</div>
+        <section
+          id="writing"
+          data-section
+          style={{
+            scrollMarginTop: '20px',
+            padding: '80px 56px 80px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              03 / WRITING
+            </div>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                <h2 style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}>Latest writing</h2>
-                <Link href="/writing" style={{ font: "500 12px var(--font-mono), monospace", color: 'var(--text-2)', textDecoration: 'none', transition: 'color .3s' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginBottom: '6px',
+                }}
+              >
+                <h2
+                  style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}
+                >
+                  Latest writing
+                </h2>
+                <Link
+                  href="/writing"
+                  style={{
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-2)',
+                    textDecoration: 'none',
+                    transition: 'color .3s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                >
                   all writing →
                 </Link>
               </div>
               <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
                 {[
-                  { date: '2026 · 03', title: 'Event sourcing without the regret', desc: "What I'd tell myself before building LedgerLoop's ledger a second time.", time: '8 min' },
-                  { date: '2026 · 01', title: 'Running a game jam is a distributed-systems problem', desc: 'Coordination, backpressure, and eventual consistency — but with dinosaurs.', time: '6 min' },
-                ].map(p => (
+                  {
+                    date: '2026 · 03',
+                    title: 'Event sourcing without the regret',
+                    desc: "What I'd tell myself before building LedgerLoop's ledger a second time.",
+                    time: '8 min',
+                  },
+                  {
+                    date: '2026 · 01',
+                    title: 'Running a game jam is a distributed-systems problem',
+                    desc: 'Coordination, backpressure, and eventual consistency — but with dinosaurs.',
+                    time: '6 min',
+                  },
+                ].map((p) => (
                   <Link
                     key={p.title}
                     href="/writing"
@@ -517,15 +894,56 @@ export default function Home() {
                       borderBottom: '1px solid var(--border-1)',
                       transition: 'padding .35s cubic-bezier(.34,1.56,.64,1), background .3s',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.paddingLeft = '16px'; e.currentTarget.style.background = '#101114'; }}
-                    onMouseLeave={e => { e.currentTarget.style.paddingLeft = '4px'; e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.paddingLeft = '16px';
+                      e.currentTarget.style.background = '#101114';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.paddingLeft = '4px';
+                      e.currentTarget.style.background = 'transparent';
+                    }}
                   >
-                    <span style={{ font: "500 11px var(--font-mono), monospace", color: 'var(--text-4)' }}>{p.date}</span>
-                    <span>
-                      <span style={{ display: 'block', fontWeight: 600, fontSize: '19px', letterSpacing: '-.01em', marginBottom: '5px' }}>{p.title}</span>
-                      <span style={{ display: 'block', fontSize: '14px', lineHeight: 1.55, color: 'var(--text-2)', maxWidth: '44em' }}>{p.desc}</span>
+                    <span
+                      style={{
+                        font: '500 11px var(--font-mono), monospace',
+                        color: 'var(--text-4)',
+                      }}
+                    >
+                      {p.date}
                     </span>
-                    <span style={{ font: "500 10.5px var(--font-mono), monospace", color: 'var(--text-3)', whiteSpace: 'nowrap' }}>{p.time}</span>
+                    <span>
+                      <span
+                        style={{
+                          display: 'block',
+                          fontWeight: 600,
+                          fontSize: '19px',
+                          letterSpacing: '-.01em',
+                          marginBottom: '5px',
+                        }}
+                      >
+                        {p.title}
+                      </span>
+                      <span
+                        style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          lineHeight: 1.55,
+                          color: 'var(--text-2)',
+                          maxWidth: '44em',
+                        }}
+                      >
+                        {p.desc}
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        font: '500 10.5px var(--font-mono), monospace',
+                        color: 'var(--text-3)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {p.time}
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -534,34 +952,97 @@ export default function Home() {
         </section>
 
         {/* EXPERIENCE TEASER */}
-        <section id="experience" data-section style={{ scrollMarginTop: '20px', padding: '80px 56px 90px 40px', borderTop: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }}>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>04 / EXPERIENCE</div>
+        <section
+          id="experience"
+          data-section
+          style={{
+            scrollMarginTop: '20px',
+            padding: '80px 56px 90px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              04 / EXPERIENCE
+            </div>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '34px' }}>
-                <h2 style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}>Where I've worked</h2>
-                <Link href="/experience" style={{ font: "500 12px var(--font-mono), monospace", color: 'var(--text-2)', textDecoration: 'none', transition: 'color .3s' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginBottom: '34px',
+                }}
+              >
+                <h2
+                  style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}
+                >
+                  Where I've worked
+                </h2>
+                <Link
+                  href="/experience"
+                  style={{
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-2)',
+                    textDecoration: 'none',
+                    transition: 'color .3s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                >
                   full history →
                 </Link>
               </div>
               <div id="timeline" style={{ position: 'relative', paddingLeft: '30px' }}>
-                <span id="tl-spine" style={{
-                  position: 'absolute',
-                  left: '5px',
-                  top: '6px',
-                  bottom: '6px',
-                  width: '1.5px',
-                  background: 'linear-gradient(var(--border-3),var(--border-1))',
-                  transform: 'scaleY(0)',
-                  transformOrigin: 'top',
-                  transition: 'transform 1s cubic-bezier(.65,0,.35,1)',
-                }} />
+                <span
+                  id="tl-spine"
+                  style={{
+                    position: 'absolute',
+                    left: '5px',
+                    top: '6px',
+                    bottom: '6px',
+                    width: '1.5px',
+                    background: 'linear-gradient(var(--border-3),var(--border-1))',
+                    transform: 'scaleY(0)',
+                    transformOrigin: 'top',
+                    transition: 'transform 1s cubic-bezier(.65,0,.35,1)',
+                  }}
+                />
                 {[
-                  { role: 'Software Engineer', company: 'SWIVEL', dates: '2021 — PRESENT', desc: 'Payments infrastructure on AWS — full-stack fintech development, React and TypeScript across the stack.', accent: true },
-                  { role: 'Web Development Intern', company: 'SWBC', dates: '2021', desc: 'Built and improved front-end components, optimized cloud deployment pipelines.', accent: false },
-                  { role: 'President', company: 'ACM San Antonio', dates: '2023 — PRESENT', desc: 'Co-founded and grew the chapter into a monthly rhythm of talks, workshops, and hack nights.', accent: false },
+                  {
+                    role: 'Software Engineer',
+                    company: 'SWIVEL',
+                    dates: '2021 — PRESENT',
+                    desc: 'Payments infrastructure on AWS — full-stack fintech development, React and TypeScript across the stack.',
+                    accent: true,
+                  },
+                  {
+                    role: 'Web Development Intern',
+                    company: 'SWBC',
+                    dates: '2021',
+                    desc: 'Built and improved front-end components, optimized cloud deployment pipelines.',
+                    accent: false,
+                  },
+                  {
+                    role: 'President',
+                    company: 'ACM San Antonio',
+                    dates: '2023 — PRESENT',
+                    desc: 'Co-founded and grew the chapter into a monthly rhythm of talks, workshops, and hack nights.',
+                    accent: false,
+                  },
                 ].map((item, i) => (
                   <div
                     key={item.company}
@@ -574,24 +1055,51 @@ export default function Home() {
                       transition: 'opacity .5s ease, transform .5s ease',
                     }}
                   >
-                    <span style={{
-                      position: 'absolute',
-                      left: i === 0 ? '-30px' : '-29px',
-                      top: i === 0 ? '3px' : '4px',
-                      width: i === 0 ? '12px' : '10px',
-                      height: i === 0 ? '12px' : '10px',
-                      borderRadius: '50%',
-                      background: i === 0 ? 'var(--accent)' : 'var(--canvas)',
-                      border: i === 0 ? 'none' : '1.5px solid var(--text-4)',
-                      boxShadow: '0 0 0 4px var(--canvas)',
-                    }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px' }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        left: i === 0 ? '-30px' : '-29px',
+                        top: i === 0 ? '3px' : '4px',
+                        width: i === 0 ? '12px' : '10px',
+                        height: i === 0 ? '12px' : '10px',
+                        borderRadius: '50%',
+                        background: i === 0 ? 'var(--accent)' : 'var(--canvas)',
+                        border: i === 0 ? 'none' : '1.5px solid var(--text-4)',
+                        boxShadow: '0 0 0 4px var(--canvas)',
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        flexWrap: 'wrap',
+                        gap: '6px',
+                      }}
+                    >
                       <div style={{ fontWeight: 600, fontSize: '19px' }}>
                         {item.role} — <span style={{ color: 'var(--text-2)' }}>{item.company}</span>
                       </div>
-                      <div style={{ font: "500 11px var(--font-mono), monospace", color: i === 0 ? 'var(--accent)' : 'var(--text-4)' }}>{item.dates}</div>
+                      <div
+                        style={{
+                          font: '500 11px var(--font-mono), monospace',
+                          color: i === 0 ? 'var(--accent)' : 'var(--text-4)',
+                        }}
+                      >
+                        {item.dates}
+                      </div>
                     </div>
-                    <div style={{ fontSize: '14.5px', lineHeight: 1.6, color: 'var(--text-2)', maxWidth: '44em', marginTop: '6px' }}>{item.desc}</div>
+                    <div
+                      style={{
+                        fontSize: '14.5px',
+                        lineHeight: 1.6,
+                        color: 'var(--text-2)',
+                        maxWidth: '44em',
+                        marginTop: '6px',
+                      }}
+                    >
+                      {item.desc}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -600,14 +1108,54 @@ export default function Home() {
         </section>
 
         {/* CONTACT */}
-        <section id="contact" data-section style={{ scrollMarginTop: '20px', padding: '96px 56px 40px 40px', borderTop: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }}>
-            <div style={{ font: "500 11px var(--font-mono), monospace", letterSpacing: '.12em', color: 'var(--accent)' }}>05 / CONTACT</div>
+        <section
+          id="contact"
+          data-section
+          style={{
+            scrollMarginTop: '20px',
+            padding: '96px 56px 40px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              05 / CONTACT
+            </div>
             <div>
-              <h2 style={{ fontWeight: 700, fontSize: '40px', lineHeight: 1.06, letterSpacing: '-.03em', margin: '0 0 28px', maxWidth: '15em' }}>
+              <h2
+                style={{
+                  fontWeight: 700,
+                  fontSize: '40px',
+                  lineHeight: 1.06,
+                  letterSpacing: '-.03em',
+                  margin: '0 0 28px',
+                  maxWidth: '15em',
+                }}
+              >
                 Let's build something — or just come argue about type systems at a meetup.
               </h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '11px', alignItems: 'center', marginBottom: '80px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '11px',
+                  alignItems: 'center',
+                  marginBottom: '80px',
+                }}
+              >
                 <a
                   data-magnetic
                   href="mailto:zaquariah@gmail.com"
@@ -617,37 +1165,102 @@ export default function Home() {
                     gap: '9px',
                     background: 'var(--accent)',
                     color: 'var(--canvas)',
-                    font: "600 14px var(--font-space), sans-serif",
+                    font: '600 14px var(--font-space), sans-serif',
                     textDecoration: 'none',
                     padding: '14px 22px',
                     borderRadius: '9px',
                     transition: 'transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .3s',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 16px 34px rgba(0,0,0,.5)')}
-                  onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.boxShadow = '0 16px 34px rgba(0,0,0,.5)')
+                  }
+                  onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
                 >
                   zaquariah@gmail.com
                 </a>
-                <a href="https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view" target="_blank" rel="noopener noreferrer"
-                  style={{ font: "500 12px var(--font-mono), monospace", color: 'var(--text-1)', textDecoration: 'none', padding: '13px 17px', border: '1px solid var(--border-3)', borderRadius: '9px', transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s' }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'var(--text-4)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-3)'; }}>
+                <a
+                  href="https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-1)',
+                    textDecoration: 'none',
+                    padding: '13px 17px',
+                    border: '1px solid var(--border-3)',
+                    borderRadius: '9px',
+                    transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = 'var(--text-4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'var(--border-3)';
+                  }}
+                >
                   Résumé ↓
                 </a>
-                <a href="https://github.com/Zaqttack" target="_blank" rel="noopener noreferrer"
-                  style={{ font: "500 12px var(--font-mono), monospace", color: 'var(--text-1)', textDecoration: 'none', padding: '13px 17px', border: '1px solid var(--border-3)', borderRadius: '9px', transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s' }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'var(--text-4)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-3)'; }}>
+                <a
+                  href="https://github.com/Zaqttack"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-1)',
+                    textDecoration: 'none',
+                    padding: '13px 17px',
+                    border: '1px solid var(--border-3)',
+                    borderRadius: '9px',
+                    transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = 'var(--text-4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'var(--border-3)';
+                  }}
+                >
                   GitHub ↗
                 </a>
-                <a href="https://www.linkedin.com/in/zaquariah-holland/" target="_blank" rel="noopener noreferrer"
-                  style={{ font: "500 12px var(--font-mono), monospace", color: 'var(--text-1)', textDecoration: 'none', padding: '13px 17px', border: '1px solid var(--border-3)', borderRadius: '9px', transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s' }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'var(--text-4)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-3)'; }}>
+                <a
+                  href="https://www.linkedin.com/in/zaquariah-holland/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-1)',
+                    textDecoration: 'none',
+                    padding: '13px 17px',
+                    border: '1px solid var(--border-3)',
+                    borderRadius: '9px',
+                    transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = 'var(--text-4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'var(--border-3)';
+                  }}
+                >
                   LinkedIn ↗
                 </a>
               </div>
-              <div style={{ paddingTop: '20px', borderTop: '1px solid var(--border-1)', display: 'flex', justifyContent: 'space-between', font: "500 10.5px var(--font-mono), monospace", color: 'var(--text-4)' }}>
+              <div
+                style={{
+                  paddingTop: '20px',
+                  borderTop: '1px solid var(--border-1)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  font: '500 10.5px var(--font-mono), monospace',
+                  color: 'var(--text-4)',
+                }}
+              >
                 <span>© 2026 zaquariah.dev</span>
                 <span>built with rigor · and a little nonsense</span>
               </div>
