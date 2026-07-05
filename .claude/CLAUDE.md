@@ -80,16 +80,15 @@ Key invariants:
 ## Env vars
 ```
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_PROJECT_ID=
 ADMIN_USER_ID=
 ```
 
 ## CI/CD (GitHub Actions)
-- `ci.yml` — lint, typecheck, test on every PR
-- `db-migrate.yml` — on push to `main` touching `supabase/migrations/**`, runs `supabase db push` via repo secret
-- Deploys: Cloudflare Pages native GitHub integration (not Actions)
+- `test.yml` — PR gate: lint, unit tests, Playwright smoke (skips dependabot)
+- `deploy.yml` — push to main: path detection → lint → unit → smoke → build → deploy (web changes), SQL lint → dry-run → push with retry (migration changes)
 
 ## Scripts
 | Command | What it does |
