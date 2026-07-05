@@ -1,0 +1,76 @@
+:root {
+  --accent: #EC6A2C;
+  --canvas: #0B0C0E;
+  --panel-1: #0E0F12;
+  --panel-2: #121317;
+  --text-1: #E7E8EA;
+  --text-2: #9A9EA6;
+  --text-3: #7E838C;
+  --text-4: #565B64;
+  --text-5: #4A4E56;
+  --border-1: #191B1F;
+  --border-2: #23262C;
+  --border-3: #2C3037;
+  --rail-w: 118px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--text-1);
+  font-family: var(--font-space), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--canvas);
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+ul, ol {
+  padding-left: 1.1em;
+}
+
+/* Animations */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@keyframes toastin {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Reveal utility — JS sets initial state, CSS handles transition */
+[data-reveal] {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 6px; border: 2px solid var(--canvas); }
