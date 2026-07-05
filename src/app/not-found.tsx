@@ -1,15 +1,19 @@
-import { Column, Heading, Text } from "@/once-ui/components";
-
 export default function NotFound() {
   return (
-    <Column as="section" fill center paddingBottom="160">
-      <Text marginBottom="s" variant="display-strong-xl">
+    <main
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        gap: '12px',
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: '96px', letterSpacing: '-.04em', lineHeight: 1 }}>
         404
-      </Text>
-      <Heading marginBottom="l" variant="display-default-xs">
-        Page Not Found
-      </Heading>
-      <Text onBackground="neutral-weak">The page you are looking for does not exist.</Text>
-    </Column>
+      </div>
+      <div style={{ fontSize: '18px', color: 'var(--text-2)' }}>Page not found</div>
+    </main>
   );
 }

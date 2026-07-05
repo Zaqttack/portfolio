@@ -1,12 +1,6 @@
-import { baseURL } from "@/app/resources";
-
 export default function robots() {
   return {
-    rules: [
-      {
-        userAgent: "*",
-      },
-    ],
-    sitemap: `${baseURL}/sitemap.xml`,
+    rules: [{ userAgent: '*' }],
+    sitemap: 'https://zaquariah.dev/sitemap.xml',
   };
 }

@@ -1,23 +1,11 @@
 module.exports = {
   plugins: [
     [
-      "@csstools/postcss-global-data",
+      'postcss-preset-env',
       {
-        files: ["src/once-ui/styles/breakpoints.scss"],
-      },
-    ],
-    "postcss-custom-media",
-    "postcss-flexbugs-fixes",
-    [
-      "postcss-preset-env",
-      {
-        autoprefixer: {
-          flexbox: "no-2009",
-        },
+        autoprefixer: { flexbox: 'no-2009' },
         stage: 3,
-        features: {
-          "custom-properties": false,
-        },
+        features: { 'custom-properties': false },
       },
     ],
   ],
