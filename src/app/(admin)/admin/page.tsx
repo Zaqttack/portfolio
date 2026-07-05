@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-
-const PASSPHRASE = 'raptor';
+import { createBrowserClient } from '@supabase/ssr';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type FieldType = 'text' | 'number' | 'date' | 'textarea' | 'select' | 'toggle' | 'tags';
 
@@ -19,8 +19,10 @@ interface FieldDef {
 interface Schema {
   label: string;
   singular: string;
+  table: string;
   colName: string;
   singleton?: boolean;
+  readOnly?: boolean;
   fields: FieldDef[];
   primaryKey: string;
   secondaryKey?: string;
@@ -31,46 +33,40 @@ const SCHEMAS: Record<string, Schema> = {
   projects: {
     label: 'Projects',
     singular: 'project',
+    table: 'projects',
     colName: 'TITLE',
     primaryKey: 'title',
-    secondaryKey: 'stack',
+    secondaryKey: 'tags',
     statusKey: 'status',
     fields: [
       { key: 'title', label: 'TITLE', type: 'text', placeholder: 'Project name' },
+      { key: 'slug', label: 'SLUG', type: 'text', placeholder: 'project-slug' },
       {
-        key: 'tag',
-        label: 'TAG',
-        type: 'select',
-        options: [
-          { value: 'product', label: 'Product' },
-          { value: 'side', label: 'Side project' },
-        ],
-      },
-      { key: 'year', label: 'YEAR', type: 'number', placeholder: '2024' },
-      { key: 'stack', label: 'STACK', type: 'tags', placeholder: 'Add technology…' },
-      {
-        key: 'blurb',
-        label: 'BLURB',
+        key: 'summary',
+        label: 'SUMMARY',
         type: 'textarea',
-        rows: 3,
+        rows: 2,
         placeholder: 'Short description shown on work page',
       },
-      { key: 'link', label: 'LINK', type: 'text', placeholder: 'https://…' },
       {
         key: 'body',
         label: 'BODY (MARKDOWN)',
         type: 'textarea',
-        rows: 8,
+        rows: 10,
         placeholder: 'Full case study…',
       },
+      { key: 'tags', label: 'TAGS', type: 'tags', placeholder: 'Add tag…' },
+      { key: 'repo_url', label: 'REPO URL', type: 'text', placeholder: 'https://github.com/…' },
+      { key: 'live_url', label: 'LIVE URL', type: 'text', placeholder: 'https://…' },
+      { key: 'featured', label: 'FEATURED', type: 'toggle' },
+      { key: 'display_order', label: 'ORDER', type: 'number', placeholder: '0' },
       {
         key: 'status',
         label: 'STATUS',
         type: 'select',
         options: [
-          { value: 'published', label: 'Published' },
           { value: 'draft', label: 'Draft' },
-          { value: 'archived', label: 'Archived' },
+          { value: 'published', label: 'Published' },
         ],
       },
     ],
@@ -78,24 +74,14 @@ const SCHEMAS: Record<string, Schema> = {
   posts: {
     label: 'Posts',
     singular: 'post',
+    table: 'posts',
     colName: 'TITLE',
     primaryKey: 'title',
-    secondaryKey: 'category',
+    secondaryKey: 'tags',
     statusKey: 'status',
     fields: [
       { key: 'title', label: 'TITLE', type: 'text', placeholder: 'Post title' },
-      {
-        key: 'category',
-        label: 'CATEGORY',
-        type: 'select',
-        options: [
-          { value: 'engineering', label: 'Engineering' },
-          { value: 'community', label: 'Community' },
-          { value: 'side projects', label: 'Side projects' },
-        ],
-      },
-      { key: 'date', label: 'DATE', type: 'date' },
-      { key: 'readTime', label: 'READ TIME', type: 'text', placeholder: '5 min' },
+      { key: 'slug', label: 'SLUG', type: 'text', placeholder: 'post-slug' },
       {
         key: 'excerpt',
         label: 'EXCERPT',
@@ -107,16 +93,18 @@ const SCHEMAS: Record<string, Schema> = {
         key: 'body',
         label: 'BODY (MARKDOWN)',
         type: 'textarea',
-        rows: 12,
+        rows: 14,
         placeholder: 'Post content…',
       },
+      { key: 'tags', label: 'TAGS', type: 'tags', placeholder: 'Add tag…' },
+      { key: 'published_at', label: 'PUBLISHED AT', type: 'date' },
       {
         key: 'status',
         label: 'STATUS',
         type: 'select',
         options: [
-          { value: 'published', label: 'Published' },
           { value: 'draft', label: 'Draft' },
+          { value: 'published', label: 'Published' },
         ],
       },
     ],
@@ -124,54 +112,95 @@ const SCHEMAS: Record<string, Schema> = {
   experience: {
     label: 'Experience',
     singular: 'entry',
+    table: 'experience',
     colName: 'ROLE',
     primaryKey: 'role',
-    secondaryKey: 'org',
-    statusKey: 'type',
+    secondaryKey: 'company',
+    statusKey: 'org_type',
     fields: [
+      { key: 'company', label: 'COMPANY', type: 'text', placeholder: 'Company name' },
       { key: 'role', label: 'ROLE', type: 'text', placeholder: 'Job title' },
-      { key: 'org', label: 'ORGANIZATION', type: 'text', placeholder: 'Company name' },
-      { key: 'location', label: 'LOCATION', type: 'text', placeholder: 'San Antonio, TX' },
       {
-        key: 'type',
+        key: 'org_type',
         label: 'TYPE',
         type: 'select',
         options: [
-          { value: 'work', label: 'Work' },
-          { value: 'leadership', label: 'Leadership' },
-          { value: 'education', label: 'Education' },
+          { value: 'job', label: 'Job' },
+          { value: 'internship', label: 'Internship' },
+          { value: 'contract', label: 'Contract' },
+          { value: 'volunteer', label: 'Volunteer' },
         ],
       },
-      { key: 'start', label: 'START', type: 'date' },
-      { key: 'end', label: 'END', type: 'date', help: 'Leave blank for current role' },
+      { key: 'location', label: 'LOCATION', type: 'text', placeholder: 'San Antonio, TX' },
+      { key: 'start_date', label: 'START', type: 'date' },
+      { key: 'end_date', label: 'END', type: 'date', help: 'Leave blank for current role' },
+      { key: 'display_order', label: 'ORDER', type: 'number', placeholder: '0' },
       {
-        key: 'bullets',
+        key: '_bullets',
         label: 'BULLETS (one per line)',
         type: 'textarea',
-        rows: 5,
+        rows: 6,
         placeholder: 'Achievement 1\nAchievement 2',
       },
+    ],
+  },
+  skills: {
+    label: 'Skills',
+    singular: 'skill',
+    table: 'skills',
+    colName: 'NAME',
+    primaryKey: 'name',
+    secondaryKey: 'category',
+    statusKey: 'source',
+    fields: [
+      { key: 'name', label: 'NAME', type: 'text', placeholder: 'TypeScript' },
+      { key: 'category', label: 'CATEGORY', type: 'text', placeholder: 'Languages' },
+      { key: 'proficiency', label: 'PROFICIENCY (1–5)', type: 'number', placeholder: '3' },
+      {
+        key: 'source',
+        label: 'SOURCE',
+        type: 'select',
+        options: [
+          { value: 'self', label: 'Self' },
+          { value: 'work_import', label: 'Work Import' },
+        ],
+      },
+      { key: 'display_order', label: 'ORDER', type: 'number', placeholder: '0' },
+    ],
+  },
+  involvement: {
+    label: 'Involvement',
+    singular: 'org',
+    table: 'involvement_orgs',
+    colName: 'NAME',
+    primaryKey: 'name',
+    statusKey: 'url',
+    fields: [
+      { key: 'name', label: 'NAME', type: 'text', placeholder: 'ACM San Antonio' },
+      {
+        key: 'description',
+        label: 'DESCRIPTION',
+        type: 'textarea',
+        rows: 2,
+        placeholder: 'What the org does',
+      },
+      { key: 'url', label: 'URL', type: 'text', placeholder: 'https://…' },
+      { key: 'display_order', label: 'ORDER', type: 'number', placeholder: '0' },
     ],
   },
   profile: {
     label: 'Profile',
     singular: 'Profile',
+    table: 'profile',
     colName: 'NAME',
     singleton: true,
     primaryKey: 'name',
-    statusKey: 'openToWork',
+    statusKey: 'open_to_work',
     fields: [
       { key: 'name', label: 'NAME', type: 'text', placeholder: 'Zaquariah Holland' },
       { key: 'tagline', label: 'TAGLINE', type: 'text', placeholder: 'heads-down · building ◆' },
-      { key: 'intro', label: 'INTRO', type: 'textarea', rows: 4, placeholder: 'Hero paragraph…' },
-      {
-        key: 'now',
-        label: 'NOW',
-        type: 'textarea',
-        rows: 3,
-        placeholder: "What you're working on right now",
-      },
-      { key: 'openToWork', label: 'OPEN TO WORK', type: 'toggle' },
+      { key: 'bio', label: 'BIO', type: 'textarea', rows: 4, placeholder: 'Short bio paragraph…' },
+      { key: 'location', label: 'LOCATION', type: 'text', placeholder: 'San Antonio, TX' },
       { key: 'email', label: 'EMAIL', type: 'text', placeholder: 'zaquariah@gmail.com' },
       { key: 'github', label: 'GITHUB', type: 'text', placeholder: 'https://github.com/…' },
       {
@@ -180,130 +209,38 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'https://linkedin.com/in/…',
       },
-      {
-        key: 'resume',
-        label: 'RÉSUMÉ URL',
-        type: 'text',
-        placeholder: 'https://drive.google.com/…',
-      },
+      { key: 'twitter', label: 'TWITTER', type: 'text', placeholder: 'https://twitter.com/…' },
+      { key: 'resume_url', label: 'RÉSUMÉ URL', type: 'text', placeholder: 'https://…' },
+      { key: 'open_to_work', label: 'OPEN TO WORK', type: 'toggle' },
+    ],
+  },
+  staging: {
+    label: 'Import Queue',
+    singular: 'item',
+    table: 'import_staging',
+    colName: 'SOURCE',
+    readOnly: true,
+    primaryKey: 'source_note',
+    statusKey: 'reviewed',
+    fields: [
+      { key: 'source_note', label: 'SOURCE NOTE', type: 'text' },
+      { key: 'raw_payload', label: 'PAYLOAD (JSON)', type: 'textarea', rows: 14 },
+      { key: 'reviewed', label: 'REVIEWED', type: 'toggle' },
     ],
   },
 };
 
-const MOCK_LISTS: Record<string, Record<string, unknown>[]> = {
-  projects: [
-    {
-      id: '1',
-      title: 'SWIVEL — Fintech Platform',
-      tag: 'product',
-      year: 2024,
-      stack: ['React', 'TypeScript', 'AWS'],
-      blurb: 'Full-stack fintech application development.',
-      link: '',
-      body: '',
-      status: 'published',
-    },
-    {
-      id: '2',
-      title: 'ACM SA Portal',
-      tag: 'product',
-      year: 2023,
-      stack: ['React', 'Supabase'],
-      blurb: 'Events, RSVPs, and a member directory.',
-      link: 'https://acmsa.org',
-      body: '',
-      status: 'published',
-    },
-    {
-      id: '3',
-      title: 'Dinosaur Jam',
-      tag: 'side',
-      year: 2024,
-      stack: ['community', 'organizing'],
-      blurb: 'Annual dinosaur game jam.',
-      link: '',
-      body: '',
-      status: 'published',
-    },
-  ],
-  posts: [
-    {
-      id: '1',
-      title: 'Event sourcing without the regret',
-      category: 'engineering',
-      date: '2026-03-01',
-      readTime: '8 min',
-      excerpt: "What I'd tell myself before building LedgerLoop's ledger a second time.",
-      body: '',
-      status: 'published',
-    },
-    {
-      id: '2',
-      title: 'Running a game jam is a distributed-systems problem',
-      category: 'community',
-      date: '2026-01-15',
-      readTime: '6 min',
-      excerpt: 'Coordination, backpressure, and eventual consistency — but with dinosaurs.',
-      body: '',
-      status: 'published',
-    },
-  ],
-  experience: [
-    {
-      id: '1',
-      role: 'Software Engineer',
-      org: 'SWIVEL',
-      location: 'San Antonio, TX',
-      type: 'work',
-      start: '2024-04-01',
-      end: '',
-      bullets: 'Shipped 5+ major features\nBuilt ADA-compliant components',
-    },
-    {
-      id: '2',
-      role: 'Junior Software Engineer',
-      org: 'SWIVEL',
-      location: 'San Antonio, TX',
-      type: 'work',
-      start: '2021-08-01',
-      end: '2024-04-01',
-      bullets: 'Full-stack feature development\nOwned backend services',
-    },
-    {
-      id: '3',
-      role: 'President',
-      org: 'ACM San Antonio',
-      location: 'San Antonio, TX',
-      type: 'leadership',
-      start: '2023-04-01',
-      end: '',
-      bullets: 'Grew chapter to monthly events\nManaged 50+ member community',
-    },
-  ],
-};
-
-const MOCK_PROFILE: Record<string, unknown> = {
-  name: 'Zaquariah Holland',
-  tagline: 'heads-down · building ◆',
-  intro: 'Software engineer based in San Antonio, TX.',
-  now: 'Building things at SWIVEL, running ACM SA.',
-  openToWork: false,
-  email: 'zaquariah@gmail.com',
-  github: 'https://github.com/Zaqttack',
-  linkedin: 'https://www.linkedin.com/in/zaquariah-holland/',
-  resume: 'https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view',
-};
-
-function statusPill(val: string | boolean) {
+function statusPill(val: string | boolean | null | undefined) {
   if (val === true || val === 'published')
     return { fg: '#7EE787', bg: '#0d1e11', border: '#1a3d23' };
   if (val === false || val === 'draft') return { fg: '#9A9EA6', bg: '#17181C', border: '#2C3037' };
   if (val === 'archived') return { fg: '#565B64', bg: '#14151A', border: '#23262C' };
-  if (val === 'work') return { fg: 'var(--accent)', bg: '#1a1310', border: '#3a2a1e' };
-  if (val === 'leadership') return { fg: '#79C0FF', bg: '#0d1a24', border: '#1a3048' };
-  if (val === 'education') return { fg: '#D2A8FF', bg: '#16101f', border: '#2d1a42' };
-  if (val === 'side') return { fg: '#9A9EA6', bg: '#17181C', border: '#2C3037' };
-  if (val === 'product') return { fg: 'var(--accent)', bg: '#1a1310', border: '#3a2a1e' };
+  if (val === 'job') return { fg: 'var(--accent)', bg: '#1a1310', border: '#3a2a1e' };
+  if (val === 'internship') return { fg: '#79C0FF', bg: '#0d1a24', border: '#1a3048' };
+  if (val === 'contract') return { fg: '#D2A8FF', bg: '#16101f', border: '#2d1a42' };
+  if (val === 'volunteer') return { fg: '#7EE787', bg: '#0d1e11', border: '#1a3d23' };
+  if (val === 'self') return { fg: 'var(--accent)', bg: '#1a1310', border: '#3a2a1e' };
+  if (val === 'work_import') return { fg: '#9A9EA6', bg: '#17181C', border: '#2C3037' };
   return { fg: '#9A9EA6', bg: '#17181C', border: '#2C3037' };
 }
 
@@ -328,6 +265,7 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
         boxShadow: '0 12px 32px rgba(0,0,0,.5)',
         animation: 'toastin .25s ease',
         whiteSpace: 'nowrap',
+        transform: 'translateX(-50%)',
       }}
     >
       {msg}
@@ -336,40 +274,71 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
 }
 
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(false);
-  const [pw, setPw] = useState('');
-  const [pwErr, setPwErr] = useState(false);
+  const router = useRouter();
   const [section, setSection] = useState<keyof typeof SCHEMAS>('projects');
-  const [lists, setLists] = useState(MOCK_LISTS);
-  const [profileData, setProfileData] = useState(MOCK_PROFILE);
+  const [lists, setLists] = useState<Record<string, Record<string, unknown>[]>>({});
+  const [profileData, setProfileData] = useState<Record<string, unknown>>({});
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [toast, setToast] = useState('');
-  const pwRef = useRef<HTMLInputElement>(null);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  );
+
+  const showToast = useCallback((msg: string) => setToast(msg), []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/admin/login');
+  };
+
+  const loadSection = useCallback(
+    async (s: keyof typeof SCHEMAS) => {
+      const schema = SCHEMAS[s];
+      if (schema.singleton) {
+        const { data } = await supabase.from(schema.table).select('*').maybeSingle();
+        if (data) setProfileData(data);
+      } else {
+        let query = supabase
+          .from(schema.table)
+          .select(s === 'experience' ? '*, experience_bullets(*)' : '*');
+        if (schema.table !== 'import_staging') query = query.order('display_order' as string);
+        else query = query.order('created_at', { ascending: false });
+        const { data } = await query;
+        if (data) {
+          const rows =
+            s === 'experience'
+              ? (data as unknown as Record<string, unknown>[]).map((row) => {
+                  const bullets = (row.experience_bullets as { text: string }[] | null) ?? [];
+                  return { ...row, _bullets: bullets.map((b) => b.text).join('\n') };
+                })
+              : (data as unknown as Record<string, unknown>[]).map((row) =>
+                  schema.table === 'import_staging'
+                    ? { ...row, raw_payload: JSON.stringify(row.raw_payload, null, 2) }
+                    : row,
+                );
+          setLists((d) => ({ ...d, [s]: rows }));
+        }
+      }
+    },
+    [supabase],
+  );
 
   useEffect(() => {
-    if (sessionStorage.getItem('adm') === PASSPHRASE) setAuthed(true);
-    else setTimeout(() => pwRef.current?.focus(), 60);
-  }, []);
-
-  const login = () => {
-    if (pw === PASSPHRASE) {
-      sessionStorage.setItem('adm', PASSPHRASE);
-      setAuthed(true);
-    } else {
-      setPwErr(true);
-      setTimeout(() => setPwErr(false), 2000);
-    }
-  };
-
-  const logout = () => {
-    sessionStorage.removeItem('adm');
-    setAuthed(false);
-    setPw('');
-  };
+    const loadAll = async () => {
+      setLoadingData(true);
+      await Promise.all((Object.keys(SCHEMAS) as (keyof typeof SCHEMAS)[]).map(loadSection));
+      setLoadingData(false);
+    };
+    loadAll();
+  }, [loadSection]);
 
   const schema = SCHEMAS[section];
   const isSingleton = !!schema.singleton;
+  const isReadOnly = !!schema.readOnly;
   const rows = isSingleton ? [] : lists[section] || [];
 
   const goSection = (s: keyof typeof SCHEMAS) => {
@@ -384,7 +353,7 @@ export default function AdminPage() {
   };
 
   const startNew = () => {
-    const blank: Record<string, unknown> = { id: String(Date.now()) };
+    const blank: Record<string, unknown> = {};
     schema.fields.forEach((f) => {
       blank[f.key] = f.type === 'toggle' ? false : f.type === 'tags' ? [] : '';
     });
@@ -397,32 +366,106 @@ export default function AdminPage() {
     setView('form');
   };
 
-  const deleteRow = (id: unknown) => {
-    setLists((d) => ({
-      ...d,
-      [section]: d[section].filter((r: Record<string, unknown>) => r.id !== id),
-    }));
+  const deleteRow = async (id: unknown) => {
+    const { error } = await supabase.from(schema.table).delete().eq('id', id);
+    if (error) {
+      showToast('Delete failed.');
+      return;
+    }
+    setLists((d) => ({ ...d, [section]: d[section].filter((r) => r.id !== id) }));
     showToast('Deleted.');
   };
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
+
     if (isSingleton) {
-      setProfileData({ ...editing });
+      const payload = { ...editing } as Record<string, unknown>;
+      delete payload.id;
+      delete payload.updated_at;
+
+      if (profileData.id) {
+        const { error } = await supabase
+          .from(schema.table)
+          .update(payload)
+          .eq('id', profileData.id);
+        if (error) {
+          showToast('Save failed.');
+          return;
+        }
+      } else {
+        const { error } = await supabase.from(schema.table).insert(payload);
+        if (error) {
+          showToast('Save failed.');
+          return;
+        }
+      }
+      await loadSection(section);
       showToast('Profile saved.');
       return;
     }
-    const existing = rows.find((r: Record<string, unknown>) => r.id === editing.id);
-    if (existing) {
-      setLists((d) => ({
-        ...d,
-        [section]: d[section].map((r: Record<string, unknown>) =>
-          r.id === editing.id ? editing : r,
-        ),
-      }));
-    } else {
-      setLists((d) => ({ ...d, [section]: [...d[section], editing] }));
+
+    const payload = { ...editing } as Record<string, unknown>;
+    const bulletsText = payload._bullets as string | undefined;
+    delete payload._bullets;
+    delete payload.experience_bullets;
+    delete payload.created_at;
+    delete payload.updated_at;
+
+    // Handle import_staging: parse raw_payload back to JSON
+    if (section === 'staging' && typeof payload.raw_payload === 'string') {
+      try {
+        payload.raw_payload = JSON.parse(payload.raw_payload);
+      } catch {
+        showToast('Invalid JSON in payload.');
+        return;
+      }
     }
+
+    const isNew = !payload.id;
+    let savedId = payload.id as string | undefined;
+
+    if (isNew) {
+      delete payload.id;
+      const { data, error } = await supabase
+        .from(schema.table)
+        .insert(payload)
+        .select('id')
+        .single();
+      if (error) {
+        showToast('Save failed.');
+        return;
+      }
+      savedId = data.id;
+    } else {
+      const { error } = await supabase.from(schema.table).update(payload).eq('id', payload.id);
+      if (error) {
+        showToast('Save failed.');
+        return;
+      }
+    }
+
+    // Handle experience bullets
+    if (section === 'experience' && savedId !== undefined) {
+      await supabase.from('experience_bullets').delete().eq('experience_id', savedId);
+      const lines = (bulletsText ?? '')
+        .split('\n')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      if (lines.length > 0) {
+        await supabase.from('experience_bullets').insert(
+          lines.map((text, i) => ({
+            experience_id: savedId,
+            text,
+            visibility: 'public',
+            source: 'self',
+            display_order: i,
+          })),
+        );
+      }
+    }
+
+    await loadSection(section);
     setView('list');
     setEditing(null);
     showToast('Saved.');
@@ -436,8 +479,6 @@ export default function AdminPage() {
       setEditing(null);
     }
   };
-
-  const showToast = (msg: string) => setToast(msg);
 
   const setField = (key: string, val: unknown) => {
     setEditing((e) => (e ? { ...e, [key]: val } : e));
@@ -455,119 +496,7 @@ export default function AdminPage() {
     outline: 'none',
   };
 
-  if (!authed) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px',
-          background: 'radial-gradient(1200px 600px at 50% -10%, #121317, #0B0C0E 60%)',
-        }}
-      >
-        <div style={{ width: 'min(380px, 92vw)' }}>
-          <div
-            style={{
-              font: '700 13px var(--font-mono), monospace',
-              color: 'var(--text-1)',
-              marginBottom: '6px',
-            }}
-          >
-            zq<span style={{ color: 'var(--accent)' }}>.</span>admin
-          </div>
-          <div
-            style={{
-              font: '500 11px var(--font-mono), monospace',
-              color: 'var(--text-4)',
-              marginBottom: '26px',
-            }}
-          >
-            restricted · zaquariah.dev
-          </div>
-          <div
-            style={{
-              border: '1px solid var(--border-2)',
-              borderRadius: '14px',
-              background: 'var(--panel-1)',
-              padding: '26px',
-            }}
-          >
-            <label
-              style={{
-                display: 'block',
-                font: '500 10px var(--font-mono), monospace',
-                letterSpacing: '.1em',
-                color: 'var(--text-3)',
-                marginBottom: '9px',
-              }}
-            >
-              PASSPHRASE
-            </label>
-            <input
-              ref={pwRef}
-              type="password"
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && login()}
-              placeholder="••••••••"
-              autoComplete="off"
-              style={{
-                ...inputStyle,
-                font: '500 14px var(--font-mono), monospace',
-                caretColor: 'var(--accent)',
-              }}
-              onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-              onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-            />
-            {pwErr && (
-              <div
-                style={{
-                  font: '500 11px var(--font-mono), monospace',
-                  color: '#E5534B',
-                  marginTop: '9px',
-                }}
-              >
-                ✕ wrong passphrase
-              </div>
-            )}
-            <button
-              onClick={login}
-              style={{
-                width: '100%',
-                marginTop: '16px',
-                background: 'var(--accent)',
-                color: 'var(--canvas)',
-                border: 'none',
-                borderRadius: '9px',
-                padding: '12px',
-                font: '600 13px var(--font-space), sans-serif',
-                cursor: 'pointer',
-                transition: 'filter .2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(1.08)')}
-              onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
-            >
-              Enter →
-            </button>
-          </div>
-          <div
-            style={{
-              font: '500 10px var(--font-mono), monospace',
-              color: '#3A3E45',
-              marginTop: '16px',
-              textAlign: 'center',
-            }}
-          >
-            no link from the site · bookmark this page
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const SECTIONS = ['projects', 'posts', 'experience', 'profile'] as const;
+  const SECTIONS = Object.keys(SCHEMAS) as (keyof typeof SCHEMAS)[];
 
   const sectionCount = (s: string) =>
     SCHEMAS[s].singleton ? '·' : String((lists[s] || []).length);
@@ -576,9 +505,27 @@ export default function AdminPage() {
     ? 'Profile'
     : view === 'list'
       ? schema.label
-      : editing?.id && rows.find((r: Record<string, unknown>) => r.id === editing?.id)
+      : editing?.id && rows.find((r) => r.id === editing?.id)
         ? `Edit ${schema.singular}`
         : `New ${schema.singular}`;
+
+  if (loadingData) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--canvas)',
+        }}
+      >
+        <div style={{ font: '500 12px var(--font-mono), monospace', color: 'var(--text-4)' }}>
+          loading…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '224px 1fr', minHeight: '100vh' }}>
@@ -679,7 +626,7 @@ export default function AdminPage() {
         </div>
         <div style={{ padding: '0 12px' }}>
           <button
-            onClick={logout}
+            onClick={signOut}
             style={{
               width: '100%',
               display: 'flex',
@@ -706,15 +653,6 @@ export default function AdminPage() {
             <span style={{ width: '3px', height: '16px' }} />
             Sign out ↗
           </button>
-          <div
-            style={{
-              padding: '12px 15px 0',
-              font: '500 9px var(--font-mono), monospace',
-              color: '#3A3E45',
-            }}
-          >
-            session · local preview
-          </div>
         </div>
       </aside>
 
@@ -802,25 +740,27 @@ export default function AdminPage() {
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={save}
-                  style={{
-                    background: 'var(--accent)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '9px 18px',
-                    color: 'var(--canvas)',
-                    font: '600 12.5px var(--font-space), sans-serif',
-                    cursor: 'pointer',
-                    transition: 'filter .2s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(1.08)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
-                >
-                  Save
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={save}
+                    style={{
+                      background: 'var(--accent)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '9px 18px',
+                      color: 'var(--canvas)',
+                      font: '600 12.5px var(--font-space), sans-serif',
+                      cursor: 'pointer',
+                      transition: 'filter .2s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(1.08)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
+                  >
+                    Save
+                  </button>
+                )}
               </>
-            ) : view === 'list' && !isSingleton ? (
+            ) : view === 'list' && !isSingleton && !isReadOnly ? (
               <button
                 onClick={startNew}
                 style={{
@@ -843,7 +783,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* LIST VIEW — not shown for singletons */}
+        {/* LIST */}
         {view === 'list' && !isSingleton && (
           <div style={{ padding: '26px 32px 60px' }}>
             {rows.length > 0 ? (
@@ -871,7 +811,7 @@ export default function AdminPage() {
                   <span>STATUS</span>
                   <span style={{ textAlign: 'right' }}>ACTIONS</span>
                 </div>
-                {rows.map((row: Record<string, unknown>) => {
+                {rows.map((row) => {
                   const primary = String(row[schema.primaryKey] || '—');
                   const secondary = schema.secondaryKey
                     ? Array.isArray(row[schema.secondaryKey])
@@ -937,10 +877,10 @@ export default function AdminPage() {
                           }}
                         >
                           {statusVal === true
-                            ? 'OPEN TO WORK'
+                            ? 'TRUE'
                             : statusVal === false
-                              ? 'CLOSED'
-                              : String(statusVal || '').toUpperCase()}
+                              ? 'FALSE'
+                              : String(statusVal || '—').toUpperCase()}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
@@ -965,31 +905,33 @@ export default function AdminPage() {
                             e.currentTarget.style.color = 'var(--text-2)';
                           }}
                         >
-                          edit
+                          {isReadOnly ? 'view' : 'edit'}
                         </button>
-                        <button
-                          onClick={() => deleteRow(row.id)}
-                          style={{
-                            background: 'transparent',
-                            border: '1px solid #2C3037',
-                            borderRadius: '7px',
-                            padding: '6px 9px',
-                            color: 'var(--text-4)',
-                            font: '500 11px var(--font-mono), monospace',
-                            cursor: 'pointer',
-                            transition: 'border-color .2s, color .2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = '#E5534B';
-                            e.currentTarget.style.color = '#E5534B';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = '#2C3037';
-                            e.currentTarget.style.color = 'var(--text-4)';
-                          }}
-                        >
-                          ✕
-                        </button>
+                        {!isReadOnly && (
+                          <button
+                            onClick={() => deleteRow(row.id)}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid #2C3037',
+                              borderRadius: '7px',
+                              padding: '6px 9px',
+                              color: 'var(--text-4)',
+                              font: '500 11px var(--font-mono), monospace',
+                              cursor: 'pointer',
+                              transition: 'border-color .2s, color .2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#E5534B';
+                              e.currentTarget.style.color = '#E5534B';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#2C3037';
+                              e.currentTarget.style.color = 'var(--text-4)';
+                            }}
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -1013,32 +955,33 @@ export default function AdminPage() {
                 >
                   // nothing here yet
                 </div>
-                <button
-                  onClick={startNew}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid var(--accent)',
-                    borderRadius: '8px',
-                    padding: '9px 18px',
-                    color: 'var(--accent)',
-                    font: '600 12.5px var(--font-space), sans-serif',
-                    cursor: 'pointer',
-                  }}
-                >
-                  + Create the first {schema.singular}
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={startNew}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid var(--accent)',
+                      borderRadius: '8px',
+                      padding: '9px 18px',
+                      color: 'var(--accent)',
+                      font: '600 12.5px var(--font-space), sans-serif',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    + Create the first {schema.singular}
+                  </button>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {/* FORM VIEW */}
+        {/* FORM */}
         {view === 'form' && editing && (
           <div style={{ padding: '28px 32px 80px', maxWidth: '720px' }}>
             {schema.fields.map((f) => {
               const val = editing[f.key];
               const update = (v: unknown) => setField(f.key, v);
-
               return (
                 <div key={f.key} style={{ marginBottom: '22px' }}>
                   <label
@@ -1052,24 +995,24 @@ export default function AdminPage() {
                   >
                     {f.label}
                   </label>
-
                   {f.type === 'text' && (
                     <input
                       value={String(val ?? '')}
                       onChange={(e) => update(e.target.value)}
                       placeholder={f.placeholder}
+                      readOnly={isReadOnly}
                       style={inputStyle}
                       onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
                       onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                     />
                   )}
-
                   {f.type === 'number' && (
                     <input
                       value={String(val ?? '')}
                       onChange={(e) => update(e.target.value)}
                       inputMode="numeric"
                       placeholder={f.placeholder}
+                      readOnly={isReadOnly}
                       style={{
                         ...inputStyle,
                         width: '160px',
@@ -1079,12 +1022,12 @@ export default function AdminPage() {
                       onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                     />
                   )}
-
                   {f.type === 'date' && (
                     <input
                       type="date"
                       value={String(val ?? '')}
                       onChange={(e) => update(e.target.value)}
+                      readOnly={isReadOnly}
                       style={{
                         ...inputStyle,
                         width: 'auto',
@@ -1095,23 +1038,23 @@ export default function AdminPage() {
                       onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                     />
                   )}
-
                   {f.type === 'textarea' && (
                     <textarea
                       value={String(val ?? '')}
                       onChange={(e) => update(e.target.value)}
                       rows={f.rows || 4}
                       placeholder={f.placeholder}
+                      readOnly={isReadOnly}
                       style={{ ...inputStyle, lineHeight: 1.6, resize: 'vertical' }}
                       onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
                       onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                     />
                   )}
-
                   {f.type === 'select' && (
                     <select
                       value={String(val ?? '')}
                       onChange={(e) => update(e.target.value)}
+                      disabled={isReadOnly}
                       style={{
                         ...inputStyle,
                         width: 'auto',
@@ -1129,17 +1072,16 @@ export default function AdminPage() {
                       ))}
                     </select>
                   )}
-
                   {f.type === 'toggle' && (
                     <button
-                      onClick={() => update(!val)}
+                      onClick={() => !isReadOnly && update(!val)}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '10px',
                         background: 'transparent',
                         border: 'none',
-                        cursor: 'pointer',
+                        cursor: isReadOnly ? 'default' : 'pointer',
                         padding: 0,
                       }}
                     >
@@ -1177,7 +1119,6 @@ export default function AdminPage() {
                       </span>
                     </button>
                   )}
-
                   {f.type === 'tags' && (
                     <div
                       style={{
@@ -1191,7 +1132,7 @@ export default function AdminPage() {
                         padding: '9px 10px',
                       }}
                     >
-                      {((val as string[]) || []).map((tag: string) => (
+                      {((val as string[]) || []).map((tag) => (
                         <span
                           key={tag}
                           style={{
@@ -1207,50 +1148,55 @@ export default function AdminPage() {
                           }}
                         >
                           {tag}
-                          <a
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              update((val as string[]).filter((t: string) => t !== tag));
-                            }}
-                            style={{
-                              color: 'var(--text-4)',
-                              textDecoration: 'none',
-                              fontWeight: 700,
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = '#E5534B')}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-4)')}
-                          >
-                            ×
-                          </a>
+                          {!isReadOnly && (
+                            <a
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                update((val as string[]).filter((t) => t !== tag));
+                              }}
+                              style={{
+                                color: 'var(--text-4)',
+                                textDecoration: 'none',
+                                fontWeight: 700,
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = '#E5534B')}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-4)')}
+                            >
+                              ×
+                            </a>
+                          )}
                         </span>
                       ))}
-                      <input
-                        placeholder={f.placeholder}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ',') {
-                            e.preventDefault();
-                            const v = (e.target as HTMLInputElement).value.trim().replace(',', '');
-                            if (v) {
-                              update([...((val as string[]) || []), v]);
-                              (e.target as HTMLInputElement).value = '';
+                      {!isReadOnly && (
+                        <input
+                          placeholder={f.placeholder}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ',') {
+                              e.preventDefault();
+                              const v = (e.target as HTMLInputElement).value
+                                .trim()
+                                .replace(',', '');
+                              if (v) {
+                                update([...((val as string[]) || []), v]);
+                                (e.target as HTMLInputElement).value = '';
+                              }
                             }
-                          }
-                        }}
-                        style={{
-                          flex: 1,
-                          minWidth: '120px',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--text-1)',
-                          font: '500 13px var(--font-space), sans-serif',
-                          padding: '4px 2px',
-                          outline: 'none',
-                        }}
-                      />
+                          }}
+                          style={{
+                            flex: 1,
+                            minWidth: '120px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-1)',
+                            font: '500 13px var(--font-space), sans-serif',
+                            padding: '4px 2px',
+                            outline: 'none',
+                          }}
+                        />
+                      )}
                     </div>
                   )}
-
                   {f.help && (
                     <div
                       style={{
@@ -1265,8 +1211,7 @@ export default function AdminPage() {
                 </div>
               );
             })}
-
-            {isSingleton && (
+            {isSingleton && !isReadOnly && (
               <div
                 style={{
                   display: 'flex',
@@ -1313,7 +1258,7 @@ export default function AdminPage() {
                     e.currentTarget.style.color = 'var(--text-2)';
                   }}
                 >
-                  Cancel
+                  Revert
                 </button>
               </div>
             )}

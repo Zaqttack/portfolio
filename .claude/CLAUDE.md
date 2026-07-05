@@ -108,3 +108,4 @@ ADMIN_USER_ID=
 - API routes go in `src/app/api/<resource>/route.ts`
 - DB query helpers go in `src/lib/db.ts` — pages never import supabase directly
 - Route groups: `(public)` for site, `(admin)` for portal
+- Commit messages: conventional commits — `feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:` — lowercase, no brackets

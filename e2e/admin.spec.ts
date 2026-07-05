@@ -1,13 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-test('admin gate blocks unauthenticated access', async ({ page }) => {
+test('admin gate redirects unauthenticated to login', async ({ page }) => {
   await page.goto('/admin');
-  await expect(page.locator('input[type="password"]')).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/login/);
 });
 
-test('admin gate accepts correct passphrase', async ({ page }) => {
-  await page.goto('/admin');
-  await page.locator('input[type="password"]').fill('raptor');
-  await page.keyboard.press('Enter');
-  await expect(page.locator('text=Profile')).toBeVisible();
+test('admin login page shows magic link form', async ({ page }) => {
+  await page.goto('/admin/login');
+  await expect(page.getByRole('button', { name: /send/i })).toBeVisible({ timeout: 10000 });
 });
