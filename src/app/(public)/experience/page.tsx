@@ -10,6 +10,7 @@ import type { Certification, Education, Experience, InvolvementOrg, Profile } fr
 import ExperienceClient from './ExperienceClient';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export const metadata: Metadata = { title: 'Zaquariah Holland | Experience' };
 
