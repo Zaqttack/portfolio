@@ -6,10 +6,18 @@ import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
-import type { Experience, InvolvementOrg, Post, Profile, Project, Skill } from '@/types';
+import type {
+  Experience,
+  InvolvementOrg,
+  Post,
+  Profile,
+  ProfileLink,
+  Project,
+  Skill,
+} from '@/types';
 
-const SECTIONS = ['intro', 'skills', 'projects', 'writing', 'experience', 'contact'] as const;
-type Section = (typeof SECTIONS)[number];
+const ALL_SECTIONS = ['intro', 'skills', 'projects', 'writing', 'experience', 'contact'] as const;
+type Section = (typeof ALL_SECTIONS)[number];
 
 const RAIL_LABELS: Record<Section, string> = {
   intro: 'intro',
@@ -19,6 +27,10 @@ const RAIL_LABELS: Record<Section, string> = {
   experience: 'exp',
   contact: 'hi',
 };
+
+function applyTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
+}
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -42,6 +54,7 @@ export default function HomeClient({
   experience,
   involvement,
   skills,
+  profileLinks,
 }: {
   profile: Profile | null;
   projects: Project[];
@@ -49,12 +62,21 @@ export default function HomeClient({
   experience: Experience[];
   involvement: InvolvementOrg[];
   skills: Skill[];
+  profileLinks: ProfileLink[];
 }) {
   const openToWork = profile?.open_to_work ?? false;
+  const writingEnabled = profile?.writing_enabled ?? true;
   const firstName = profile?.name?.split(' ')[0] ?? 'Zaquariah';
   const latestRole = experience[0]?.role ?? null;
   const heroLabel =
     [latestRole, profile?.location].filter(Boolean).join(' — ') || 'SOFTWARE ENGINEER';
+  const heroTitle = applyTemplate(
+    profile?.hero_title ?? "I'm {{first_name}}. I build precise, well-architected software.",
+    { first_name: firstName },
+  );
+  const SECTIONS = writingEnabled
+    ? ALL_SECTIONS
+    : (ALL_SECTIONS.filter((s) => s !== 'writing') as Section[]);
   const [activeSection, setActiveSection] = useState<Section>('intro');
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const termRef = useRef<HTMLDivElement>(null);
@@ -209,9 +231,10 @@ export default function HomeClient({
         color: txt,
       },
       { t: 'status', prompt: true, pre: '\n' },
-      openToWork
-        ? { t: '\nopen to work ', color: txt }
-        : { t: '\nheads-down · building ', color: txt },
+      {
+        t: `\n${openToWork ? 'open to work' : (profile?.terminal_status ?? 'heads-down · building')} `,
+        color: txt,
+      },
       { t: openToWork ? '✓' : '◆', color: accent, chunk: true },
     ];
     let si = 0;
@@ -259,7 +282,7 @@ export default function HomeClient({
     };
     tt = setTimeout(run, 550);
     return () => clearTimeout(tt);
-  }, [firstName, openToWork, latestRole]);
+  }, [firstName, openToWork, latestRole, profile?.terminal_status]);
 
   const railItems = SECTIONS.map((id) => ({
     href: `#${id}`,
@@ -358,7 +381,7 @@ export default function HomeClient({
                 } as React.CSSProperties
               }
             >
-              I&apos;m {firstName}. I build precise, well-architected software.
+              {heroTitle}
             </h1>
             <p
               style={{
@@ -459,35 +482,26 @@ export default function HomeClient({
                 color: 'var(--text-3)',
               }}
             >
-              {profile?.github && (
+              {profileLinks.map((link, i) => (
                 <>
                   <a
-                    href={profile.github}
+                    key={link.id}
+                    href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none', transition: 'color .3s' }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
                   >
-                    GitHub ↗
+                    {link.label} ↗
                   </a>
-                  <span style={{ color: 'var(--border-3)' }}>/</span>
+                  {i < profileLinks.length - 1 && (
+                    <span style={{ color: 'var(--border-3)' }}>/</span>
+                  )}
                 </>
-              )}
-              {profile?.linkedin && (
-                <>
-                  <a
-                    href={profile.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', transition: 'color .3s' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
-                  >
-                    LinkedIn ↗
-                  </a>
-                  <span style={{ color: 'var(--border-3)' }}>/</span>
-                </>
+              ))}
+              {profileLinks.length > 0 && profile?.email && (
+                <span style={{ color: 'var(--border-3)' }}>/</span>
               )}
               {profile?.email && (
                 <a
@@ -858,7 +872,7 @@ export default function HomeClient({
         </section>
 
         {/* RECENT WRITING */}
-        {(profile?.writing_enabled ?? true) && (
+        {writingEnabled && (
           <section
             id="writing"
             data-section
@@ -1243,9 +1257,10 @@ export default function HomeClient({
                     Résumé ↓
                   </a>
                 )}
-                {profile?.github && (
+                {profileLinks.map((link) => (
                   <a
-                    href={profile.github}
+                    key={link.id}
+                    href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -1266,35 +1281,9 @@ export default function HomeClient({
                       e.currentTarget.style.borderColor = 'var(--border-3)';
                     }}
                   >
-                    GitHub ↗
+                    {link.label} ↗
                   </a>
-                )}
-                {profile?.linkedin && (
-                  <a
-                    href={profile.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      font: '500 12px var(--font-mono), monospace',
-                      color: 'var(--text-1)',
-                      textDecoration: 'none',
-                      padding: '13px 17px',
-                      border: '1px solid var(--border-3)',
-                      borderRadius: '9px',
-                      transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.borderColor = 'var(--text-4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.borderColor = 'var(--border-3)';
-                    }}
-                  >
-                    LinkedIn ↗
-                  </a>
-                )}
+                ))}
               </div>
               <div
                 style={{

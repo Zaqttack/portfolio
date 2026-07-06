@@ -83,7 +83,7 @@ export default function WritingClient({
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
           >
-            ← index
+            ← home
           </Link>
           <h1
             style={{

@@ -94,7 +94,7 @@ export default function WorkClient({
         setFilter('side');
       },
     },
-    { href: '/', label: '← index', active: false, isBack: true },
+    { href: '/', label: '← home', active: false, isBack: true },
   ];
 
   const visible = projects.filter((p) => filter === 'all' || projectTag(p) === filter);
@@ -134,7 +134,7 @@ export default function WorkClient({
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
           >
-            ← index
+            ← home
           </Link>
           <h1
             style={{

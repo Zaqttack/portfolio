@@ -5,7 +5,14 @@ import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
-import type { Certification, Education, Experience, InvolvementOrg, Profile } from '@/types';
+import type {
+  Achievement,
+  Certification,
+  Education,
+  Experience,
+  InvolvementOrg,
+  Profile,
+} from '@/types';
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -24,6 +31,7 @@ export default function ExperienceClient({
   profile,
   education,
   certifications,
+  achievements,
   subtitle,
   writingEnabled,
 }: {
@@ -32,12 +40,13 @@ export default function ExperienceClient({
   profile: Profile | null;
   education: Education[];
   certifications: Certification[];
+  achievements: Achievement[];
   subtitle: string | null;
   writingEnabled: boolean;
 }) {
-  const [activeSection, setActiveSection] = useState<'history' | 'community' | 'education'>(
-    'history',
-  );
+  const [activeSection, setActiveSection] = useState<
+    'history' | 'community' | 'education' | 'awards'
+  >('history');
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
   const spineRef = useRef<HTMLSpanElement>(null);
@@ -94,7 +103,7 @@ export default function ExperienceClient({
 
   // Scroll-spy for active section
   useEffect(() => {
-    const sectionIds = ['history', 'community', 'education'] as const;
+    const sectionIds = ['history', 'community', 'education', 'awards'] as const;
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -146,7 +155,8 @@ export default function ExperienceClient({
     { href: '#history', label: 'history', active: activeSection === 'history' },
     { href: '#community', label: 'community', active: activeSection === 'community' },
     { href: '#education', label: 'education', active: activeSection === 'education' },
-    { href: '/', label: '← index', active: false, isBack: true },
+    { href: '#awards', label: 'awards', active: activeSection === 'awards' },
+    { href: '/', label: '← home', active: false, isBack: true },
   ];
 
   return (
@@ -172,7 +182,7 @@ export default function ExperienceClient({
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
           >
-            ← index
+            ← home
           </Link>
           <div
             style={{
@@ -528,6 +538,94 @@ export default function ExperienceClient({
                 </div>
               </div>
             )}
+          </div>
+        </section>
+
+        {/* AWARDS & ACHIEVEMENTS */}
+        <section
+          id="awards"
+          style={{
+            scrollMarginTop: '20px',
+            padding: '36px 56px 80px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              / AWARDS &amp; ACHIEVEMENTS
+            </div>
+            <div style={{ borderTop: '1px solid var(--border-2)' }}>
+              {achievements.length === 0 && (
+                <p style={{ padding: '22px 0', color: 'var(--text-3)', fontSize: '14px' }}>
+                  No awards yet.
+                </p>
+              )}
+              {achievements.map((award) => (
+                <div
+                  key={award.id}
+                  data-reveal
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr auto',
+                    gap: '20px',
+                    padding: '22px 0',
+                    borderBottom: '1px solid var(--border-1)',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>
+                      {award.evidence_url ? (
+                        <a
+                          href={award.evidence_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            color: 'inherit',
+                            textDecoration: 'none',
+                            transition: 'color .3s',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}
+                        >
+                          {award.title} ↗
+                        </a>
+                      ) : (
+                        award.title
+                      )}
+                    </div>
+                    {award.description && (
+                      <div style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--text-2)' }}>
+                        {award.description}
+                      </div>
+                    )}
+                  </div>
+                  {award.date && (
+                    <div
+                      style={{
+                        font: '500 11px var(--font-mono), monospace',
+                        color: 'var(--text-4)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {award.date}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </main>

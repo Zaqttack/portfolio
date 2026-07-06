@@ -339,6 +339,14 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'Your full name shown in the site header and meta tags.',
       },
       {
+        key: 'hero_title',
+        label: 'Hero Title',
+        type: 'textarea',
+        rows: 2,
+        placeholder: "I'm {{first_name}}. I build precise, well-architected software.",
+        help: 'The large heading on the home page. Use {{first_name}} as a token for your first name.',
+      },
+      {
         key: 'tagline',
         label: 'Now',
         type: 'textarea',
@@ -356,6 +364,13 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'A paragraph about you shown in the home page hero.',
       },
       {
+        key: 'terminal_status',
+        label: 'Terminal Status',
+        type: 'text',
+        placeholder: 'heads-down · building',
+        help: 'The status text shown in the home page terminal when not open to work.',
+      },
+      {
         key: 'location',
         label: 'Location',
         type: 'text',
@@ -370,27 +385,6 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'Shown in the contact section and used for the mailto link.',
       },
       {
-        key: 'github',
-        label: 'GitHub URL',
-        type: 'text',
-        placeholder: 'https://github.com/…',
-        help: 'Full URL to your GitHub profile.',
-      },
-      {
-        key: 'linkedin',
-        label: 'LinkedIn URL',
-        type: 'text',
-        placeholder: 'https://linkedin.com/in/…',
-        help: 'Full URL to your LinkedIn profile.',
-      },
-      {
-        key: 'twitter',
-        label: 'Twitter / X URL',
-        type: 'text',
-        placeholder: 'https://twitter.com/…',
-        help: 'Full URL to your Twitter/X profile.',
-      },
-      {
         key: 'resume_url',
         label: 'Résumé URL',
         type: 'text',
@@ -402,6 +396,30 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Open to work',
         type: 'toggle',
         help: 'Shows a pulsing indicator in the left rail when enabled.',
+      },
+    ],
+  },
+  profile_links: {
+    label: 'Links',
+    singular: 'link',
+    table: 'profile_links',
+    colName: 'LABEL',
+    primaryKey: 'label',
+    secondaryKey: 'url',
+    fields: [
+      {
+        key: 'label',
+        label: 'Label',
+        type: 'text',
+        placeholder: 'GitHub',
+        help: 'Display name shown next to the link.',
+      },
+      {
+        key: 'url',
+        label: 'URL',
+        type: 'text',
+        placeholder: 'https://github.com/…',
+        help: 'Full URL the link points to.',
       },
     ],
   },
@@ -601,6 +619,7 @@ const SECTION_GROUPS = [
     tabs: [
       { key: 'profile' as const, label: 'About' },
       { key: 'skills' as const, label: 'Skills' },
+      { key: 'profile_links' as const, label: 'Links' },
     ],
   },
   {
@@ -855,13 +874,15 @@ export default function AdminPage() {
           .update(payload)
           .eq('id', profileData.id);
         if (error) {
-          showToast('Save failed.');
+          console.error('Save failed:', error);
+          showToast(`Save failed: ${error.message}`);
           return;
         }
       } else {
         const { error } = await supabase.from(schema.table).insert(payload);
         if (error) {
-          showToast('Save failed.');
+          console.error('Save failed:', error);
+          showToast(`Save failed: ${error.message}`);
           return;
         }
       }
@@ -918,14 +939,16 @@ export default function AdminPage() {
         .select('id')
         .single();
       if (error) {
-        showToast('Save failed.');
+        console.error('Save failed:', error);
+        showToast(`Save failed: ${error.message}`);
         return;
       }
       savedId = data.id;
     } else {
       const { error } = await supabase.from(schema.table).update(payload).eq('id', payload.id);
       if (error) {
-        showToast('Save failed.');
+        console.error('Save failed:', error);
+        showToast(`Save failed: ${error.message}`);
         return;
       }
     }
