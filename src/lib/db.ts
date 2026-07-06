@@ -2,6 +2,8 @@ import type {
   Achievement,
   AdminActivity,
   BotSignature,
+  Certification,
+  Education,
   Experience,
   GalleryImage,
   ImportStaging,
@@ -50,6 +52,18 @@ export async function getAchievements(): Promise<Achievement[]> {
 
 export async function getSkills(): Promise<Skill[]> {
   const { data, error } = await supabase.from('skills').select('*').order('display_order');
+  if (error) throw error;
+  return data;
+}
+
+export async function getEducation(): Promise<Education[]> {
+  const { data, error } = await supabase.from('education').select('*').order('display_order');
+  if (error) throw error;
+  return data;
+}
+
+export async function getCertifications(): Promise<Certification[]> {
+  const { data, error } = await supabase.from('certifications').select('*').order('display_order');
   if (error) throw error;
   return data;
 }

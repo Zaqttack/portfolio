@@ -9,6 +9,8 @@ import {
 import type { Experience, InvolvementOrg, Post, Profile, Project, Skill } from '@/types';
 import HomeClient from './HomeClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   let profile: Profile | null = null;
   let projects: Project[] = [];

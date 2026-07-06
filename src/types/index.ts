@@ -12,7 +12,30 @@ export interface Profile {
   twitter: string | null;
   website: string | null;
   open_to_work: boolean;
+  writing_enabled: boolean;
+  projects_subtitle: string | null;
+  writing_subtitle: string | null;
+  experience_subtitle: string | null;
   updated_at: string;
+}
+
+export interface Education {
+  id: string;
+  degree: string;
+  institution: string;
+  start_year: string;
+  end_year: string | null;
+  display_order: number;
+  created_at: string;
+}
+
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string | null;
+  year: string | null;
+  display_order: number;
+  created_at: string;
 }
 
 export interface Experience {
@@ -68,6 +91,7 @@ export interface Achievement {
   evidence_url: string | null;
   visibility: 'public' | 'private';
   display_order: number;
+  created_at: string;
 }
 
 export interface Skill {

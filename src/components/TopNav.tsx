@@ -5,9 +5,11 @@ import { usePathname } from 'next/navigation';
 
 interface TopNavProps {
   onCmdK?: () => void;
+  writingEnabled?: boolean;
+  resumeUrl?: string | null;
 }
 
-export default function TopNav({ onCmdK }: TopNavProps) {
+export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: TopNavProps) {
   const pathname = usePathname();
 
   const link = (href: string, label: string) => {
@@ -74,17 +76,21 @@ export default function TopNav({ onCmdK }: TopNavProps) {
         >
           ⌘K
         </button>
-        {link('/work', 'Work')}
-        {link('/writing', 'Writing')}
+        {link('/work', 'Projects')}
+        {writingEnabled && link('/writing', 'Writing')}
         {link('/experience', 'Experience')}
-        <a
-          href="https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: 'none', color: 'var(--accent)' }}
-        >
-          Résumé ↓
-        </a>
+        {resumeUrl ? (
+          <a
+            href={resumeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: 'none', color: 'var(--accent)' }}
+          >
+            Résumé ↓
+          </a>
+        ) : (
+          <span style={{ color: 'var(--accent)' }}>Résumé ↓</span>
+        )}
       </span>
     </div>
   );
