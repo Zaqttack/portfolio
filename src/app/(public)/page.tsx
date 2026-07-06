@@ -10,6 +10,7 @@ import type { Experience, InvolvementOrg, Post, Profile, Project, Skill } from '
 import HomeClient from './HomeClient';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default async function HomePage() {
   let profile: Profile | null = null;
