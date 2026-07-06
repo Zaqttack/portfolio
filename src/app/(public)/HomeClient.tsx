@@ -8,13 +8,13 @@ import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
 import type { Experience, InvolvementOrg, Post, Profile, Project, Skill } from '@/types';
 
-const SECTIONS = ['intro', 'skills', 'work', 'writing', 'experience', 'contact'] as const;
+const SECTIONS = ['intro', 'skills', 'projects', 'writing', 'experience', 'contact'] as const;
 type Section = (typeof SECTIONS)[number];
 
 const RAIL_LABELS: Record<Section, string> = {
   intro: 'intro',
   skills: 'skills',
-  work: 'work',
+  projects: 'projects',
   writing: 'writing',
   experience: 'exp',
   contact: 'hi',
@@ -51,6 +51,10 @@ export default function HomeClient({
   skills: Skill[];
 }) {
   const openToWork = profile?.open_to_work ?? false;
+  const firstName = profile?.name?.split(' ')[0] ?? 'Zaquariah';
+  const latestRole = experience[0]?.role ?? null;
+  const heroLabel =
+    [latestRole, profile?.location].filter(Boolean).join(' — ') || 'SOFTWARE ENGINEER';
   const [activeSection, setActiveSection] = useState<Section>('intro');
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const termRef = useRef<HTMLDivElement>(null);
@@ -200,7 +204,10 @@ export default function HomeClient({
       txt = '#C7CBD1';
     const seq = [
       { t: 'whoami', prompt: true },
-      { t: '\nzaquariah — software engineer\n', color: txt },
+      {
+        t: `\n${firstName.toLowerCase()}${latestRole ? ` — ${latestRole.toLowerCase()}` : ''}\n`,
+        color: txt,
+      },
       { t: 'status', prompt: true, pre: '\n' },
       openToWork
         ? { t: '\nopen to work ', color: txt }
@@ -252,7 +259,7 @@ export default function HomeClient({
     };
     tt = setTimeout(run, 550);
     return () => clearTimeout(tt);
-  }, []);
+  }, [firstName, openToWork, latestRole]);
 
   const railItems = SECTIONS.map((id) => ({
     href: `#${id}`,
@@ -272,10 +279,10 @@ export default function HomeClient({
       run: () => document.getElementById('skills')?.scrollIntoView({ behavior: 'smooth' }),
     },
     {
-      label: 'Recent work',
+      label: 'Recent projects',
       kind: 'section' as const,
       hint: 'this page',
-      run: () => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' }),
+      run: () => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }),
     },
     {
       label: 'Contact',
@@ -308,7 +315,11 @@ export default function HomeClient({
       <LeftRail items={railItems} openToWork={openToWork} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
-        <TopNav onCmdK={() => setCmdkOpen(true)} />
+        <TopNav
+          onCmdK={() => setCmdkOpen(true)}
+          writingEnabled={profile?.writing_enabled ?? true}
+          resumeUrl={profile?.resume_url ?? null}
+        />
 
         {/* HERO */}
         <section
@@ -333,7 +344,7 @@ export default function HomeClient({
                 marginBottom: '26px',
               }}
             >
-              SOFTWARE ENGINEER — SAN ANTONIO, TX
+              {heroLabel}
             </div>
             <h1
               style={
@@ -347,7 +358,7 @@ export default function HomeClient({
                 } as React.CSSProperties
               }
             >
-              I'm Zaquariah. I build precise, well-architected software.
+              I&apos;m {firstName}. I build precise, well-architected software.
             </h1>
             <p
               style={{
@@ -358,9 +369,8 @@ export default function HomeClient({
                 margin: '0 0 32px',
               }}
             >
-              Full-stack, backend-leaning — fintech and cloud infrastructure by trade. Clean
-              TypeScript, boring reliability, systems that hold up. I also run a month-long dinosaur
-              game jam, because someone has to.
+              {profile?.bio ??
+                'Full-stack, backend-leaning — fintech and cloud infrastructure by trade. Clean TypeScript, boring reliability, systems that hold up. I also run a month-long dinosaur game jam, because someone has to.'}
             </p>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <Link
@@ -383,7 +393,7 @@ export default function HomeClient({
                 }
                 onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
               >
-                View work ↗
+                View projects ↗
               </Link>
               {profile?.resume_url && (
                 <a
@@ -504,8 +514,8 @@ export default function HomeClient({
             >
               <span style={{ color: 'var(--accent)', whiteSpace: 'nowrap' }}>// now</span>
               <span style={{ color: 'var(--text-2)', lineHeight: 1.65 }}>
-                Building payments infrastructure at SWIVEL, running ACM San Antonio, and reading too
-                much about consensus protocols.
+                {profile?.tagline ??
+                  'Building payments infrastructure at SWIVEL, running ACM San Antonio, and reading too much about consensus protocols.'}
               </span>
             </div>
           </div>
@@ -562,7 +572,7 @@ export default function HomeClient({
                     color: 'var(--text-4)',
                   }}
                 >
-                  zaquariah — zsh
+                  {firstName.toLowerCase()} — zsh
                 </span>
               </div>
               <div
@@ -697,9 +707,9 @@ export default function HomeClient({
           </div>
         </section>
 
-        {/* RECENT WORK */}
+        {/* RECENT PROJECTS */}
         <section
-          id="work"
+          id="projects"
           data-section
           style={{
             scrollMarginTop: '20px',
@@ -722,7 +732,7 @@ export default function HomeClient({
                 color: 'var(--accent)',
               }}
             >
-              02 / RECENT WORK
+              02 / RECENT PROJECTS
             </div>
             <div>
               <div
@@ -848,128 +858,135 @@ export default function HomeClient({
         </section>
 
         {/* RECENT WRITING */}
-        <section
-          id="writing"
-          data-section
-          style={{
-            scrollMarginTop: '20px',
-            padding: '80px 56px 80px 40px',
-            borderTop: '1px solid var(--border-1)',
-          }}
-        >
-          <div
+        {(profile?.writing_enabled ?? true) && (
+          <section
+            id="writing"
+            data-section
             style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
+              scrollMarginTop: '20px',
+              padding: '80px 56px 80px 40px',
+              borderTop: '1px solid var(--border-1)',
             }}
           >
             <div
               style={{
-                font: '500 11px var(--font-mono), monospace',
-                letterSpacing: '.12em',
-                color: 'var(--accent)',
+                display: 'grid',
+                gridTemplateColumns: '200px 1fr',
+                gap: '48px',
+                alignItems: 'start',
               }}
             >
-              03 / WRITING
-            </div>
-            <div>
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  marginBottom: '6px',
+                  font: '500 11px var(--font-mono), monospace',
+                  letterSpacing: '.12em',
+                  color: 'var(--accent)',
                 }}
               >
-                <h2
-                  style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}
-                >
-                  Latest writing
-                </h2>
-                <Link
-                  href="/writing"
-                  style={{
-                    font: '500 12px var(--font-mono), monospace',
-                    color: 'var(--text-2)',
-                    textDecoration: 'none',
-                    transition: 'color .3s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
-                >
-                  all writing →
-                </Link>
+                03 / WRITING
               </div>
-              <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
-                {posts.length === 0 && (
-                  <p style={{ padding: '24px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
-                    No posts yet.
-                  </p>
-                )}
-                {posts.slice(0, 2).map((p) => (
-                  <Link
-                    key={p.id}
-                    href="/writing"
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    marginBottom: '6px',
+                  }}
+                >
+                  <h2
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: '110px 1fr',
-                      gap: '22px',
-                      alignItems: 'baseline',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      padding: '24px 4px',
-                      borderBottom: '1px solid var(--border-1)',
-                      transition: 'padding .35s cubic-bezier(.34,1.56,.64,1), background .3s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.paddingLeft = '16px';
-                      e.currentTarget.style.background = '#101114';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.paddingLeft = '4px';
-                      e.currentTarget.style.background = 'transparent';
+                      fontWeight: 600,
+                      fontSize: '26px',
+                      letterSpacing: '-.02em',
+                      margin: 0,
                     }}
                   >
-                    <span
+                    Latest writing
+                  </h2>
+                  <Link
+                    href="/writing"
+                    style={{
+                      font: '500 12px var(--font-mono), monospace',
+                      color: 'var(--text-2)',
+                      textDecoration: 'none',
+                      transition: 'color .3s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                  >
+                    all writing →
+                  </Link>
+                </div>
+                <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
+                  {posts.length === 0 && (
+                    <p style={{ padding: '24px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
+                      No posts yet.
+                    </p>
+                  )}
+                  {posts.slice(0, 2).map((p) => (
+                    <Link
+                      key={p.id}
+                      href="/writing"
                       style={{
-                        font: '500 11px var(--font-mono), monospace',
-                        color: 'var(--text-4)',
+                        display: 'grid',
+                        gridTemplateColumns: '110px 1fr',
+                        gap: '22px',
+                        alignItems: 'baseline',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        padding: '24px 4px',
+                        borderBottom: '1px solid var(--border-1)',
+                        transition: 'padding .35s cubic-bezier(.34,1.56,.64,1), background .3s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.paddingLeft = '16px';
+                        e.currentTarget.style.background = '#101114';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.paddingLeft = '4px';
+                        e.currentTarget.style.background = 'transparent';
                       }}
                     >
-                      {p.published_at ? fmtPostDate(p.published_at) : ''}
-                    </span>
-                    <span>
                       <span
                         style={{
-                          display: 'block',
-                          fontWeight: 600,
-                          fontSize: '19px',
-                          letterSpacing: '-.01em',
-                          marginBottom: '5px',
+                          font: '500 11px var(--font-mono), monospace',
+                          color: 'var(--text-4)',
                         }}
                       >
-                        {p.title}
+                        {p.published_at ? fmtPostDate(p.published_at) : ''}
                       </span>
-                      <span
-                        style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          lineHeight: 1.55,
-                          color: 'var(--text-2)',
-                          maxWidth: '44em',
-                        }}
-                      >
-                        {p.excerpt}
+                      <span>
+                        <span
+                          style={{
+                            display: 'block',
+                            fontWeight: 600,
+                            fontSize: '19px',
+                            letterSpacing: '-.01em',
+                            marginBottom: '5px',
+                          }}
+                        >
+                          {p.title}
+                        </span>
+                        <span
+                          style={{
+                            display: 'block',
+                            fontSize: '14px',
+                            lineHeight: 1.55,
+                            color: 'var(--text-2)',
+                            maxWidth: '44em',
+                          }}
+                        >
+                          {p.excerpt}
+                        </span>
                       </span>
-                    </span>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* EXPERIENCE TEASER */}
         <section

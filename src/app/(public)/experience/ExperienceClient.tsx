@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
-import type { Experience, InvolvementOrg } from '@/types';
+import type { Certification, Education, Experience, InvolvementOrg, Profile } from '@/types';
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -21,9 +21,19 @@ function fmtPeriod(start: string, end: string | null): string {
 export default function ExperienceClient({
   experience,
   involvement,
+  profile,
+  education,
+  certifications,
+  subtitle,
+  writingEnabled,
 }: {
   experience: Experience[];
   involvement: InvolvementOrg[];
+  profile: Profile | null;
+  education: Education[];
+  certifications: Certification[];
+  subtitle: string | null;
+  writingEnabled: boolean;
 }) {
   const [activeSection, setActiveSection] = useState<'history' | 'community' | 'education'>(
     'history',
@@ -144,7 +154,11 @@ export default function ExperienceClient({
       <LeftRail items={railItems} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
-        <TopNav onCmdK={() => setCmdkOpen(true)} />
+        <TopNav
+          onCmdK={() => setCmdkOpen(true)}
+          writingEnabled={writingEnabled}
+          resumeUrl={profile?.resume_url ?? null}
+        />
 
         <header style={{ padding: '56px 56px 12px 40px' }}>
           <Link
@@ -181,42 +195,47 @@ export default function ExperienceClient({
               >
                 Experience
               </h1>
-              <p
-                style={{
-                  fontSize: '16px',
-                  lineHeight: 1.6,
-                  color: 'var(--text-2)',
-                  maxWidth: '40em',
-                  margin: 0,
-                }}
-              >
-                The résumé, on the page. Five years of shipping backend-leaning software — mostly
-                fintech — plus the community work I do on the side.
-              </p>
+              {subtitle && (
+                <p
+                  style={{
+                    fontSize: '16px',
+                    lineHeight: 1.6,
+                    color: 'var(--text-2)',
+                    maxWidth: '40em',
+                    margin: 0,
+                  }}
+                >
+                  {subtitle}
+                </p>
+              )}
             </div>
-            <a
-              ref={magnetRef}
-              href="https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: 'var(--accent)',
-                color: 'var(--canvas)',
-                font: '600 13px var(--font-space), sans-serif',
-                textDecoration: 'none',
-                padding: '13px 20px',
-                borderRadius: '8px',
-                whiteSpace: 'nowrap',
-                transition: 'box-shadow .3s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')}
-              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
-            >
-              Download résumé ↓
-            </a>
+            {profile?.resume_url && (
+              <a
+                ref={magnetRef}
+                href={profile.resume_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'var(--accent)',
+                  color: 'var(--canvas)',
+                  font: '600 13px var(--font-space), sans-serif',
+                  textDecoration: 'none',
+                  padding: '13px 20px',
+                  borderRadius: '8px',
+                  whiteSpace: 'nowrap',
+                  transition: 'box-shadow .3s',
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')
+                }
+                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
+              >
+                Download résumé ↓
+              </a>
+            )}
           </div>
         </header>
 
@@ -457,46 +476,58 @@ export default function ExperienceClient({
               / EDUCATION
             </div>
             <div data-reveal>
-              <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>
-                B.S. Computer Science
-              </div>
-              <div style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--text-2)' }}>
-                University of Texas at San Antonio
-              </div>
-              <div
-                style={{
-                  font: '500 11px var(--font-mono), monospace',
-                  color: 'var(--text-4)',
-                  marginTop: '6px',
-                }}
-              >
-                2018 — DEC 2022
-              </div>
+              {education.length === 0 && (
+                <p style={{ color: 'var(--text-3)', fontSize: '14px' }}>
+                  No education entries yet.
+                </p>
+              )}
+              {education.map((edu) => (
+                <div key={edu.id} style={{ marginBottom: '20px' }}>
+                  <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>
+                    {edu.degree}
+                  </div>
+                  <div style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--text-2)' }}>
+                    {edu.institution}
+                  </div>
+                  <div
+                    style={{
+                      font: '500 11px var(--font-mono), monospace',
+                      color: 'var(--text-4)',
+                      marginTop: '6px',
+                    }}
+                  >
+                    {edu.start_year}
+                    {edu.end_year ? ` — ${edu.end_year}` : ' — PRESENT'}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div data-reveal>
-              <div
-                style={{
-                  font: '500 10.5px var(--font-mono), monospace',
-                  letterSpacing: '.08em',
-                  color: 'var(--text-4)',
-                  marginBottom: '12px',
-                }}
-              >
-                CERTIFICATIONS
+            {certifications.length > 0 && (
+              <div data-reveal>
+                <div
+                  style={{
+                    font: '500 10.5px var(--font-mono), monospace',
+                    letterSpacing: '.08em',
+                    color: 'var(--text-4)',
+                    marginBottom: '12px',
+                  }}
+                >
+                  CERTIFICATIONS
+                </div>
+                <div
+                  style={{
+                    fontSize: '14px',
+                    lineHeight: 1.9,
+                    color: '#C7CBD1',
+                    fontFamily: 'var(--font-mono), monospace',
+                  }}
+                >
+                  {certifications.map((c) => (
+                    <div key={c.id}>{c.name}</div>
+                  ))}
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: '14px',
-                  lineHeight: 1.9,
-                  color: '#C7CBD1',
-                  fontFamily: 'var(--font-mono), monospace',
-                }}
-              >
-                AWS Solutions Architect — Assoc.
-                <br />
-                AWS Developer — Associate
-              </div>
-            </div>
+            )}
           </div>
         </section>
       </main>

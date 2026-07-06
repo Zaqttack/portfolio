@@ -18,7 +18,17 @@ function projectYear(p: Project): string {
   return `'${new Date(p.created_at).getFullYear().toString().slice(2)}`;
 }
 
-export default function WorkClient({ projects }: { projects: Project[] }) {
+export default function WorkClient({
+  projects,
+  subtitle,
+  writingEnabled,
+  resumeUrl,
+}: {
+  projects: Project[];
+  subtitle: string | null;
+  writingEnabled: boolean;
+  resumeUrl: string | null;
+}) {
   const [filter, setFilter] = useState<Tag>('all');
   const [cmdkOpen, setCmdkOpen] = useState(false);
 
@@ -106,7 +116,11 @@ export default function WorkClient({ projects }: { projects: Project[] }) {
       <LeftRail items={railItems} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
-        <TopNav onCmdK={() => setCmdkOpen(true)} />
+        <TopNav
+          onCmdK={() => setCmdkOpen(true)}
+          writingEnabled={writingEnabled}
+          resumeUrl={resumeUrl}
+        />
 
         <header style={{ padding: '56px 56px 30px 40px' }}>
           <Link
@@ -130,20 +144,21 @@ export default function WorkClient({ projects }: { projects: Project[] }) {
               margin: '16px 0 12px',
             }}
           >
-            Work
+            Projects
           </h1>
-          <p
-            style={{
-              fontSize: '16px',
-              lineHeight: 1.6,
-              color: 'var(--text-2)',
-              maxWidth: '40em',
-              margin: '0 0 26px',
-            }}
-          >
-            Things I've shipped — professionally and for the sheer fun of it. The side projects get
-            documented with the same rigor as the paid work, on purpose.
-          </p>
+          {subtitle && (
+            <p
+              style={{
+                fontSize: '16px',
+                lineHeight: 1.6,
+                color: 'var(--text-2)',
+                maxWidth: '40em',
+                margin: '0 0 26px',
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button onClick={() => setFilter('all')} style={pillStyle('all')}>
               All

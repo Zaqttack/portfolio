@@ -12,7 +12,17 @@ function formatPostDate(d: string): string {
   return `${dt.getFullYear()} · ${String(dt.getMonth() + 1).padStart(2, '0')}`;
 }
 
-export default function WritingClient({ posts }: { posts: Post[] }) {
+export default function WritingClient({
+  posts,
+  subtitle,
+  writingEnabled,
+  resumeUrl,
+}: {
+  posts: Post[];
+  subtitle: string | null;
+  writingEnabled: boolean;
+  resumeUrl: string | null;
+}) {
   const featured = posts[0] ?? null;
   const archive = posts.slice(1);
   const [cmdkOpen, setCmdkOpen] = useState(false);
@@ -51,20 +61,15 @@ export default function WritingClient({ posts }: { posts: Post[] }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const railItems = [
-    { href: '/', label: 'home', active: false },
-    { href: '/work', label: 'work', active: false },
-    { href: '/writing', label: 'writing', active: true },
-    { href: '/experience', label: 'exp', active: false },
-    { href: '/#contact', label: 'hi', active: false },
-  ];
-
   return (
     <>
-      <LeftRail items={railItems} />
-
+      <LeftRail items={[]} />
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
-        <TopNav onCmdK={() => setCmdkOpen(true)} />
+        <TopNav
+          onCmdK={() => setCmdkOpen(true)}
+          writingEnabled={writingEnabled}
+          resumeUrl={resumeUrl}
+        />
 
         <header style={{ padding: '56px 56px 30px 40px' }}>
           <Link
@@ -90,18 +95,19 @@ export default function WritingClient({ posts }: { posts: Post[] }) {
           >
             Writing
           </h1>
-          <p
-            style={{
-              fontSize: '16px',
-              lineHeight: 1.6,
-              color: 'var(--text-2)',
-              maxWidth: '40em',
-              margin: 0,
-            }}
-          >
-            Notes on systems, reliability, and the occasional side project that got out of hand.
-            Plainly written — no padded intros.
-          </p>
+          {subtitle && (
+            <p
+              style={{
+                fontSize: '16px',
+                lineHeight: 1.6,
+                color: 'var(--text-2)',
+                maxWidth: '40em',
+                margin: 0,
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
         </header>
 
         {/* featured */}
