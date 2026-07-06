@@ -7,7 +7,7 @@ test('home page loads', async ({ page }) => {
 
 test('work page loads', async ({ page }) => {
   await page.goto('/work');
-  await expect(page.locator('h1')).toContainText('Work');
+  await expect(page.locator('h1')).toContainText('Projects');
 });
 
 test('writing page loads', async ({ page }) => {
