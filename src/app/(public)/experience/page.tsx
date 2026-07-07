@@ -6,6 +6,7 @@ import {
   getExperience,
   getInvolvement,
   getProfile,
+  getProfileLinks,
 } from '@/lib/db';
 import type {
   Achievement,
@@ -14,6 +15,7 @@ import type {
   Experience,
   InvolvementOrg,
   Profile,
+  ProfileLink,
 } from '@/types';
 import ExperienceClient from './ExperienceClient';
 
@@ -29,20 +31,28 @@ export default async function ExperiencePage() {
   let education: Education[] = [];
   let certifications: Certification[] = [];
   let achievements: Achievement[] = [];
+  let profileLinks: ProfileLink[] = [];
   try {
-    [experience, involvement, profile, education, certifications, achievements] = await Promise.all(
-      [
-        getExperience(),
-        getInvolvement(),
-        getProfile(),
-        getEducation(),
-        getCertifications(),
-        getAchievements(),
-      ],
-    );
-  } catch {
-    // DB not available — show empty state
-  }
+    experience = await getExperience();
+  } catch {}
+  try {
+    involvement = await getInvolvement();
+  } catch {}
+  try {
+    profile = await getProfile();
+  } catch {}
+  try {
+    education = await getEducation();
+  } catch {}
+  try {
+    certifications = await getCertifications();
+  } catch {}
+  try {
+    achievements = await getAchievements();
+  } catch {}
+  try {
+    profileLinks = await getProfileLinks();
+  } catch {}
   return (
     <ExperienceClient
       experience={experience}
@@ -51,8 +61,9 @@ export default async function ExperiencePage() {
       education={education}
       certifications={certifications}
       achievements={achievements}
+      profileLinks={profileLinks}
       subtitle={profile?.experience_subtitle ?? null}
-      writingEnabled={profile?.writing_enabled ?? true}
+      writingEnabled={profile?.writing_enabled ?? false}
     />
   );
 }

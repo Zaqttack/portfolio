@@ -5,6 +5,8 @@ export interface Profile {
   bio: string | null;
   hero_title: string | null;
   terminal_status: string | null;
+  now_expires_at: string | null;
+  contact_cta: string | null;
   avatar_url: string | null;
   location: string | null;
   resume_url: string | null;

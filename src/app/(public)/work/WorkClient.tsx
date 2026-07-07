@@ -1,11 +1,13 @@
 'use client';
 
+import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import CmdK from '@/components/CmdK';
+import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
-import type { Project } from '@/types';
+import type { ProfileLink, Project } from '@/types';
 
 type Tag = 'all' | 'product' | 'side';
 
@@ -23,11 +25,13 @@ export default function WorkClient({
   subtitle,
   writingEnabled,
   resumeUrl,
+  profileLinks,
 }: {
   projects: Project[];
   subtitle: string | null;
   writingEnabled: boolean;
   resumeUrl: string | null;
+  profileLinks: ProfileLink[];
 }) {
   const [filter, setFilter] = useState<Tag>('all');
   const [cmdkOpen, setCmdkOpen] = useState(false);
@@ -126,6 +130,9 @@ export default function WorkClient({
           <Link
             href="/"
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
               font: '500 11px var(--font-mono), monospace',
               color: 'var(--text-3)',
               textDecoration: 'none',
@@ -134,7 +141,7 @@ export default function WorkClient({
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
           >
-            ← home
+            <ArrowLeft size={12} /> home
           </Link>
           <h1
             style={{
@@ -274,6 +281,9 @@ export default function WorkClient({
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
                           font: '500 11px var(--font-mono), monospace',
                           color: 'var(--text-2)',
                           textDecoration: 'none',
@@ -282,7 +292,7 @@ export default function WorkClient({
                         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
                       >
-                        visit ↗
+                        visit <ArrowUpRight size={11} />
                       </a>
                     )}
                   </div>
@@ -293,6 +303,7 @@ export default function WorkClient({
         </div>
       </main>
 
+      <Footer profileLinks={profileLinks} />
       <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
     </>
   );

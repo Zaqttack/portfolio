@@ -1,8 +1,10 @@
 'use client';
 
+import { ArrowLeft, ArrowUpRight, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
+import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
 import type {
@@ -12,6 +14,7 @@ import type {
   Experience,
   InvolvementOrg,
   Profile,
+  ProfileLink,
 } from '@/types';
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -32,6 +35,7 @@ export default function ExperienceClient({
   education,
   certifications,
   achievements,
+  profileLinks,
   subtitle,
   writingEnabled,
 }: {
@@ -41,6 +45,7 @@ export default function ExperienceClient({
   education: Education[];
   certifications: Certification[];
   achievements: Achievement[];
+  profileLinks: ProfileLink[];
   subtitle: string | null;
   writingEnabled: boolean;
 }) {
@@ -174,6 +179,9 @@ export default function ExperienceClient({
           <Link
             href="/"
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
               font: '500 11px var(--font-mono), monospace',
               color: 'var(--text-3)',
               textDecoration: 'none',
@@ -182,7 +190,7 @@ export default function ExperienceClient({
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
           >
-            ← home
+            <ArrowLeft size={12} /> home
           </Link>
           <div
             style={{
@@ -243,7 +251,7 @@ export default function ExperienceClient({
                 }
                 onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
               >
-                Download résumé ↓
+                Download résumé <Download size={13} />
               </a>
             )}
           </div>
@@ -593,6 +601,9 @@ export default function ExperienceClient({
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                             color: 'inherit',
                             textDecoration: 'none',
                             transition: 'color .3s',
@@ -600,7 +611,7 @@ export default function ExperienceClient({
                           onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                           onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}
                         >
-                          {award.title} ↗
+                          {award.title} <ArrowUpRight size={13} />
                         </a>
                       ) : (
                         award.title
@@ -630,6 +641,7 @@ export default function ExperienceClient({
         </section>
       </main>
 
+      <Footer profileLinks={profileLinks} />
       <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
     </>
   );
