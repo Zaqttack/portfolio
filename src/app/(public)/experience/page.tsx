@@ -1,12 +1,22 @@
 import type { Metadata } from 'next';
 import {
+  getAchievements,
   getCertifications,
   getEducation,
   getExperience,
   getInvolvement,
   getProfile,
+  getProfileLinks,
 } from '@/lib/db';
-import type { Certification, Education, Experience, InvolvementOrg, Profile } from '@/types';
+import type {
+  Achievement,
+  Certification,
+  Education,
+  Experience,
+  InvolvementOrg,
+  Profile,
+  ProfileLink,
+} from '@/types';
 import ExperienceClient from './ExperienceClient';
 
 export const dynamic = 'force-dynamic';
@@ -20,17 +30,29 @@ export default async function ExperiencePage() {
   let profile: Profile | null = null;
   let education: Education[] = [];
   let certifications: Certification[] = [];
+  let achievements: Achievement[] = [];
+  let profileLinks: ProfileLink[] = [];
   try {
-    [experience, involvement, profile, education, certifications] = await Promise.all([
-      getExperience(),
-      getInvolvement(),
-      getProfile(),
-      getEducation(),
-      getCertifications(),
-    ]);
-  } catch {
-    // DB not available — show empty state
-  }
+    experience = await getExperience();
+  } catch {}
+  try {
+    involvement = await getInvolvement();
+  } catch {}
+  try {
+    profile = await getProfile();
+  } catch {}
+  try {
+    education = await getEducation();
+  } catch {}
+  try {
+    certifications = await getCertifications();
+  } catch {}
+  try {
+    achievements = await getAchievements();
+  } catch {}
+  try {
+    profileLinks = await getProfileLinks();
+  } catch {}
   return (
     <ExperienceClient
       experience={experience}
@@ -38,8 +60,10 @@ export default async function ExperiencePage() {
       profile={profile}
       education={education}
       certifications={certifications}
+      achievements={achievements}
+      profileLinks={profileLinks}
       subtitle={profile?.experience_subtitle ?? null}
-      writingEnabled={profile?.writing_enabled ?? true}
+      writingEnabled={profile?.writing_enabled ?? false}
     />
   );
 }

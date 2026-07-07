@@ -4,7 +4,504 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type FieldType = 'text' | 'number' | 'date' | 'textarea' | 'toggle' | 'tags';
+const US_STATES = [
+  ['AL', 'Alabama'],
+  ['AK', 'Alaska'],
+  ['AZ', 'Arizona'],
+  ['AR', 'Arkansas'],
+  ['CA', 'California'],
+  ['CO', 'Colorado'],
+  ['CT', 'Connecticut'],
+  ['DE', 'Delaware'],
+  ['FL', 'Florida'],
+  ['GA', 'Georgia'],
+  ['HI', 'Hawaii'],
+  ['ID', 'Idaho'],
+  ['IL', 'Illinois'],
+  ['IN', 'Indiana'],
+  ['IA', 'Iowa'],
+  ['KS', 'Kansas'],
+  ['KY', 'Kentucky'],
+  ['LA', 'Louisiana'],
+  ['ME', 'Maine'],
+  ['MD', 'Maryland'],
+  ['MA', 'Massachusetts'],
+  ['MI', 'Michigan'],
+  ['MN', 'Minnesota'],
+  ['MS', 'Mississippi'],
+  ['MO', 'Missouri'],
+  ['MT', 'Montana'],
+  ['NE', 'Nebraska'],
+  ['NV', 'Nevada'],
+  ['NH', 'New Hampshire'],
+  ['NJ', 'New Jersey'],
+  ['NM', 'New Mexico'],
+  ['NY', 'New York'],
+  ['NC', 'North Carolina'],
+  ['ND', 'North Dakota'],
+  ['OH', 'Ohio'],
+  ['OK', 'Oklahoma'],
+  ['OR', 'Oregon'],
+  ['PA', 'Pennsylvania'],
+  ['RI', 'Rhode Island'],
+  ['SC', 'South Carolina'],
+  ['SD', 'South Dakota'],
+  ['TN', 'Tennessee'],
+  ['TX', 'Texas'],
+  ['UT', 'Utah'],
+  ['VT', 'Vermont'],
+  ['VA', 'Virginia'],
+  ['WA', 'Washington'],
+  ['WV', 'West Virginia'],
+  ['WI', 'Wisconsin'],
+  ['WY', 'Wyoming'],
+] as const;
+
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function MarkdownEditor({
+  value,
+  onChange,
+  rows,
+  placeholder,
+  readOnly,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  placeholder?: string;
+  readOnly?: boolean;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  const wrap = (before: string, after: string) => {
+    const el = ref.current;
+    if (!el || readOnly) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const sel = value.slice(start, end) || 'text';
+    const newVal = value.slice(0, start) + before + sel + after + value.slice(end);
+    onChange(newVal);
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + before.length, start + before.length + sel.length);
+    }, 0);
+  };
+
+  const linePrefix = (text: string) => {
+    const el = ref.current;
+    if (!el || readOnly) return;
+    const start = el.selectionStart;
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+    const newVal = value.slice(0, lineStart) + text + value.slice(lineStart);
+    onChange(newVal);
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + text.length, start + text.length);
+    }, 0);
+  };
+
+  const btnSt: React.CSSProperties = {
+    background: 'transparent',
+    border: '1px solid #2C3037',
+    borderRadius: '5px',
+    padding: '3px 8px',
+    color: 'var(--text-3)',
+    font: '500 11px var(--font-mono), monospace',
+    cursor: 'pointer',
+    lineHeight: 1.4,
+  };
+
+  const tools = [
+    { label: 'H1', fn: () => linePrefix('# ') },
+    { label: 'H2', fn: () => linePrefix('## ') },
+    { label: 'H3', fn: () => linePrefix('### ') },
+    { label: '**B**', fn: () => wrap('**', '**') },
+    { label: '_I_', fn: () => wrap('_', '_') },
+    { label: 'link', fn: () => wrap('[', '](https://)') },
+    { label: '`code`', fn: () => wrap('`', '`') },
+    { label: '```', fn: () => wrap('\n```\n', '\n```\n') },
+    { label: '• list', fn: () => linePrefix('- ') },
+    { label: '1. list', fn: () => linePrefix('1. ') },
+    { label: '> quote', fn: () => linePrefix('> ') },
+    {
+      label: '---',
+      fn: () => {
+        const el = ref.current;
+        if (!el) return;
+        const s = el.selectionStart;
+        const nv = value.slice(0, s) + '\n---\n' + value.slice(s);
+        onChange(nv);
+        setTimeout(() => {
+          el.focus();
+          el.setSelectionRange(s + 5, s + 5);
+        }, 0);
+      },
+    },
+  ];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+        {tools.map((t) => (
+          <button
+            key={t.label}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              t.fn();
+            }}
+            style={btnSt}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent)';
+              e.currentTarget.style.color = 'var(--accent)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#2C3037';
+              e.currentTarget.style.color = 'var(--text-3)';
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows || 10}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        style={{
+          width: '100%',
+          background: '#0E0F12',
+          border: '1px solid #2C3037',
+          borderRadius: '9px',
+          padding: '11px 13px',
+          color: 'var(--text-1)',
+          font: '500 13px var(--font-mono), monospace',
+          lineHeight: 1.7,
+          resize: 'vertical',
+          transition: 'border-color .2s',
+          outline: 'none',
+        }}
+        onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+        onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+      />
+    </div>
+  );
+}
+
+type RoleEntry = { role: string; start: string; end: string };
+
+function RolesEditor({
+  value,
+  onChange,
+  readOnly,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  readOnly?: boolean;
+}) {
+  const parse = (s: string): RoleEntry[] => {
+    const lines = s
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (lines.length === 0) return [{ role: '', start: '', end: '' }];
+    return lines.map((line) => {
+      const [role, start, end] = line.split('|').map((x) => x.trim());
+      return { role: role ?? '', start: start ?? '', end: end ?? '' };
+    });
+  };
+
+  const [entries, setEntries] = useState<RoleEntry[]>(() => parse(value));
+
+  const commit = (next: RoleEntry[]) => {
+    setEntries(next);
+    onChange(
+      next
+        .filter((e) => e.role.trim())
+        .map((e) => `${e.role.trim()} | ${e.start} | ${e.end}`)
+        .join('\n'),
+    );
+  };
+
+  const updateEntry = (i: number, field: keyof RoleEntry, v: string) => {
+    commit(entries.map((e, idx) => (idx === i ? { ...e, [field]: v } : e)));
+  };
+
+  const addRow = () => commit([...entries, { role: '', start: '', end: '' }]);
+
+  const removeRow = (i: number) => {
+    const next = entries.filter((_, idx) => idx !== i);
+    commit(next.length === 0 ? [{ role: '', start: '', end: '' }] : next);
+  };
+
+  const cellStyle: React.CSSProperties = {
+    background: '#0E0F12',
+    border: '1px solid #2C3037',
+    borderRadius: '7px',
+    padding: '8px 11px',
+    color: 'var(--text-1)',
+    font: '500 13px var(--font-space), sans-serif',
+    outline: 'none',
+    transition: 'border-color .2s',
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 140px 140px 32px',
+          gap: '6px',
+          font: '500 9.5px var(--font-mono), monospace',
+          letterSpacing: '.06em',
+          color: 'var(--text-4)',
+          paddingLeft: '2px',
+          marginBottom: '2px',
+        }}
+      >
+        <span>ROLE TITLE</span>
+        <span>START (YYYY-MM)</span>
+        <span>END (YYYY-MM)</span>
+        <span />
+      </div>
+      {entries.map((e, i) => (
+        <div
+          key={i}
+          style={{ display: 'grid', gridTemplateColumns: '1fr 140px 140px 32px', gap: '6px' }}
+        >
+          <input
+            value={e.role}
+            onChange={(ev) => updateEntry(i, 'role', ev.target.value)}
+            placeholder="President"
+            readOnly={readOnly}
+            style={cellStyle}
+            onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
+            onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
+          />
+          <input
+            type="month"
+            value={e.start}
+            onChange={(ev) => updateEntry(i, 'start', ev.target.value)}
+            readOnly={readOnly}
+            style={{ ...cellStyle, colorScheme: 'dark' }}
+            onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
+            onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
+          />
+          <input
+            type="month"
+            value={e.end}
+            onChange={(ev) => updateEntry(i, 'end', ev.target.value)}
+            placeholder="blank = present"
+            readOnly={readOnly}
+            style={{ ...cellStyle, colorScheme: 'dark' }}
+            onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
+            onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
+          />
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => removeRow(i)}
+              style={{
+                background: 'transparent',
+                border: '1px solid #2C3037',
+                borderRadius: '7px',
+                color: 'var(--text-4)',
+                font: '500 12px var(--font-mono), monospace',
+                cursor: 'pointer',
+                lineHeight: 1,
+                transition: 'border-color .2s, color .2s',
+              }}
+              onMouseEnter={(ev) => {
+                ev.currentTarget.style.borderColor = '#E5534B';
+                ev.currentTarget.style.color = '#E5534B';
+              }}
+              onMouseLeave={(ev) => {
+                ev.currentTarget.style.borderColor = '#2C3037';
+                ev.currentTarget.style.color = 'var(--text-4)';
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      ))}
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={addRow}
+          style={{
+            alignSelf: 'flex-start',
+            background: 'transparent',
+            border: '1px solid #2C3037',
+            borderRadius: '7px',
+            padding: '6px 13px',
+            color: 'var(--text-3)',
+            font: '500 11.5px var(--font-space), sans-serif',
+            cursor: 'pointer',
+            marginTop: '2px',
+            transition: 'border-color .2s, color .2s',
+          }}
+          onMouseEnter={(ev) => {
+            ev.currentTarget.style.borderColor = 'var(--accent)';
+            ev.currentTarget.style.color = 'var(--accent)';
+          }}
+          onMouseLeave={(ev) => {
+            ev.currentTarget.style.borderColor = '#2C3037';
+            ev.currentTarget.style.color = 'var(--text-3)';
+          }}
+        >
+          + Add role
+        </button>
+      )}
+    </div>
+  );
+}
+
+function BulletsEditor({
+  value,
+  onChange,
+  placeholder,
+  readOnly,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  readOnly?: boolean;
+}) {
+  const parse = (s: string): string[] => {
+    const lines = s
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    return lines.length === 0 ? [''] : lines;
+  };
+
+  const [lines, setLines] = useState<string[]>(() => parse(value));
+
+  const commit = (next: string[]) => {
+    setLines(next);
+    onChange(next.filter((l) => l.trim()).join('\n'));
+  };
+
+  const updateLine = (i: number, v: string) => {
+    commit(lines.map((l, idx) => (idx === i ? v : l)));
+  };
+
+  const addRow = () => commit([...lines, '']);
+
+  const removeLine = (i: number) => {
+    const next = lines.filter((_, idx) => idx !== i);
+    commit(next.length === 0 ? [''] : next);
+  };
+
+  const cellStyle: React.CSSProperties = {
+    flex: 1,
+    background: '#0E0F12',
+    border: '1px solid #2C3037',
+    borderRadius: '7px',
+    padding: '8px 11px',
+    color: 'var(--text-1)',
+    font: '500 13px var(--font-space), sans-serif',
+    outline: 'none',
+    transition: 'border-color .2s',
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {lines.map((l, i) => (
+        <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <input
+            value={l}
+            onChange={(e) => updateLine(i, e.target.value)}
+            placeholder={placeholder ?? 'Achievement'}
+            readOnly={readOnly}
+            style={cellStyle}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+          />
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => removeLine(i)}
+              style={{
+                background: 'transparent',
+                border: '1px solid #2C3037',
+                borderRadius: '7px',
+                padding: '6px 9px',
+                color: 'var(--text-4)',
+                font: '500 12px var(--font-mono), monospace',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'border-color .2s, color .2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#E5534B';
+                e.currentTarget.style.color = '#E5534B';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#2C3037';
+                e.currentTarget.style.color = 'var(--text-4)';
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      ))}
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={addRow}
+          style={{
+            alignSelf: 'flex-start',
+            background: 'transparent',
+            border: '1px solid #2C3037',
+            borderRadius: '7px',
+            padding: '6px 13px',
+            color: 'var(--text-3)',
+            font: '500 11.5px var(--font-space), sans-serif',
+            cursor: 'pointer',
+            marginTop: '2px',
+            transition: 'border-color .2s, color .2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--accent)';
+            e.currentTarget.style.color = 'var(--accent)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#2C3037';
+            e.currentTarget.style.color = 'var(--text-3)';
+          }}
+        >
+          + Add achievement
+        </button>
+      )}
+    </div>
+  );
+}
+
+type FieldType =
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'datetime'
+  | 'textarea'
+  | 'markdown'
+  | 'toggle'
+  | 'tags'
+  | 'location'
+  | 'roles'
+  | 'bullets';
 
 interface FieldDef {
   key: string;
@@ -15,6 +512,7 @@ interface FieldDef {
   help?: string;
   onLabel?: string;
   offLabel?: string;
+  defaultValue?: unknown;
 }
 
 interface PageSettingsConfig {
@@ -71,7 +569,7 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Slug',
         type: 'text',
         placeholder: 'project-slug',
-        help: 'URL-safe identifier used in the project detail URL (e.g. /work/project-slug).',
+        help: 'Auto-generated from the title. Override to set a custom URL path (/work/your-slug).',
       },
       {
         key: 'summary',
@@ -84,7 +582,7 @@ const SCHEMAS: Record<string, Schema> = {
       {
         key: 'body',
         label: 'Body',
-        type: 'textarea',
+        type: 'markdown',
         rows: 10,
         placeholder: 'Full case study…',
         help: 'Markdown. Rendered on the full project detail page.',
@@ -109,12 +607,6 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'https://…',
         help: 'Optional link to the deployed/live version.',
-      },
-      {
-        key: 'featured',
-        label: 'Featured',
-        type: 'toggle',
-        help: 'Featured projects appear in the home page teaser.',
       },
     ],
   },
@@ -160,7 +652,7 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Slug',
         type: 'text',
         placeholder: 'post-slug',
-        help: 'URL-safe identifier used in the post URL (e.g. /writing/post-slug).',
+        help: 'Auto-generated from the title. Override to set a custom URL path (/writing/your-slug).',
       },
       {
         key: 'excerpt',
@@ -173,7 +665,7 @@ const SCHEMAS: Record<string, Schema> = {
       {
         key: 'body',
         label: 'Body',
-        type: 'textarea',
+        type: 'markdown',
         rows: 14,
         placeholder: 'Post content…',
         help: 'Markdown. Rendered on the full post page.',
@@ -189,7 +681,7 @@ const SCHEMAS: Record<string, Schema> = {
         key: 'published_at',
         label: 'Published date',
         type: 'date',
-        help: 'Sets the date shown on the post. Posts sort newest-first by this date.',
+        help: 'The date displayed on the post and used for sort order. Visibility is controlled by Status — a post must be Published to appear publicly.',
       },
     ],
   },
@@ -250,10 +742,9 @@ const SCHEMAS: Record<string, Schema> = {
       {
         key: '_bullets',
         label: 'Achievements',
-        type: 'textarea',
-        rows: 6,
-        placeholder: 'Achievement 1\nAchievement 2',
-        help: 'One achievement per line. Each line becomes a bullet on the experience page.',
+        type: 'bullets',
+        placeholder: 'What you built, shipped, or drove',
+        help: 'Each entry becomes a bullet on the experience page.',
       },
     ],
   },
@@ -315,10 +806,8 @@ const SCHEMAS: Record<string, Schema> = {
       {
         key: '_roles',
         label: 'Roles',
-        type: 'textarea',
-        rows: 4,
-        placeholder: 'President | 2023-04 |\nMember | 2022-01 | 2023-03',
-        help: 'One role per line: Role Title | Start (YYYY-MM) | End (YYYY-MM, blank = present). Most recent role shows on the experience page.',
+        type: 'roles',
+        help: 'Your role history at this org. Leave end blank for current/ongoing. Most recent role shows on the experience page.',
       },
     ],
   },
@@ -339,13 +828,27 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'Your full name shown in the site header and meta tags.',
       },
       {
+        key: 'hero_title',
+        label: 'Hero Title',
+        type: 'textarea',
+        rows: 2,
+        placeholder: "I'm {{first_name}}. I build precise, well-architected software.",
+        help: 'The large heading on the home page. Use {{first_name}} as a token for your first name.',
+      },
+      {
         key: 'tagline',
         label: 'Now',
         type: 'textarea',
         rows: 2,
         placeholder:
           'Building payments infra at SWIVEL, running ACM SA, reading too much about consensus protocols.',
-        help: 'Shown in the "// now" blurb on the home page hero.',
+        help: 'Shown in the "// now" blurb on the home page hero. Hidden if empty or after the expiry date.',
+      },
+      {
+        key: 'now_expires_at',
+        label: 'Now — expiry',
+        type: 'datetime',
+        help: 'Optional. The "// now" blurb hides after this date and time. Leave blank to show indefinitely.',
       },
       {
         key: 'bio',
@@ -356,11 +859,25 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'A paragraph about you shown in the home page hero.',
       },
       {
+        key: 'terminal_status',
+        label: 'Terminal Status',
+        type: 'text',
+        placeholder: 'heads-down · building',
+        help: 'The status text shown in the home page terminal when not open to work.',
+      },
+      {
+        key: 'contact_cta',
+        label: 'Contact CTA',
+        type: 'textarea',
+        rows: 2,
+        placeholder: "Let's build something — or just come argue about type systems at a meetup.",
+        help: 'The heading in the Contact section at the bottom of the home page.',
+      },
+      {
         key: 'location',
         label: 'Location',
-        type: 'text',
-        placeholder: 'San Antonio, TX',
-        help: 'City shown in the left rail.',
+        type: 'location',
+        help: 'Shown in the left rail hero label (e.g. "SAT · TX").',
       },
       {
         key: 'email',
@@ -368,27 +885,6 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'zaquariah@gmail.com',
         help: 'Shown in the contact section and used for the mailto link.',
-      },
-      {
-        key: 'github',
-        label: 'GitHub URL',
-        type: 'text',
-        placeholder: 'https://github.com/…',
-        help: 'Full URL to your GitHub profile.',
-      },
-      {
-        key: 'linkedin',
-        label: 'LinkedIn URL',
-        type: 'text',
-        placeholder: 'https://linkedin.com/in/…',
-        help: 'Full URL to your LinkedIn profile.',
-      },
-      {
-        key: 'twitter',
-        label: 'Twitter / X URL',
-        type: 'text',
-        placeholder: 'https://twitter.com/…',
-        help: 'Full URL to your Twitter/X profile.',
       },
       {
         key: 'resume_url',
@@ -402,6 +898,30 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Open to work',
         type: 'toggle',
         help: 'Shows a pulsing indicator in the left rail when enabled.',
+      },
+    ],
+  },
+  profile_links: {
+    label: 'Links',
+    singular: 'link',
+    table: 'profile_links',
+    colName: 'LABEL',
+    primaryKey: 'label',
+    secondaryKey: 'url',
+    fields: [
+      {
+        key: 'label',
+        label: 'Label',
+        type: 'text',
+        placeholder: 'GitHub',
+        help: 'Display name shown next to the link.',
+      },
+      {
+        key: 'url',
+        label: 'URL',
+        type: 'text',
+        placeholder: 'https://github.com/…',
+        help: 'Full URL the link points to.',
       },
     ],
   },
@@ -515,6 +1035,7 @@ const SCHEMAS: Record<string, Schema> = {
         key: '_visibility_public',
         label: 'Public',
         type: 'toggle',
+        defaultValue: true,
         help: 'Show this award on the public site.',
       },
     ],
@@ -565,11 +1086,28 @@ function statusPill(val: string | boolean | null | undefined) {
   return { fg: '#9A9EA6', bg: '#17181C', border: '#2C3037' };
 }
 
-function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
+type ToastVariant = 'success' | 'error' | 'info';
+
+const TOAST_STYLES: Record<ToastVariant, { border: string; color: string; dot: string }> = {
+  success: { border: '#1a3d23', color: '#7EE787', dot: '#7EE787' },
+  error: { border: '#3d1a1a', color: '#E5534B', dot: '#E5534B' },
+  info: { border: '#2C3037', color: 'var(--text-1)', dot: 'var(--text-4)' },
+};
+
+function Toast({
+  msg,
+  variant,
+  onDone,
+}: {
+  msg: string;
+  variant: ToastVariant;
+  onDone: () => void;
+}) {
   useEffect(() => {
     const t = setTimeout(onDone, 2600);
     return () => clearTimeout(t);
   }, [onDone]);
+  const s = TOAST_STYLES[variant];
   return (
     <div
       style={{
@@ -578,17 +1116,29 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
         left: '50%',
         zIndex: 99,
         background: '#17181C',
-        border: '1px solid #2C3037',
+        border: `1px solid ${s.border}`,
         borderRadius: '10px',
         padding: '11px 20px',
         font: '500 12.5px var(--font-space), sans-serif',
-        color: 'var(--text-1)',
+        color: s.color,
         boxShadow: '0 12px 32px rgba(0,0,0,.5)',
         animation: 'toastin .25s ease',
         whiteSpace: 'nowrap',
         transform: 'translateX(-50%)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
       }}
     >
+      <span
+        style={{
+          width: '7px',
+          height: '7px',
+          borderRadius: '50%',
+          background: s.dot,
+          flexShrink: 0,
+        }}
+      />
       {msg}
     </div>
   );
@@ -601,6 +1151,7 @@ const SECTION_GROUPS = [
     tabs: [
       { key: 'profile' as const, label: 'About' },
       { key: 'skills' as const, label: 'Skills' },
+      { key: 'profile_links' as const, label: 'Links' },
     ],
   },
   {
@@ -640,20 +1191,25 @@ export default function AdminPage() {
   const [pageSettingsForm, setPageSettingsForm] = useState<Record<string, unknown>>({});
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState<{ msg: string; variant: ToastVariant } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: unknown; label: string } | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
   const [isPageSettingsDirty, setIsPageSettingsDirty] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const dragIdx = useRef<number | null>(null);
   const pendingNavRef = useRef<(() => void) | null>(null);
+  const autoGenSlugRef = useRef('');
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
   );
 
-  const showToast = useCallback((msg: string) => setToast(msg), []);
+  const showToast = useCallback(
+    (msg: string, variant: ToastVariant = 'info') => setToast({ msg, variant }),
+    [],
+  );
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -700,12 +1256,12 @@ export default function AdminPage() {
     });
     const { error } = await supabase.from('profile').update(payload).eq('id', profileData.id);
     if (error) {
-      showToast('Save failed.');
+      showToast(`Save failed: ${error.message}`, 'error');
       return;
     }
     setProfileData((d) => ({ ...d, ...payload }));
     setIsPageSettingsDirty(false);
-    showToast('Page settings saved.');
+    showToast('Page settings saved.', 'success');
   }, [profileData, section, pageSettingsForm, supabase, showToast]);
 
   const loadSection = useCallback(
@@ -818,9 +1374,17 @@ export default function AdminPage() {
 
   const startNew = () => {
     setIsDirty(false);
+    autoGenSlugRef.current = '';
     const blank: Record<string, unknown> = {};
     schema.fields.forEach((f) => {
-      blank[f.key] = f.type === 'toggle' ? false : f.type === 'tags' ? [] : '';
+      blank[f.key] =
+        f.defaultValue !== undefined
+          ? f.defaultValue
+          : f.type === 'toggle'
+            ? false
+            : f.type === 'tags'
+              ? []
+              : '';
     });
     setEditing(blank);
     setView('form');
@@ -832,14 +1396,28 @@ export default function AdminPage() {
     setView('form');
   };
 
+  const toggleFeatured = async (row: Record<string, unknown>) => {
+    const newVal = !row.featured;
+    const { error } = await supabase.from('projects').update({ featured: newVal }).eq('id', row.id);
+    if (error) {
+      showToast('Failed to update.', 'error');
+      return;
+    }
+    setLists((d) => ({
+      ...d,
+      projects: d.projects.map((r) => (r.id === row.id ? { ...r, featured: newVal } : r)),
+    }));
+    showToast(newVal ? 'Marked as featured.' : 'Removed from featured.', 'success');
+  };
+
   const deleteRow = async (id: unknown) => {
     const { error } = await supabase.from(schema.table).delete().eq('id', id);
     if (error) {
-      showToast('Delete failed.');
+      showToast('Delete failed.', 'error');
       return;
     }
     setLists((d) => ({ ...d, [section]: d[section].filter((r) => r.id !== id) }));
-    showToast('Deleted.');
+    showToast('Deleted.', 'success');
   };
 
   const saveWithStatus = async (status?: string) => {
@@ -849,25 +1427,32 @@ export default function AdminPage() {
       const payload = { ...editing } as Record<string, unknown>;
       delete payload.id;
       delete payload.updated_at;
+      for (const f of schema.fields) {
+        if ((f.type === 'date' || f.type === 'datetime') && payload[f.key] === '') {
+          payload[f.key] = null;
+        }
+      }
       if (profileData.id) {
         const { error } = await supabase
           .from(schema.table)
           .update(payload)
           .eq('id', profileData.id);
         if (error) {
-          showToast('Save failed.');
+          console.error('Save failed:', error);
+          showToast(`Save failed: ${error.message}`, 'error');
           return;
         }
       } else {
         const { error } = await supabase.from(schema.table).insert(payload);
         if (error) {
-          showToast('Save failed.');
+          console.error('Save failed:', error);
+          showToast(`Save failed: ${error.message}`, 'error');
           return;
         }
       }
       await loadSection(section);
       setIsDirty(false);
-      showToast('Profile saved.');
+      showToast('Profile saved.', 'success');
       return;
     }
 
@@ -892,7 +1477,7 @@ export default function AdminPage() {
       try {
         payload.raw_payload = JSON.parse(payload.raw_payload);
       } catch {
-        showToast('Invalid JSON in payload.');
+        showToast('Invalid JSON in payload.', 'error');
         return;
       }
     }
@@ -900,6 +1485,13 @@ export default function AdminPage() {
     // Assign next display_order for new records
     if (!payload.id && schema.table !== 'import_staging') {
       payload.display_order = rows.length;
+    }
+
+    // Coerce empty strings to null for date/datetime fields so Postgres doesn't choke on ''
+    for (const f of schema.fields) {
+      if ((f.type === 'date' || f.type === 'datetime') && payload[f.key] === '') {
+        payload[f.key] = null;
+      }
     }
 
     // skills: default source to 'self'
@@ -918,14 +1510,16 @@ export default function AdminPage() {
         .select('id')
         .single();
       if (error) {
-        showToast('Save failed.');
+        console.error('Save failed:', error);
+        showToast(`Save failed: ${error.message}`, 'error');
         return;
       }
       savedId = data.id;
     } else {
       const { error } = await supabase.from(schema.table).update(payload).eq('id', payload.id);
       if (error) {
-        showToast('Save failed.');
+        console.error('Save failed:', error);
+        showToast(`Save failed: ${error.message}`, 'error');
         return;
       }
     }
@@ -980,6 +1574,7 @@ export default function AdminPage() {
     setEditing(null);
     showToast(
       status === 'published' ? 'Published.' : status === 'draft' ? 'Saved as draft.' : 'Saved.',
+      'success',
     );
   };
 
@@ -1661,6 +2256,36 @@ export default function AdminPage() {
                         onClick={(e) => e.stopPropagation()}
                         onDragStart={(e) => e.stopPropagation()}
                       >
+                        {section === 'projects' && (
+                          <button
+                            onClick={() => toggleFeatured(row)}
+                            title={row.featured ? 'Remove from featured' : 'Mark as featured'}
+                            style={{
+                              background: 'transparent',
+                              border: `1px solid ${row.featured ? '#7a4f1e' : '#2C3037'}`,
+                              borderRadius: '7px',
+                              padding: '6px 9px',
+                              color: row.featured ? '#FFA94D' : 'var(--text-4)',
+                              font: '500 11px var(--font-mono), monospace',
+                              cursor: 'pointer',
+                              transition: 'border-color .2s, color .2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#7a4f1e';
+                              e.currentTarget.style.color = '#FFA94D';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = row.featured
+                                ? '#7a4f1e'
+                                : '#2C3037';
+                              e.currentTarget.style.color = row.featured
+                                ? '#FFA94D'
+                                : 'var(--text-4)';
+                            }}
+                          >
+                            ★
+                          </button>
+                        )}
                         <button
                           onClick={() => startEdit(row)}
                           style={{
@@ -1686,7 +2311,12 @@ export default function AdminPage() {
                         </button>
                         {!isReadOnly && (
                           <button
-                            onClick={() => deleteRow(row.id)}
+                            onClick={() =>
+                              setDeleteConfirm({
+                                id: row.id,
+                                label: String(row[schema.primaryKey] ?? row.id ?? ''),
+                              })
+                            }
                             style={{
                               background: 'transparent',
                               border: '1px solid #2C3037',
@@ -1786,7 +2416,20 @@ export default function AdminPage() {
                   {f.type === 'text' && (
                     <input
                       value={String(val ?? '')}
-                      onChange={(e) => update(e.target.value)}
+                      onChange={(e) => {
+                        update(e.target.value);
+                        if (
+                          f.key === 'title' &&
+                          !editing.id &&
+                          (section === 'projects' || section === 'posts')
+                        ) {
+                          const gen = slugify(e.target.value);
+                          if (!editing.slug || editing.slug === autoGenSlugRef.current) {
+                            autoGenSlugRef.current = gen;
+                            setField('slug', gen);
+                          }
+                        }
+                      }}
                       placeholder={f.placeholder}
                       readOnly={isReadOnly}
                       style={inputStyle}
@@ -1813,7 +2456,7 @@ export default function AdminPage() {
                   {f.type === 'date' && (
                     <input
                       type="date"
-                      value={String(val ?? '')}
+                      value={String(val ?? '').slice(0, 10)}
                       onChange={(e) => update(e.target.value)}
                       readOnly={isReadOnly}
                       style={{
@@ -1824,6 +2467,39 @@ export default function AdminPage() {
                       }}
                       onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
                       onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                    />
+                  )}
+                  {f.type === 'datetime' && (
+                    <input
+                      type="datetime-local"
+                      value={String(val ?? '').slice(0, 16)}
+                      onChange={(e) => update(e.target.value || null)}
+                      readOnly={isReadOnly}
+                      style={{
+                        ...inputStyle,
+                        width: 'auto',
+                        font: '500 13px var(--font-mono), monospace',
+                        colorScheme: 'dark',
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                    />
+                  )}
+                  {f.type === 'roles' && (
+                    <RolesEditor
+                      key={String(editing?.id ?? 'new')}
+                      value={String(val ?? '')}
+                      onChange={update}
+                      readOnly={isReadOnly}
+                    />
+                  )}
+                  {f.type === 'bullets' && (
+                    <BulletsEditor
+                      key={String(editing?.id ?? 'new')}
+                      value={String(val ?? '')}
+                      onChange={update}
+                      placeholder={f.placeholder}
+                      readOnly={isReadOnly}
                     />
                   )}
                   {f.type === 'textarea' && (
@@ -1838,6 +2514,59 @@ export default function AdminPage() {
                       onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                     />
                   )}
+                  {f.type === 'markdown' && (
+                    <MarkdownEditor
+                      value={String(val ?? '')}
+                      onChange={update}
+                      rows={f.rows}
+                      placeholder={f.placeholder}
+                      readOnly={isReadOnly}
+                    />
+                  )}
+                  {f.type === 'location' &&
+                    (() => {
+                      const parts = String(val ?? '').split(' · ');
+                      const city = parts[0] ?? '';
+                      const state = parts[1] ?? '';
+                      const compose = (c: string, s: string) => (s ? `${c} · ${s}` : c);
+                      return (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input
+                            value={city}
+                            onChange={(e) => update(compose(e.target.value, state))}
+                            placeholder="City abbreviation (e.g. SAT)"
+                            readOnly={isReadOnly}
+                            style={{
+                              ...inputStyle,
+                              width: '180px',
+                              font: '500 13px var(--font-mono), monospace',
+                            }}
+                            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                          />
+                          <select
+                            value={state}
+                            onChange={(e) => update(compose(city, e.target.value))}
+                            disabled={isReadOnly}
+                            style={{
+                              ...inputStyle,
+                              width: '200px',
+                              colorScheme: 'dark',
+                              cursor: 'pointer',
+                            }}
+                            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                          >
+                            <option value="">— State —</option>
+                            {US_STATES.map(([abbr, name]) => (
+                              <option key={abbr} value={abbr}>
+                                {abbr} — {name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })()}
                   {f.type === 'toggle' && (
                     <button
                       onClick={() => !isReadOnly && update(!val)}
@@ -2008,7 +2737,91 @@ export default function AdminPage() {
         )}
       </main>
 
-      {toast && <Toast msg={toast} onDone={() => setToast('')} />}
+      {toast && <Toast msg={toast.msg} variant={toast.variant} onDone={() => setToast(null)} />}
+
+      {deleteConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 200,
+            background: 'rgba(0,0,0,.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setDeleteConfirm(null)}
+        >
+          <div
+            style={{
+              background: '#0E0F12',
+              border: '1px solid #2C3037',
+              borderRadius: '14px',
+              padding: '28px 32px',
+              maxWidth: '400px',
+              width: '100%',
+              boxShadow: '0 24px 64px rgba(0,0,0,.7)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                font: '600 16px var(--font-space), sans-serif',
+                color: 'var(--text-1)',
+                marginBottom: '8px',
+              }}
+            >
+              Delete {schema.singular}?
+            </div>
+            <div
+              style={{
+                fontSize: '13px',
+                color: 'var(--text-3)',
+                marginBottom: '24px',
+                lineHeight: 1.55,
+              }}
+            >
+              This will permanently delete{' '}
+              <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{deleteConfirm.label}</span>
+              . This action cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #2C3037',
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  color: 'var(--text-2)',
+                  font: '500 13px var(--font-space), sans-serif',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteRow(deleteConfirm.id);
+                  setDeleteConfirm(null);
+                }}
+                style={{
+                  background: '#3d1a1a',
+                  border: '1px solid #5c2a2a',
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  color: '#E5534B',
+                  font: '600 13px var(--font-space), sans-serif',
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showUnsavedModal && (
         <div

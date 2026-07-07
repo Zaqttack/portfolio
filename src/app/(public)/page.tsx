@@ -3,10 +3,19 @@ import {
   getInvolvement,
   getPosts,
   getProfile,
+  getProfileLinks,
   getProjects,
   getSkills,
 } from '@/lib/db';
-import type { Experience, InvolvementOrg, Post, Profile, Project, Skill } from '@/types';
+import type {
+  Experience,
+  InvolvementOrg,
+  Post,
+  Profile,
+  ProfileLink,
+  Project,
+  Skill,
+} from '@/types';
 import HomeClient from './HomeClient';
 
 export const dynamic = 'force-dynamic';
@@ -19,14 +28,16 @@ export default async function HomePage() {
   let experience: Experience[] = [];
   let involvement: InvolvementOrg[] = [];
   let skills: Skill[] = [];
+  let profileLinks: ProfileLink[] = [];
   try {
-    [profile, projects, posts, experience, involvement, skills] = await Promise.all([
+    [profile, projects, posts, experience, involvement, skills, profileLinks] = await Promise.all([
       getProfile().catch(() => null),
       getProjects().catch((): Project[] => []),
       getPosts().catch((): Post[] => []),
       getExperience().catch((): Experience[] => []),
       getInvolvement().catch((): InvolvementOrg[] => []),
       getSkills().catch((): Skill[] => []),
+      getProfileLinks().catch((): ProfileLink[] => []),
     ]);
   } catch {
     // DB not available — show empty state
@@ -39,6 +50,7 @@ export default async function HomePage() {
       experience={experience}
       involvement={involvement}
       skills={skills}
+      profileLinks={profileLinks}
     />
   );
 }

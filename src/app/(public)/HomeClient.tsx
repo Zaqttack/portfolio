@@ -1,15 +1,24 @@
 'use client';
 
+import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
-import type { Experience, InvolvementOrg, Post, Profile, Project, Skill } from '@/types';
+import type {
+  Experience,
+  InvolvementOrg,
+  Post,
+  Profile,
+  ProfileLink,
+  Project,
+  Skill,
+} from '@/types';
 
-const SECTIONS = ['intro', 'skills', 'projects', 'writing', 'experience', 'contact'] as const;
-type Section = (typeof SECTIONS)[number];
+const ALL_SECTIONS = ['intro', 'skills', 'projects', 'writing', 'experience', 'contact'] as const;
+type Section = (typeof ALL_SECTIONS)[number];
 
 const RAIL_LABELS: Record<Section, string> = {
   intro: 'intro',
@@ -19,6 +28,10 @@ const RAIL_LABELS: Record<Section, string> = {
   experience: 'exp',
   contact: 'hi',
 };
+
+function applyTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
+}
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -42,6 +55,7 @@ export default function HomeClient({
   experience,
   involvement,
   skills,
+  profileLinks,
 }: {
   profile: Profile | null;
   projects: Project[];
@@ -49,12 +63,21 @@ export default function HomeClient({
   experience: Experience[];
   involvement: InvolvementOrg[];
   skills: Skill[];
+  profileLinks: ProfileLink[];
 }) {
   const openToWork = profile?.open_to_work ?? false;
+  const writingEnabled = profile?.writing_enabled ?? true;
   const firstName = profile?.name?.split(' ')[0] ?? 'Zaquariah';
   const latestRole = experience[0]?.role ?? null;
   const heroLabel =
     [latestRole, profile?.location].filter(Boolean).join(' — ') || 'SOFTWARE ENGINEER';
+  const heroTitle = applyTemplate(
+    profile?.hero_title ?? "I'm {{first_name}}. I build precise, well-architected software.",
+    { first_name: firstName },
+  );
+  const SECTIONS = writingEnabled
+    ? ALL_SECTIONS
+    : (ALL_SECTIONS.filter((s) => s !== 'writing') as Section[]);
   const [activeSection, setActiveSection] = useState<Section>('intro');
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const termRef = useRef<HTMLDivElement>(null);
@@ -201,19 +224,71 @@ export default function HomeClient({
     if (!out) return;
     out.innerHTML = '';
     const accent = 'var(--accent)',
-      txt = '#C7CBD1';
-    const seq = [
+      txt = '#C7CBD1',
+      dim = 'var(--text-4)';
+
+    const projSlugs = projects
+      .slice(0, 3)
+      .map((p) =>
+        p.title
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+          .slice(0, 14),
+      )
+      .join('  ');
+    const projMore = projects.length > 3 ? `  (+${projects.length - 3})` : '';
+
+    const stackLine = skills
+      .slice(0, 6)
+      .map((s) => s.name.toLowerCase())
+      .join('  ');
+
+    type SeqItem = {
+      t: string;
+      color?: string;
+      prompt?: true;
+      pre?: string;
+      chunk?: true;
+      dim?: true;
+    };
+
+    const seq: SeqItem[] = [
       { t: 'whoami', prompt: true },
       {
         t: `\n${firstName.toLowerCase()}${latestRole ? ` — ${latestRole.toLowerCase()}` : ''}\n`,
         color: txt,
       },
       { t: 'status', prompt: true, pre: '\n' },
-      openToWork
-        ? { t: '\nopen to work ', color: txt }
-        : { t: '\nheads-down · building ', color: txt },
+      {
+        t: `\n${openToWork ? 'open to work' : (profile?.terminal_status ?? 'heads-down · building')} `,
+        color: txt,
+      },
       { t: openToWork ? '✓' : '◆', color: accent, chunk: true },
+      ...(projects.length > 0
+        ? ([
+            { t: 'ls ./projects', prompt: true, pre: '\n\n' },
+            {
+              t: `\n${projects.length} ${projects.length === 1 ? 'project' : 'projects'}  `,
+              color: dim,
+            },
+            { t: projSlugs, color: txt, chunk: true },
+            ...(projMore ? [{ t: projMore, color: dim, chunk: true }] : []),
+            { t: '\n', color: txt, chunk: true },
+          ] as SeqItem[])
+        : []),
+      ...(stackLine
+        ? ([
+            {
+              t: 'stack',
+              prompt: true,
+              pre: projects.length > 0 ? '\n' : '\n\n',
+            },
+            { t: `\n${stackLine}\n`, color: txt },
+          ] as SeqItem[])
+        : []),
     ];
+
     let si = 0;
     let tt: ReturnType<typeof setTimeout>;
     const promptSpan = () => {
@@ -236,14 +311,14 @@ export default function HomeClient({
     };
     const run = () => {
       if (si >= seq.length) return;
-      const item = seq[si++] as any;
+      const item = seq[si++];
       if (item.pre) out.appendChild(document.createTextNode(item.pre));
       if (item.chunk) {
         const s = document.createElement('span');
-        s.style.color = item.color;
+        s.style.color = item.color ?? txt;
         s.textContent = item.t;
         out.appendChild(s);
-        tt = setTimeout(run, 120);
+        tt = setTimeout(run, 80);
         return;
       }
       if (item.prompt) {
@@ -251,7 +326,7 @@ export default function HomeClient({
         typeStr(item.t, txt, run);
       } else {
         const s = document.createElement('span');
-        s.style.color = item.color;
+        s.style.color = item.color ?? txt;
         s.textContent = item.t;
         out.appendChild(s);
         tt = setTimeout(run, 200);
@@ -259,7 +334,7 @@ export default function HomeClient({
     };
     tt = setTimeout(run, 550);
     return () => clearTimeout(tt);
-  }, [firstName, openToWork, latestRole]);
+  }, [firstName, openToWork, latestRole, profile?.terminal_status, projects, skills]);
 
   const railItems = SECTIONS.map((id) => ({
     href: `#${id}`,
@@ -358,7 +433,7 @@ export default function HomeClient({
                 } as React.CSSProperties
               }
             >
-              I&apos;m {firstName}. I build precise, well-architected software.
+              {heroTitle}
             </h1>
             <p
               style={{
@@ -393,7 +468,7 @@ export default function HomeClient({
                 }
                 onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
               >
-                View projects ↗
+                View projects <ArrowUpRight size={14} />
               </Link>
               {profile?.resume_url && (
                 <a
@@ -424,7 +499,7 @@ export default function HomeClient({
                     e.currentTarget.style.color = 'var(--text-1)';
                   }}
                 >
-                  Résumé ↓
+                  Résumé <ArrowDown size={13} />
                 </a>
               )}
               <a
@@ -459,35 +534,32 @@ export default function HomeClient({
                 color: 'var(--text-3)',
               }}
             >
-              {profile?.github && (
+              {profileLinks.map((link, i) => (
                 <>
                   <a
-                    href={profile.github}
+                    key={link.id}
+                    href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', transition: 'color .3s' }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      textDecoration: 'none',
+                      transition: 'color .3s',
+                    }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
                   >
-                    GitHub ↗
+                    {link.label} <ArrowUpRight size={11} />
                   </a>
-                  <span style={{ color: 'var(--border-3)' }}>/</span>
+                  {i < profileLinks.length - 1 && (
+                    <span style={{ color: 'var(--border-3)' }}>/</span>
+                  )}
                 </>
-              )}
-              {profile?.linkedin && (
-                <>
-                  <a
-                    href={profile.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', transition: 'color .3s' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
-                  >
-                    LinkedIn ↗
-                  </a>
-                  <span style={{ color: 'var(--border-3)' }}>/</span>
-                </>
+              ))}
+              {profileLinks.length > 0 && profile?.email && (
+                <span style={{ color: 'var(--border-3)' }}>/</span>
               )}
               {profile?.email && (
                 <a
@@ -500,24 +572,26 @@ export default function HomeClient({
                 </a>
               )}
             </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '10px',
-                marginTop: '26px',
-                paddingTop: '22px',
-                borderTop: '1px solid var(--border-1)',
-                font: '500 11.5px var(--font-mono), monospace',
-                maxWidth: '36em',
-              }}
-            >
-              <span style={{ color: 'var(--accent)', whiteSpace: 'nowrap' }}>// now</span>
-              <span style={{ color: 'var(--text-2)', lineHeight: 1.65 }}>
-                {profile?.tagline ??
-                  'Building payments infrastructure at SWIVEL, running ACM San Antonio, and reading too much about consensus protocols.'}
-              </span>
-            </div>
+            {profile?.tagline &&
+              (!profile.now_expires_at || new Date(profile.now_expires_at) > new Date()) && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: '10px',
+                    marginTop: '26px',
+                    paddingTop: '22px',
+                    borderTop: '1px solid var(--border-1)',
+                    font: '500 11.5px var(--font-mono), monospace',
+                    maxWidth: '36em',
+                  }}
+                >
+                  <span style={{ color: 'var(--accent)', whiteSpace: 'nowrap' }}>// now</span>
+                  <span style={{ color: 'var(--text-2)', lineHeight: 1.65 }}>
+                    {profile.tagline}
+                  </span>
+                </div>
+              )}
           </div>
 
           {/* Terminal + avatar */}
@@ -759,7 +833,7 @@ export default function HomeClient({
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
                 >
-                  view all →
+                  view all <ArrowRight size={12} />
                 </Link>
               </div>
               <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
@@ -858,7 +932,7 @@ export default function HomeClient({
         </section>
 
         {/* RECENT WRITING */}
-        {(profile?.writing_enabled ?? true) && (
+        {writingEnabled && (
           <section
             id="writing"
             data-section
@@ -915,7 +989,7 @@ export default function HomeClient({
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
                   >
-                    all writing →
+                    all writing <ArrowRight size={12} />
                   </Link>
                 </div>
                 <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
@@ -1040,7 +1114,7 @@ export default function HomeClient({
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
                 >
-                  full history →
+                  full history <ArrowRight size={12} />
                 </Link>
               </div>
               <div id="timeline" style={{ position: 'relative', paddingLeft: '30px' }}>
@@ -1182,7 +1256,8 @@ export default function HomeClient({
                   maxWidth: '15em',
                 }}
               >
-                Let's build something — or just come argue about type systems at a meetup.
+                {profile?.contact_cta ??
+                  "Let's build something — or just come argue about type systems at a meetup."}
               </h2>
               <div
                 style={{
@@ -1223,6 +1298,9 @@ export default function HomeClient({
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
                       font: '500 12px var(--font-mono), monospace',
                       color: 'var(--text-1)',
                       textDecoration: 'none',
@@ -1240,15 +1318,19 @@ export default function HomeClient({
                       e.currentTarget.style.borderColor = 'var(--border-3)';
                     }}
                   >
-                    Résumé ↓
+                    Résumé <ArrowDown size={13} />
                   </a>
                 )}
-                {profile?.github && (
+                {profileLinks.map((link) => (
                   <a
-                    href={profile.github}
+                    key={link.id}
+                    href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
                       font: '500 12px var(--font-mono), monospace',
                       color: 'var(--text-1)',
                       textDecoration: 'none',
@@ -1266,35 +1348,9 @@ export default function HomeClient({
                       e.currentTarget.style.borderColor = 'var(--border-3)';
                     }}
                   >
-                    GitHub ↗
+                    {link.label} <ArrowUpRight size={12} />
                   </a>
-                )}
-                {profile?.linkedin && (
-                  <a
-                    href={profile.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      font: '500 12px var(--font-mono), monospace',
-                      color: 'var(--text-1)',
-                      textDecoration: 'none',
-                      padding: '13px 17px',
-                      border: '1px solid var(--border-3)',
-                      borderRadius: '9px',
-                      transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.borderColor = 'var(--text-4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.borderColor = 'var(--border-3)';
-                    }}
-                  >
-                    LinkedIn ↗
-                  </a>
-                )}
+                ))}
               </div>
               <div
                 style={{
@@ -1306,7 +1362,7 @@ export default function HomeClient({
                   color: 'var(--text-4)',
                 }}
               >
-                <span>© 2026 zaquariah.dev</span>
+                <span>© {new Date().getFullYear()} zaquariah.dev</span>
                 <span>built with rigor · and a little nonsense</span>
               </div>
             </div>

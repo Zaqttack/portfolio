@@ -3,6 +3,10 @@ export interface Profile {
   name: string;
   tagline: string | null;
   bio: string | null;
+  hero_title: string | null;
+  terminal_status: string | null;
+  now_expires_at: string | null;
+  contact_cta: string | null;
   avatar_url: string | null;
   location: string | null;
   resume_url: string | null;
@@ -17,6 +21,14 @@ export interface Profile {
   writing_subtitle: string | null;
   experience_subtitle: string | null;
   updated_at: string;
+}
+
+export interface ProfileLink {
+  id: string;
+  label: string;
+  url: string;
+  display_order: number;
+  created_at: string;
 }
 
 export interface Education {

@@ -11,6 +11,7 @@ import type {
   PageView,
   Post,
   Profile,
+  ProfileLink,
   Project,
   Skill,
 } from '@/types';
@@ -36,6 +37,12 @@ export async function getInvolvement(): Promise<InvolvementOrg[]> {
     .from('involvement_orgs')
     .select('*, involvement_roles(*)')
     .order('display_order');
+  if (error) throw error;
+  return data;
+}
+
+export async function getProfileLinks(): Promise<ProfileLink[]> {
+  const { data, error } = await supabase.from('profile_links').select('*').order('display_order');
   if (error) throw error;
   return data;
 }

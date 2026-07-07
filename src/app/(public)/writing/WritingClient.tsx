@@ -1,11 +1,13 @@
 'use client';
 
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import CmdK from '@/components/CmdK';
+import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
-import type { Post } from '@/types';
+import type { Post, ProfileLink } from '@/types';
 
 function formatPostDate(d: string): string {
   const dt = new Date(d);
@@ -17,11 +19,13 @@ export default function WritingClient({
   subtitle,
   writingEnabled,
   resumeUrl,
+  profileLinks,
 }: {
   posts: Post[];
   subtitle: string | null;
   writingEnabled: boolean;
   resumeUrl: string | null;
+  profileLinks: ProfileLink[];
 }) {
   const featured = posts[0] ?? null;
   const archive = posts.slice(1);
@@ -75,6 +79,9 @@ export default function WritingClient({
           <Link
             href="/"
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
               font: '500 11px var(--font-mono), monospace',
               color: 'var(--text-3)',
               textDecoration: 'none',
@@ -83,7 +90,7 @@ export default function WritingClient({
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
           >
-            ← index
+            <ArrowLeft size={12} /> home
           </Link>
           <h1
             style={{
@@ -178,9 +185,15 @@ export default function WritingClient({
                 {featured.excerpt}
               </p>
               <span
-                style={{ font: '500 12px var(--font-mono), monospace', color: 'var(--accent)' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  font: '500 12px var(--font-mono), monospace',
+                  color: 'var(--accent)',
+                }}
               >
-                read →
+                read <ArrowRight size={12} />
               </span>
             </a>
           </div>
@@ -284,6 +297,7 @@ export default function WritingClient({
         </div>
       </main>
 
+      <Footer profileLinks={profileLinks} />
       <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
     </>
   );
