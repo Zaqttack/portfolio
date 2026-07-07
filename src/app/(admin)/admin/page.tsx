@@ -3,6 +3,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { US_CITIES } from '@/lib/us-cities';
 
 const US_STATES = [
   ['AL', 'Alabama'],
@@ -222,6 +223,7 @@ function RolesEditor({
   };
 
   const [entries, setEntries] = useState<RoleEntry[]>(() => parse(value));
+  const rolesDragIdx = useRef<number | null>(null);
 
   const commit = (next: RoleEntry[]) => {
     setEntries(next);
@@ -244,6 +246,16 @@ function RolesEditor({
     commit(next.length === 0 ? [{ role: '', start: '', end: '' }] : next);
   };
 
+  const dropRow = (toIdx: number) => {
+    const fromIdx = rolesDragIdx.current;
+    rolesDragIdx.current = null;
+    if (fromIdx === null || fromIdx === toIdx) return;
+    const next = [...entries];
+    const [item] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, item);
+    commit(next);
+  };
+
   const cellStyle: React.CSSProperties = {
     background: '#0E0F12',
     border: '1px solid #2C3037',
@@ -255,12 +267,22 @@ function RolesEditor({
     transition: 'border-color .2s',
   };
 
+  const dragHandle: React.CSSProperties = {
+    color: 'var(--text-4)',
+    fontSize: '14px',
+    letterSpacing: '1px',
+    cursor: 'grab',
+    userSelect: 'none',
+    flexShrink: 0,
+    paddingTop: '2px',
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 140px 140px 32px',
+          gridTemplateColumns: '16px 1fr 140px 140px 32px',
           gap: '6px',
           font: '500 9.5px var(--font-mono), monospace',
           letterSpacing: '.06em',
@@ -269,6 +291,7 @@ function RolesEditor({
           marginBottom: '2px',
         }}
       >
+        <span />
         <span>ROLE TITLE</span>
         <span>START (YYYY-MM)</span>
         <span>END (YYYY-MM)</span>
@@ -277,8 +300,20 @@ function RolesEditor({
       {entries.map((e, i) => (
         <div
           key={i}
-          style={{ display: 'grid', gridTemplateColumns: '1fr 140px 140px 32px', gap: '6px' }}
+          draggable={!readOnly}
+          onDragStart={() => {
+            rolesDragIdx.current = i;
+          }}
+          onDragOver={(ev) => ev.preventDefault()}
+          onDrop={() => dropRow(i)}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '16px 1fr 140px 140px 32px',
+            gap: '6px',
+            alignItems: 'center',
+          }}
         >
+          {!readOnly && <span style={dragHandle}>⠿</span>}
           <input
             value={e.role}
             onChange={(ev) => updateEntry(i, 'role', ev.target.value)}
@@ -387,6 +422,7 @@ function BulletsEditor({
   };
 
   const [lines, setLines] = useState<string[]>(() => parse(value));
+  const bulletsDragIdx = useRef<number | null>(null);
 
   const commit = (next: string[]) => {
     setLines(next);
@@ -404,6 +440,16 @@ function BulletsEditor({
     commit(next.length === 0 ? [''] : next);
   };
 
+  const dropLine = (toIdx: number) => {
+    const fromIdx = bulletsDragIdx.current;
+    bulletsDragIdx.current = null;
+    if (fromIdx === null || fromIdx === toIdx) return;
+    const next = [...lines];
+    const [item] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, item);
+    commit(next);
+  };
+
   const cellStyle: React.CSSProperties = {
     flex: 1,
     background: '#0E0F12',
@@ -419,7 +465,30 @@ function BulletsEditor({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       {lines.map((l, i) => (
-        <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <div
+          key={i}
+          draggable={!readOnly}
+          onDragStart={() => {
+            bulletsDragIdx.current = i;
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => dropLine(i)}
+          style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
+        >
+          {!readOnly && (
+            <span
+              style={{
+                color: 'var(--text-4)',
+                fontSize: '14px',
+                letterSpacing: '1px',
+                cursor: 'grab',
+                userSelect: 'none',
+                flexShrink: 0,
+              }}
+            >
+              ⠿
+            </span>
+          )}
           <input
             value={l}
             onChange={(e) => updateLine(i, e.target.value)}
@@ -483,7 +552,7 @@ function BulletsEditor({
             e.currentTarget.style.color = 'var(--text-3)';
           }}
         >
-          + Add achievement
+          + Add item
         </button>
       )}
     </div>
@@ -501,7 +570,9 @@ type FieldType =
   | 'tags'
   | 'location'
   | 'roles'
-  | 'bullets';
+  | 'bullets'
+  | 'select'
+  | 'image';
 
 interface FieldDef {
   key: string;
@@ -513,6 +584,10 @@ interface FieldDef {
   onLabel?: string;
   offLabel?: string;
   defaultValue?: unknown;
+  optionsFrom?: string;
+  nullable?: boolean;
+  nullLabel?: string;
+  locationSep?: string;
 }
 
 interface PageSettingsConfig {
@@ -532,6 +607,199 @@ interface Schema {
   statusKey?: string;
   hasStatus?: boolean;
   pageSettings?: PageSettingsConfig;
+}
+
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/svg+xml', 'image/webp', 'image/jpeg', 'image/gif'];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function getImageDimensions(file: File): Promise<{ w: number; h: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ w: img.naturalWidth, h: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject();
+    };
+    img.src = url;
+  });
+}
+
+function ImageUploadField({
+  value,
+  onChange,
+  onUpload,
+}: {
+  value: string;
+  onChange: (url: string) => void;
+  onUpload: (file: File) => Promise<string | null>;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [warn, setWarn] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    setError(null);
+    setWarn(null);
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setError('Unsupported format. Use PNG, SVG, WebP, or JPEG.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max 5 MB.`);
+      return;
+    }
+    if (file.type !== 'image/svg+xml') {
+      try {
+        const { w, h } = await getImageDimensions(file);
+        if (Math.max(w, h) < 128) {
+          setError(`Image too small (${w}×${h}px). Minimum 128×128px.`);
+          return;
+        }
+        if (Math.max(w, h) / Math.min(w, h) > 1.5) {
+          setWarn(`Image is ${w}×${h}px — non-square logos may be cropped. Square works best.`);
+        }
+      } catch {
+        // can't read dimensions, proceed
+      }
+    }
+
+    setUploading(true);
+    const url = await onUpload(file);
+    if (url) {
+      onChange(url);
+      setWarn(null);
+    }
+    setUploading(false);
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
+  const btnSt: React.CSSProperties = {
+    background: 'transparent',
+    border: '1px solid #2C3037',
+    borderRadius: '7px',
+    padding: '8px 14px',
+    color: 'var(--text-2)',
+    font: '500 12.5px var(--font-space), sans-serif',
+    cursor: uploading ? 'default' : 'pointer',
+    transition: 'border-color .2s, color .2s',
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {value && (
+          <img
+            src={value}
+            alt=""
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '8px',
+              objectFit: 'cover',
+              border: '1px solid #2C3037',
+              flexShrink: 0,
+            }}
+          />
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleFile(file);
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          style={btnSt}
+          onMouseEnter={(e) => {
+            if (!uploading) {
+              e.currentTarget.style.borderColor = 'var(--accent)';
+              e.currentTarget.style.color = 'var(--accent)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#2C3037';
+            e.currentTarget.style.color = 'var(--text-2)';
+          }}
+        >
+          {uploading ? 'Uploading…' : value ? 'Change' : 'Upload logo'}
+        </button>
+        {value && !uploading && (
+          <button
+            type="button"
+            onClick={() => {
+              onChange('');
+              setError(null);
+              setWarn(null);
+            }}
+            style={{
+              background: 'transparent',
+              border: '1px solid #2C3037',
+              borderRadius: '7px',
+              padding: '8px 10px',
+              color: 'var(--text-4)',
+              font: '500 12px var(--font-mono), monospace',
+              cursor: 'pointer',
+              transition: 'border-color .2s, color .2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#E5534B';
+              e.currentTarget.style.color = '#E5534B';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#2C3037';
+              e.currentTarget.style.color = 'var(--text-4)';
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      {error ? (
+        <div
+          style={{
+            marginTop: '8px',
+            font: '500 11.5px var(--font-space), sans-serif',
+            color: '#E5534B',
+          }}
+        >
+          {error}
+        </div>
+      ) : warn ? (
+        <div
+          style={{
+            marginTop: '8px',
+            font: '500 11.5px var(--font-space), sans-serif',
+            color: '#FFA94D',
+          }}
+        >
+          {warn}
+        </div>
+      ) : (
+        <div
+          style={{
+            marginTop: '8px',
+            font: '400 11px var(--font-mono), monospace',
+            color: 'var(--text-4)',
+            letterSpacing: '.02em',
+          }}
+        >
+          SVG or PNG · square · min 128×128px · max 5 MB
+        </div>
+      )}
+    </div>
+  );
 }
 
 const SCHEMAS: Record<string, Schema> = {
@@ -685,6 +953,36 @@ const SCHEMAS: Record<string, Schema> = {
       },
     ],
   },
+  companies: {
+    label: 'Companies',
+    singular: 'company',
+    table: 'companies',
+    colName: 'NAME',
+    primaryKey: 'name',
+    secondaryKey: 'website_url',
+    fields: [
+      {
+        key: 'name',
+        label: 'Company name',
+        type: 'text',
+        placeholder: 'SWIVEL',
+        help: 'Company name as it appears on the timeline.',
+      },
+      {
+        key: 'website_url',
+        label: 'Website',
+        type: 'text',
+        placeholder: 'https://…',
+        help: 'Optional link to the company website.',
+      },
+      {
+        key: 'logo_url',
+        label: 'Logo',
+        type: 'image',
+        help: 'Upload a square company logo. Max 5 MB. Shown on the timeline next to the company name.',
+      },
+    ],
+  },
   experience: {
     label: 'Experience',
     singular: 'entry',
@@ -707,11 +1005,11 @@ const SCHEMAS: Record<string, Schema> = {
     },
     fields: [
       {
-        key: 'company',
+        key: 'company_id',
         label: 'Company',
-        type: 'text',
-        placeholder: 'Company name',
-        help: 'Organization or employer name.',
+        type: 'select',
+        optionsFrom: 'companies',
+        help: 'Link to a company record. Add companies first under the Companies tab.',
       },
       {
         key: 'role',
@@ -723,21 +1021,23 @@ const SCHEMAS: Record<string, Schema> = {
       {
         key: 'location',
         label: 'Location',
-        type: 'text',
-        placeholder: 'San Antonio, TX',
+        type: 'location',
+        locationSep: ', ',
         help: 'City and state shown below the role title.',
       },
       {
         key: 'start_date',
         label: 'Start date',
         type: 'date',
-        help: 'When you started this role.',
+        help: 'Start date for this role. Used for sort order and the timeline display.',
       },
       {
         key: 'end_date',
         label: 'End date',
         type: 'date',
-        help: 'Leave blank if this is your current role — it will show as "PRESENT".',
+        nullable: true,
+        nullLabel: 'Current role',
+        help: 'Leave blank to show PRESENT instead of an end date.',
       },
       {
         key: '_bullets',
@@ -829,7 +1129,7 @@ const SCHEMAS: Record<string, Schema> = {
       },
       {
         key: 'hero_title',
-        label: 'Hero Title',
+        label: 'Hero title',
         type: 'textarea',
         rows: 2,
         placeholder: "I'm {{first_name}}. I build precise, well-architected software.",
@@ -860,7 +1160,7 @@ const SCHEMAS: Record<string, Schema> = {
       },
       {
         key: 'terminal_status',
-        label: 'Terminal Status',
+        label: 'Terminal status',
         type: 'text',
         placeholder: 'heads-down · building',
         help: 'The status text shown in the home page terminal when not open to work.',
@@ -897,6 +1197,8 @@ const SCHEMAS: Record<string, Schema> = {
         key: 'open_to_work',
         label: 'Open to work',
         type: 'toggle',
+        onLabel: 'Active',
+        offLabel: 'Inactive',
         help: 'Shows a pulsing indicator in the left rail when enabled.',
       },
     ],
@@ -1022,7 +1324,7 @@ const SCHEMAS: Record<string, Schema> = {
         key: 'date',
         label: 'Date',
         type: 'date',
-        help: 'Date of the award.',
+        help: 'Date of the award. Used for sort order on the experience page.',
       },
       {
         key: 'evidence_url',
@@ -1036,6 +1338,8 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Public',
         type: 'toggle',
         defaultValue: true,
+        onLabel: 'Public',
+        offLabel: 'Private',
         help: 'Show this award on the public site.',
       },
     ],
@@ -1066,6 +1370,8 @@ const SCHEMAS: Record<string, Schema> = {
         key: 'reviewed',
         label: 'Reviewed',
         type: 'toggle',
+        onLabel: 'Reviewed',
+        offLabel: 'Pending',
         help: 'Mark as reviewed once processed.',
       },
     ],
@@ -1171,8 +1477,9 @@ const SECTION_GROUPS = [
       { key: 'experience' as const, label: 'Work' },
       { key: 'involvement' as const, label: 'Community' },
       { key: 'education' as const, label: 'Education' },
-      { key: 'certifications' as const, label: 'Certifications' },
       { key: 'achievements' as const, label: 'Awards' },
+      { key: 'certifications' as const, label: 'Certifications' },
+      { key: 'companies' as const, label: 'Companies' },
     ],
   },
   {
@@ -1209,6 +1516,21 @@ export default function AdminPage() {
   const showToast = useCallback(
     (msg: string, variant: ToastVariant = 'info') => setToast({ msg, variant }),
     [],
+  );
+
+  const handleImageUpload = useCallback(
+    async (file: File): Promise<string | null> => {
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from('media').upload(path, file, { upsert: true });
+      if (error) {
+        showToast(`Upload failed: ${error.message}`, 'error');
+        return null;
+      }
+      const { data } = supabase.storage.from('media').getPublicUrl(path);
+      return data.publicUrl;
+    },
+    [supabase, showToast],
   );
 
   const signOut = async () => {
@@ -1275,7 +1597,7 @@ export default function AdminPage() {
           .from(schema.table)
           .select(
             s === 'experience'
-              ? '*, experience_bullets(*)'
+              ? '*, experience_bullets(*), company_data:companies(*)'
               : s === 'involvement'
                 ? '*, involvement_roles(*)'
                 : '*',
@@ -1463,6 +1785,7 @@ export default function AdminPage() {
     delete payload._roles;
     delete payload.experience_bullets;
     delete payload.involvement_roles;
+    delete payload.company_data;
     delete payload.created_at;
     delete payload.updated_at;
 
@@ -1497,6 +1820,12 @@ export default function AdminPage() {
     // skills: default source to 'self'
     if (section === 'skills' && !payload.id) {
       payload.source = 'self';
+    }
+
+    // experience: sync company text from selected company for display fallback
+    if (section === 'experience' && payload.company_id) {
+      const match = (lists.companies ?? []).find((r) => r.id === payload.company_id);
+      if (match) payload.company = match.name;
     }
 
     const isNew = !payload.id;
@@ -2017,7 +2346,7 @@ export default function AdminPage() {
         </div>
 
         {/* SUB-TABS */}
-        {currentGroup && currentGroup.tabs.length > 1 && view !== 'form' && (
+        {currentGroup && currentGroup.tabs.length > 1 && (view !== 'form' || isSingleton) && (
           <div
             style={{
               display: 'flex',
@@ -2454,20 +2783,80 @@ export default function AdminPage() {
                     />
                   )}
                   {f.type === 'date' && (
-                    <input
-                      type="date"
-                      value={String(val ?? '').slice(0, 10)}
-                      onChange={(e) => update(e.target.value)}
-                      readOnly={isReadOnly}
+                    <div
                       style={{
-                        ...inputStyle,
-                        width: 'auto',
-                        font: '500 13px var(--font-mono), monospace',
-                        colorScheme: 'dark',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        flexWrap: 'wrap',
                       }}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                    />
+                    >
+                      {val === null && f.nullable ? null : (
+                        <input
+                          type="date"
+                          value={String(val ?? '').slice(0, 10)}
+                          onChange={(e) => update(e.target.value || null)}
+                          readOnly={isReadOnly}
+                          style={{
+                            ...inputStyle,
+                            width: 'auto',
+                            font: '500 13px var(--font-mono), monospace',
+                            colorScheme: 'dark',
+                          }}
+                          onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                          onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                        />
+                      )}
+                      {f.nullable && (
+                        <button
+                          type="button"
+                          onClick={() => !isReadOnly && update(val === null ? '' : null)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: isReadOnly ? 'default' : 'pointer',
+                            padding: 0,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '36px',
+                              height: '20px',
+                              borderRadius: '20px',
+                              background: val === null ? 'var(--accent)' : '#2C3037',
+                              position: 'relative',
+                              transition: 'background .2s',
+                              display: 'inline-block',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <span
+                              style={{
+                                position: 'absolute',
+                                top: '2px',
+                                left: val === null ? '18px' : '2px',
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '50%',
+                                background: 'var(--text-1)',
+                                transition: 'left .2s',
+                              }}
+                            />
+                          </span>
+                          <span
+                            style={{
+                              font: '500 12px var(--font-space), sans-serif',
+                              color: val === null ? 'var(--text-1)' : 'var(--text-3)',
+                            }}
+                          >
+                            {f.nullLabel ?? 'Ongoing'}
+                          </span>
+                        </button>
+                      )}
+                    </div>
                   )}
                   {f.type === 'datetime' && (
                     <input
@@ -2525,25 +2914,14 @@ export default function AdminPage() {
                   )}
                   {f.type === 'location' &&
                     (() => {
-                      const parts = String(val ?? '').split(' · ');
+                      const sep = f.locationSep ?? ' · ';
+                      const parts = String(val ?? '').split(sep);
                       const city = parts[0] ?? '';
                       const state = parts[1] ?? '';
-                      const compose = (c: string, s: string) => (s ? `${c} · ${s}` : c);
+                      const compose = (c: string, s: string) => (s ? `${c}${sep}${s}` : c);
+                      const cities = state ? (US_CITIES[state] ?? []) : [];
                       return (
                         <div style={{ display: 'flex', gap: '10px' }}>
-                          <input
-                            value={city}
-                            onChange={(e) => update(compose(e.target.value, state))}
-                            placeholder="City abbreviation (e.g. SAT)"
-                            readOnly={isReadOnly}
-                            style={{
-                              ...inputStyle,
-                              width: '180px',
-                              font: '500 13px var(--font-mono), monospace',
-                            }}
-                            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                          />
                           <select
                             value={state}
                             onChange={(e) => update(compose(city, e.target.value))}
@@ -2560,7 +2938,28 @@ export default function AdminPage() {
                             <option value="">— State —</option>
                             {US_STATES.map(([abbr, name]) => (
                               <option key={abbr} value={abbr}>
-                                {abbr} — {name}
+                                {name} ({abbr})
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={city}
+                            onChange={(e) => update(compose(e.target.value, state))}
+                            disabled={isReadOnly || !state}
+                            style={{
+                              ...inputStyle,
+                              width: '180px',
+                              colorScheme: 'dark',
+                              cursor: state ? 'pointer' : 'default',
+                              opacity: state ? 1 : 0.4,
+                            }}
+                            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                          >
+                            <option value="">— City —</option>
+                            {cities.map((c) => (
+                              <option key={c} value={c}>
+                                {c}
                               </option>
                             ))}
                           </select>
@@ -2613,6 +3012,36 @@ export default function AdminPage() {
                         {val ? (f.onLabel ?? 'Yes') : (f.offLabel ?? 'No')}
                       </span>
                     </button>
+                  )}
+                  {f.type === 'select' && f.optionsFrom && (
+                    <select
+                      value={String(val ?? '')}
+                      onChange={(e) => update(e.target.value || null)}
+                      disabled={isReadOnly}
+                      style={{
+                        ...inputStyle,
+                        width: 'auto',
+                        minWidth: '260px',
+                        colorScheme: 'dark',
+                        cursor: 'pointer',
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                    >
+                      <option value="">— None —</option>
+                      {(lists[f.optionsFrom] ?? []).map((opt) => (
+                        <option key={String(opt.id)} value={String(opt.id)}>
+                          {String(opt.name ?? '')}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {f.type === 'image' && (
+                    <ImageUploadField
+                      value={String(val ?? '')}
+                      onChange={update}
+                      onUpload={handleImageUpload}
+                    />
                   )}
                   {f.type === 'tags' && (
                     <div

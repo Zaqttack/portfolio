@@ -50,9 +50,20 @@ export interface Certification {
   created_at: string;
 }
 
+export interface Company {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  website_url: string | null;
+  display_order: number;
+  created_at: string;
+}
+
 export interface Experience {
   id: string;
-  company: string;
+  company: string | null;
+  company_id: string | null;
+  company_data?: Company | null;
   role: string;
   start_date: string;
   end_date: string | null;

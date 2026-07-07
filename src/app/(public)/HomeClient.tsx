@@ -1363,7 +1363,7 @@ export default function HomeClient({
                 }}
               >
                 <span>© {new Date().getFullYear()} zaquariah.dev</span>
-                <span>built with rigor · and a little nonsense</span>
+                <span>built to show you who I am</span>
               </div>
             </div>
           </div>
