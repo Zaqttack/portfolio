@@ -583,11 +583,28 @@ function statusPill(val: string | boolean | null | undefined) {
   return { fg: '#9A9EA6', bg: '#17181C', border: '#2C3037' };
 }
 
-function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
+type ToastVariant = 'success' | 'error' | 'info';
+
+const TOAST_STYLES: Record<ToastVariant, { border: string; color: string; dot: string }> = {
+  success: { border: '#1a3d23', color: '#7EE787', dot: '#7EE787' },
+  error: { border: '#3d1a1a', color: '#E5534B', dot: '#E5534B' },
+  info: { border: '#2C3037', color: 'var(--text-1)', dot: 'var(--text-4)' },
+};
+
+function Toast({
+  msg,
+  variant,
+  onDone,
+}: {
+  msg: string;
+  variant: ToastVariant;
+  onDone: () => void;
+}) {
   useEffect(() => {
     const t = setTimeout(onDone, 2600);
     return () => clearTimeout(t);
   }, [onDone]);
+  const s = TOAST_STYLES[variant];
   return (
     <div
       style={{
@@ -596,17 +613,29 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
         left: '50%',
         zIndex: 99,
         background: '#17181C',
-        border: '1px solid #2C3037',
+        border: `1px solid ${s.border}`,
         borderRadius: '10px',
         padding: '11px 20px',
         font: '500 12.5px var(--font-space), sans-serif',
-        color: 'var(--text-1)',
+        color: s.color,
         boxShadow: '0 12px 32px rgba(0,0,0,.5)',
         animation: 'toastin .25s ease',
         whiteSpace: 'nowrap',
         transform: 'translateX(-50%)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
       }}
     >
+      <span
+        style={{
+          width: '7px',
+          height: '7px',
+          borderRadius: '50%',
+          background: s.dot,
+          flexShrink: 0,
+        }}
+      />
       {msg}
     </div>
   );
@@ -659,7 +688,8 @@ export default function AdminPage() {
   const [pageSettingsForm, setPageSettingsForm] = useState<Record<string, unknown>>({});
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState<{ msg: string; variant: ToastVariant } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: unknown; label: string } | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
   const [isPageSettingsDirty, setIsPageSettingsDirty] = useState(false);
@@ -672,7 +702,10 @@ export default function AdminPage() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
   );
 
-  const showToast = useCallback((msg: string) => setToast(msg), []);
+  const showToast = useCallback(
+    (msg: string, variant: ToastVariant = 'info') => setToast({ msg, variant }),
+    [],
+  );
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -719,12 +752,12 @@ export default function AdminPage() {
     });
     const { error } = await supabase.from('profile').update(payload).eq('id', profileData.id);
     if (error) {
-      showToast('Save failed.');
+      showToast(`Save failed: ${error.message}`, 'error');
       return;
     }
     setProfileData((d) => ({ ...d, ...payload }));
     setIsPageSettingsDirty(false);
-    showToast('Page settings saved.');
+    showToast('Page settings saved.', 'success');
   }, [profileData, section, pageSettingsForm, supabase, showToast]);
 
   const loadSection = useCallback(
@@ -854,11 +887,11 @@ export default function AdminPage() {
   const deleteRow = async (id: unknown) => {
     const { error } = await supabase.from(schema.table).delete().eq('id', id);
     if (error) {
-      showToast('Delete failed.');
+      showToast('Delete failed.', 'error');
       return;
     }
     setLists((d) => ({ ...d, [section]: d[section].filter((r) => r.id !== id) }));
-    showToast('Deleted.');
+    showToast('Deleted.', 'success');
   };
 
   const saveWithStatus = async (status?: string) => {
@@ -875,20 +908,20 @@ export default function AdminPage() {
           .eq('id', profileData.id);
         if (error) {
           console.error('Save failed:', error);
-          showToast(`Save failed: ${error.message}`);
+          showToast(`Save failed: ${error.message}`, 'error');
           return;
         }
       } else {
         const { error } = await supabase.from(schema.table).insert(payload);
         if (error) {
           console.error('Save failed:', error);
-          showToast(`Save failed: ${error.message}`);
+          showToast(`Save failed: ${error.message}`, 'error');
           return;
         }
       }
       await loadSection(section);
       setIsDirty(false);
-      showToast('Profile saved.');
+      showToast('Profile saved.', 'success');
       return;
     }
 
@@ -913,7 +946,7 @@ export default function AdminPage() {
       try {
         payload.raw_payload = JSON.parse(payload.raw_payload);
       } catch {
-        showToast('Invalid JSON in payload.');
+        showToast('Invalid JSON in payload.', 'error');
         return;
       }
     }
@@ -921,6 +954,13 @@ export default function AdminPage() {
     // Assign next display_order for new records
     if (!payload.id && schema.table !== 'import_staging') {
       payload.display_order = rows.length;
+    }
+
+    // Coerce empty strings to null for date fields so Postgres doesn't choke on ''
+    for (const f of schema.fields) {
+      if (f.type === 'date' && payload[f.key] === '') {
+        payload[f.key] = null;
+      }
     }
 
     // skills: default source to 'self'
@@ -940,7 +980,7 @@ export default function AdminPage() {
         .single();
       if (error) {
         console.error('Save failed:', error);
-        showToast(`Save failed: ${error.message}`);
+        showToast(`Save failed: ${error.message}`, 'error');
         return;
       }
       savedId = data.id;
@@ -948,7 +988,7 @@ export default function AdminPage() {
       const { error } = await supabase.from(schema.table).update(payload).eq('id', payload.id);
       if (error) {
         console.error('Save failed:', error);
-        showToast(`Save failed: ${error.message}`);
+        showToast(`Save failed: ${error.message}`, 'error');
         return;
       }
     }
@@ -1003,6 +1043,7 @@ export default function AdminPage() {
     setEditing(null);
     showToast(
       status === 'published' ? 'Published.' : status === 'draft' ? 'Saved as draft.' : 'Saved.',
+      'success',
     );
   };
 
@@ -1709,7 +1750,12 @@ export default function AdminPage() {
                         </button>
                         {!isReadOnly && (
                           <button
-                            onClick={() => deleteRow(row.id)}
+                            onClick={() =>
+                              setDeleteConfirm({
+                                id: row.id,
+                                label: String(row[schema.primaryKey] ?? row.id ?? ''),
+                              })
+                            }
                             style={{
                               background: 'transparent',
                               border: '1px solid #2C3037',
@@ -2031,7 +2077,91 @@ export default function AdminPage() {
         )}
       </main>
 
-      {toast && <Toast msg={toast} onDone={() => setToast('')} />}
+      {toast && <Toast msg={toast.msg} variant={toast.variant} onDone={() => setToast(null)} />}
+
+      {deleteConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 200,
+            background: 'rgba(0,0,0,.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setDeleteConfirm(null)}
+        >
+          <div
+            style={{
+              background: '#0E0F12',
+              border: '1px solid #2C3037',
+              borderRadius: '14px',
+              padding: '28px 32px',
+              maxWidth: '400px',
+              width: '100%',
+              boxShadow: '0 24px 64px rgba(0,0,0,.7)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                font: '600 16px var(--font-space), sans-serif',
+                color: 'var(--text-1)',
+                marginBottom: '8px',
+              }}
+            >
+              Delete {schema.singular}?
+            </div>
+            <div
+              style={{
+                fontSize: '13px',
+                color: 'var(--text-3)',
+                marginBottom: '24px',
+                lineHeight: 1.55,
+              }}
+            >
+              This will permanently delete{' '}
+              <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{deleteConfirm.label}</span>
+              . This action cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #2C3037',
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  color: 'var(--text-2)',
+                  font: '500 13px var(--font-space), sans-serif',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteRow(deleteConfirm.id);
+                  setDeleteConfirm(null);
+                }}
+                style={{
+                  background: '#3d1a1a',
+                  border: '1px solid #5c2a2a',
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  color: '#E5534B',
+                  font: '600 13px var(--font-space), sans-serif',
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showUnsavedModal && (
         <div
