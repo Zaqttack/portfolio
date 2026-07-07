@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('home page loads', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('link', { name: 'zaquariah.dev' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'zaquariah.dev', exact: true })).toBeVisible();
 });
 
 test('work page loads', async ({ page }) => {

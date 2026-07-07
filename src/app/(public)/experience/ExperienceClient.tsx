@@ -17,6 +17,43 @@ import type {
   ProfileLink,
 } from '@/types';
 
+type CompanyGroup = {
+  key: string;
+  companyName: string;
+  logoUrl: string | null;
+  earliest: string;
+  latest: string | null;
+  roles: Experience[];
+};
+
+function buildGroups(jobs: Experience[]): CompanyGroup[] {
+  const seen = new Map<string, CompanyGroup>();
+  const order: string[] = [];
+  for (const job of jobs) {
+    const key = job.company_id ?? `__${job.company ?? job.id}`;
+    if (!seen.has(key)) {
+      seen.set(key, {
+        key,
+        companyName: job.company_data?.name ?? job.company ?? '',
+        logoUrl: job.company_data?.logo_url ?? null,
+        earliest: job.start_date,
+        latest: job.end_date,
+        roles: [],
+      });
+      order.push(key);
+    }
+    const g = seen.get(key)!;
+    g.roles.push(job);
+    if (job.start_date < g.earliest) g.earliest = job.start_date;
+    if (job.end_date === null) {
+      g.latest = null;
+    } else if (g.latest !== null && job.end_date > g.latest) {
+      g.latest = job.end_date;
+    }
+  }
+  return order.map((k) => seen.get(k)!);
+}
+
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 function fmtDate(d: string): string {
@@ -296,88 +333,166 @@ export default function ExperienceClient({
                   No work history yet.
                 </p>
               )}
-              {experience.map((job, i) => {
-                const accent = i === 0;
-                const bullets = (job.experience_bullets ?? []).filter(
-                  (b) => b.visibility === 'public',
-                );
-                return (
-                  <div
-                    key={job.id}
-                    data-tl
-                    style={{
-                      position: 'relative',
-                      marginBottom: i < experience.length - 1 ? '40px' : 0,
-                      opacity: 0,
-                      transform: 'translateY(12px)',
-                      transition: 'opacity .5s ease, transform .5s ease',
-                    }}
-                  >
-                    <span
-                      style={{
-                        position: 'absolute',
-                        left: '-30px',
-                        top: accent ? '3px' : '4px',
-                        width: accent ? '12px' : '10px',
-                        height: accent ? '12px' : '10px',
-                        borderRadius: '50%',
-                        background: accent ? 'var(--accent)' : 'var(--canvas)',
-                        border: accent ? 'none' : '1.5px solid var(--text-4)',
-                        boxShadow: '0 0 0 4px var(--canvas)',
-                      }}
-                    />
+              {(() => {
+                const groups = buildGroups(experience);
+                return groups.map((group, gi) => {
+                  const accent = gi === 0;
+                  return (
                     <div
+                      key={group.key}
+                      data-tl
                       style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'baseline',
-                        flexWrap: 'wrap',
-                        gap: '6px',
-                        marginBottom: '4px',
+                        position: 'relative',
+                        marginBottom: gi < groups.length - 1 ? '48px' : 0,
+                        opacity: 0,
+                        transform: 'translateY(12px)',
+                        transition: 'opacity .5s ease, transform .5s ease',
                       }}
                     >
-                      <div style={{ fontWeight: 600, fontSize: '20px' }}>
-                        {job.role} <span style={{ color: 'var(--text-3)' }}>— {job.company}</span>
-                      </div>
+                      {/* Company dot on the spine */}
+                      <span
+                        style={{
+                          position: 'absolute',
+                          left: '-30px',
+                          top: accent ? '3px' : '5px',
+                          width: accent ? '12px' : '10px',
+                          height: accent ? '12px' : '10px',
+                          borderRadius: '50%',
+                          background: accent ? 'var(--accent)' : 'var(--canvas)',
+                          border: accent ? 'none' : '1.5px solid var(--text-4)',
+                          boxShadow: '0 0 0 4px var(--canvas)',
+                        }}
+                      />
+
+                      {/* Company header */}
                       <div
                         style={{
-                          font: '500 11px var(--font-mono), monospace',
-                          color: accent ? 'var(--accent)' : 'var(--text-4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          marginBottom: '18px',
                         }}
                       >
-                        {fmtPeriod(job.start_date, job.end_date)}
+                        {group.logoUrl && (
+                          <img
+                            src={group.logoUrl}
+                            alt={group.companyName}
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '7px',
+                              objectFit: 'cover',
+                              border: '1px solid var(--border-2)',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <div>
+                          <div
+                            style={{
+                              fontWeight: 700,
+                              fontSize: '20px',
+                              letterSpacing: '-.01em',
+                            }}
+                          >
+                            {group.companyName}
+                          </div>
+                          <div
+                            style={{
+                              font: '500 11px var(--font-mono), monospace',
+                              color: accent ? 'var(--accent)' : 'var(--text-4)',
+                              marginTop: '2px',
+                            }}
+                          >
+                            {fmtPeriod(group.earliest, group.latest)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Nested roles */}
+                      <div style={{ paddingLeft: '24px' }}>
+                        {group.roles.map((role, ri) => {
+                          const bullets = (role.experience_bullets ?? []).filter(
+                            (b) => b.visibility === 'public',
+                          );
+                          return (
+                            <div
+                              key={role.id}
+                              style={{
+                                position: 'relative',
+                                paddingBottom: ri < group.roles.length - 1 ? '22px' : 0,
+                              }}
+                            >
+                              {/* Role dot */}
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  left: '-16px',
+                                  top: '6px',
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  background: 'var(--canvas)',
+                                  border: '1.5px solid var(--text-4)',
+                                  boxShadow: '0 0 0 3px var(--canvas)',
+                                }}
+                              />
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'baseline',
+                                  flexWrap: 'wrap',
+                                  gap: '6px',
+                                }}
+                              >
+                                <div style={{ fontWeight: 600, fontSize: '16px' }}>{role.role}</div>
+                                <div
+                                  style={{
+                                    font: '500 11px var(--font-mono), monospace',
+                                    color: 'var(--text-4)',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {fmtPeriod(role.start_date, role.end_date)}
+                                </div>
+                              </div>
+                              {role.location && (
+                                <div
+                                  style={{
+                                    font: '500 11px var(--font-mono), monospace',
+                                    color: 'var(--text-4)',
+                                    marginTop: '2px',
+                                    marginBottom: bullets.length > 0 ? '8px' : 0,
+                                  }}
+                                >
+                                  {role.location}
+                                </div>
+                              )}
+                              {bullets.length > 0 && (
+                                <ul
+                                  style={{
+                                    margin: role.location ? 0 : '8px 0 0',
+                                    paddingLeft: '18px',
+                                    fontSize: '14px',
+                                    lineHeight: 1.7,
+                                    color: 'var(--text-2)',
+                                    maxWidth: '48em',
+                                  }}
+                                >
+                                  {bullets.map((b) => (
+                                    <li key={b.id}>{b.text}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                    {job.location && (
-                      <div
-                        style={{
-                          font: '500 11px var(--font-mono), monospace',
-                          color: 'var(--text-4)',
-                          marginBottom: '12px',
-                        }}
-                      >
-                        {job.location}
-                      </div>
-                    )}
-                    {bullets.length > 0 && (
-                      <ul
-                        style={{
-                          margin: 0,
-                          paddingLeft: '18px',
-                          fontSize: '14.5px',
-                          lineHeight: 1.7,
-                          color: 'var(--text-2)',
-                          maxWidth: '48em',
-                        }}
-                      >
-                        {bullets.map((b) => (
-                          <li key={b.id}>{b.text}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
         </section>

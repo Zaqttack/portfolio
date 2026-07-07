@@ -3,6 +3,7 @@ import type {
   AdminActivity,
   BotSignature,
   Certification,
+  Company,
   Education,
   Experience,
   GalleryImage,
@@ -23,10 +24,16 @@ export async function getProfile(): Promise<Profile> {
   return data;
 }
 
+export async function getCompanies(): Promise<Company[]> {
+  const { data, error } = await supabase.from('companies').select('*').order('display_order');
+  if (error) throw error;
+  return data;
+}
+
 export async function getExperience(): Promise<Experience[]> {
   const { data, error } = await supabase
     .from('experience')
-    .select('*, experience_bullets(*)')
+    .select('*, experience_bullets(*), company_data:companies(*)')
     .order('display_order');
   if (error) throw error;
   return data;
