@@ -369,23 +369,14 @@ function RolesEditor({
               </button>
             )}
           </div>
-          <textarea
-            value={e.highlights}
-            onChange={(ev) => updateEntry(i, 'highlights', ev.target.value)}
-            placeholder="Bullets (one per line) — Led 3 workshops, Grew membership from 40 to 120…"
-            readOnly={readOnly}
-            rows={2}
-            style={{
-              ...cellStyle,
-              marginLeft: '22px',
-              fontSize: '12px',
-              lineHeight: 1.6,
-              resize: 'vertical',
-              color: 'var(--text-2)',
-            }}
-            onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
-            onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
-          />
+          <div style={{ marginLeft: '22px' }}>
+            <BulletsEditor
+              value={e.highlights}
+              onChange={(v) => updateEntry(i, 'highlights', v)}
+              placeholder="Led 3 workshops, Grew membership from 40 to 120…"
+              readOnly={readOnly}
+            />
+          </div>
         </>
       ))}
       {!readOnly && (
