@@ -551,18 +551,38 @@ export default function ExperienceClient({
                       <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>
                         {roleLabel}
                       </div>
-                      {org.description && (
-                        <div
-                          style={{
-                            fontSize: '14px',
-                            lineHeight: 1.55,
-                            color: 'var(--text-2)',
-                            maxWidth: '46em',
-                          }}
-                        >
-                          {org.description}
-                        </div>
-                      )}
+                      {(() => {
+                        const bullets = (org.involvement_roles ?? []).flatMap(
+                          (r) => r.highlights ?? [],
+                        );
+                        return bullets.length > 0 ? (
+                          <ul
+                            style={{
+                              margin: '6px 0 0',
+                              paddingLeft: '18px',
+                              fontSize: '14px',
+                              lineHeight: 1.7,
+                              color: 'var(--text-2)',
+                              maxWidth: '46em',
+                            }}
+                          >
+                            {bullets.map((b, bi) => (
+                              <li key={bi}>{b}</li>
+                            ))}
+                          </ul>
+                        ) : org.description ? (
+                          <div
+                            style={{
+                              fontSize: '14px',
+                              lineHeight: 1.55,
+                              color: 'var(--text-2)',
+                              maxWidth: '46em',
+                            }}
+                          >
+                            {org.description}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                     {period && (
                       <div
