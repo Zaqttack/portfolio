@@ -554,13 +554,29 @@ export default function ExperienceClient({
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'baseline',
+                        alignItems: 'center',
                         gap: '16px',
                         marginBottom: roles.length > 0 ? '14px' : 0,
                       }}
                     >
-                      <div style={{ fontWeight: 700, fontSize: '18px', letterSpacing: '-.01em' }}>
-                        {org.name}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {org.logo && (
+                          <img
+                            src={org.logo}
+                            alt={org.name}
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              objectFit: 'cover',
+                              border: '1px solid var(--border-2)',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <div style={{ fontWeight: 700, fontSize: '18px', letterSpacing: '-.01em' }}>
+                          {org.name}
+                        </div>
                       </div>
                       {earliest && (
                         <div
