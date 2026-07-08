@@ -209,7 +209,9 @@ export default function ExperienceClient({
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
-          resumeUrl={profile?.resume_url ?? null}
+          resumeUrl={
+            profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
+          }
         />
 
         <header style={{ padding: '56px 56px 12px 40px' }}>
@@ -264,33 +266,41 @@ export default function ExperienceClient({
                 </p>
               )}
             </div>
-            {profile?.resume_url && (
-              <a
-                ref={magnetRef}
-                href={profile.resume_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'var(--accent)',
-                  color: 'var(--canvas)',
-                  font: '600 13px var(--font-space), sans-serif',
-                  textDecoration: 'none',
-                  padding: '13px 20px',
-                  borderRadius: '8px',
-                  whiteSpace: 'nowrap',
-                  transition: 'box-shadow .3s',
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')
-                }
-                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
-              >
-                Download résumé <Download size={13} />
-              </a>
-            )}
+            {(profile?.resume_download_enabled || profile?.resume_url) &&
+              (() => {
+                const href = profile?.resume_download_enabled
+                  ? '/api/resume'
+                  : profile!.resume_url!;
+                const isDownload = profile?.resume_download_enabled;
+                return (
+                  <a
+                    ref={magnetRef}
+                    href={href}
+                    {...(isDownload
+                      ? { download: true }
+                      : { target: '_blank', rel: 'noopener noreferrer' })}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'var(--accent)',
+                      color: 'var(--canvas)',
+                      font: '600 13px var(--font-space), sans-serif',
+                      textDecoration: 'none',
+                      padding: '13px 20px',
+                      borderRadius: '8px',
+                      whiteSpace: 'nowrap',
+                      transition: 'box-shadow .3s',
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.boxShadow = '0 14px 30px rgba(0,0,0,.5)')
+                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
+                  >
+                    Download résumé <Download size={13} />
+                  </a>
+                );
+              })()}
           </div>
         </header>
 

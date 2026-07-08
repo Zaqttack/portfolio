@@ -17,6 +17,7 @@ export interface Profile {
   website: string | null;
   open_to_work: boolean;
   writing_enabled: boolean;
+  resume_download_enabled: boolean;
   projects_subtitle: string | null;
   writing_subtitle: string | null;
   experience_subtitle: string | null;
@@ -69,6 +70,7 @@ export interface Experience {
   end_date: string | null;
   org_type: 'job' | 'internship' | 'contract' | 'volunteer';
   location: string | null;
+  resume_include: boolean;
   display_order: number;
   created_at: string;
   experience_bullets?: ExperienceBullet[];
@@ -124,6 +126,7 @@ export interface Skill {
   proficiency: number | null;
   source_experience_id: string | null;
   source: 'self' | 'work_import';
+  resume_include: boolean;
   display_order: number;
 }
 
@@ -139,6 +142,7 @@ export interface Project {
   live_url: string | null;
   status: 'draft' | 'published';
   featured: boolean;
+  resume_include: boolean;
   display_order: number;
   created_at: string;
   updated_at: string;

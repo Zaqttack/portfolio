@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import LeftRail from '@/components/LeftRail';
 import TopNav from '@/components/TopNav';
@@ -393,7 +393,9 @@ export default function HomeClient({
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={profile?.writing_enabled ?? true}
-          resumeUrl={profile?.resume_url ?? null}
+          resumeUrl={
+            profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
+          }
         />
 
         {/* HERO */}
@@ -470,38 +472,46 @@ export default function HomeClient({
               >
                 View projects <ArrowUpRight size={14} />
               </Link>
-              {profile?.resume_url && (
-                <a
-                  href={profile.resume_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    color: 'var(--text-1)',
-                    font: '600 13px var(--font-space), sans-serif',
-                    textDecoration: 'none',
-                    padding: '13px 20px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-3)',
-                    transition:
-                      'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, color .3s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                    e.currentTarget.style.color = 'var(--accent)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = 'var(--border-3)';
-                    e.currentTarget.style.color = 'var(--text-1)';
-                  }}
-                >
-                  Résumé <ArrowDown size={13} />
-                </a>
-              )}
+              {(profile?.resume_download_enabled || profile?.resume_url) &&
+                (() => {
+                  const href = profile?.resume_download_enabled
+                    ? '/api/resume'
+                    : profile!.resume_url!;
+                  const isDownload = profile?.resume_download_enabled;
+                  return (
+                    <a
+                      href={href}
+                      {...(isDownload
+                        ? { download: true }
+                        : { target: '_blank', rel: 'noopener noreferrer' })}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: 'var(--text-1)',
+                        font: '600 13px var(--font-space), sans-serif',
+                        textDecoration: 'none',
+                        padding: '13px 20px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-3)',
+                        transition:
+                          'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, color .3s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.borderColor = 'var(--accent)';
+                        e.currentTarget.style.color = 'var(--accent)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.borderColor = 'var(--border-3)';
+                        e.currentTarget.style.color = 'var(--text-1)';
+                      }}
+                    >
+                      Résumé <ArrowDown size={13} />
+                    </a>
+                  );
+                })()}
               <a
                 href="#contact"
                 onClick={(e) => {
@@ -535,9 +545,8 @@ export default function HomeClient({
               }}
             >
               {profileLinks.map((link, i) => (
-                <>
+                <Fragment key={link.id}>
                   <a
-                    key={link.id}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -556,7 +565,7 @@ export default function HomeClient({
                   {i < profileLinks.length - 1 && (
                     <span style={{ color: 'var(--border-3)' }}>/</span>
                   )}
-                </>
+                </Fragment>
               ))}
               {profileLinks.length > 0 && profile?.email && (
                 <span style={{ color: 'var(--border-3)' }}>/</span>
@@ -1292,35 +1301,44 @@ export default function HomeClient({
                     {profile.email}
                   </a>
                 )}
-                {profile?.resume_url && (
-                  <a
-                    href={profile.resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      font: '500 12px var(--font-mono), monospace',
-                      color: 'var(--text-1)',
-                      textDecoration: 'none',
-                      padding: '13px 17px',
-                      border: '1px solid var(--border-3)',
-                      borderRadius: '9px',
-                      transition: 'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.borderColor = 'var(--text-4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.borderColor = 'var(--border-3)';
-                    }}
-                  >
-                    Résumé <ArrowDown size={13} />
-                  </a>
-                )}
+                {(profile?.resume_download_enabled || profile?.resume_url) &&
+                  (() => {
+                    const href = profile?.resume_download_enabled
+                      ? '/api/resume'
+                      : profile!.resume_url!;
+                    const isDownload = profile?.resume_download_enabled;
+                    return (
+                      <a
+                        href={href}
+                        {...(isDownload
+                          ? { download: true }
+                          : { target: '_blank', rel: 'noopener noreferrer' })}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          font: '500 12px var(--font-mono), monospace',
+                          color: 'var(--text-1)',
+                          textDecoration: 'none',
+                          padding: '13px 17px',
+                          border: '1px solid var(--border-3)',
+                          borderRadius: '9px',
+                          transition:
+                            'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.borderColor = 'var(--text-4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.borderColor = 'var(--border-3)';
+                        }}
+                      >
+                        Résumé <ArrowDown size={13} />
+                      </a>
+                    );
+                  })()}
                 {profileLinks.map((link) => (
                   <a
                     key={link.id}

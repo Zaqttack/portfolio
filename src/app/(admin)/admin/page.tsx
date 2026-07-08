@@ -2,7 +2,7 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { US_CITIES } from '@/lib/us-cities';
 
 const US_STATES = [
@@ -581,7 +581,8 @@ type FieldType =
   | 'roles'
   | 'bullets'
   | 'select'
-  | 'image';
+  | 'image'
+  | 'combobox';
 
 interface FieldDef {
   key: string;
@@ -594,6 +595,7 @@ interface FieldDef {
   offLabel?: string;
   defaultValue?: unknown;
   optionsFrom?: string;
+  optionsFromField?: { list: string; field: string };
   nullable?: boolean;
   nullLabel?: string;
   locationSep?: string;
@@ -610,6 +612,7 @@ interface Schema {
   colName: string;
   singleton?: boolean;
   readOnly?: boolean;
+  resumeToggle?: boolean;
   fields: FieldDef[];
   primaryKey: string;
   secondaryKey?: string;
@@ -620,6 +623,96 @@ interface Schema {
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/svg+xml', 'image/webp', 'image/jpeg', 'image/gif'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function ComboboxField({
+  value,
+  options,
+  placeholder,
+  readOnly,
+  onChange,
+  inputStyle,
+}: {
+  value: string;
+  options: string[];
+  placeholder?: string;
+  readOnly?: boolean;
+  onChange: (v: string) => void;
+  inputStyle: React.CSSProperties;
+}) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState(value);
+  const filtered = options.filter((o) => o.toLowerCase().includes(input.toLowerCase()));
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        value={input}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        onChange={(e) => {
+          setInput(e.target.value);
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = 'var(--accent)';
+          if (!readOnly) setOpen(true);
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = '#2C3037';
+          setTimeout(() => setOpen(false), 120);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && input.trim()) {
+            onChange(input.trim());
+            setOpen(false);
+            (e.target as HTMLInputElement).blur();
+          }
+          if (e.key === 'Escape') setOpen(false);
+        }}
+        style={inputStyle}
+      />
+      {open && filtered.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            background: '#17181C',
+            border: '1px solid #2C3037',
+            borderRadius: '9px',
+            overflow: 'hidden',
+            zIndex: 50,
+          }}
+        >
+          {filtered.map((opt) => (
+            <div
+              key={opt}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(opt);
+                setInput(opt);
+                setOpen(false);
+              }}
+              style={{
+                padding: '9px 12px',
+                font: '500 13px var(--font-space), sans-serif',
+                color: opt === value ? 'var(--accent)' : 'var(--text-1)',
+                cursor: 'pointer',
+                borderBottom: '1px solid #2C3037',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#0E0F12')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function getImageDimensions(file: File): Promise<{ w: number; h: number }> {
   return new Promise((resolve, reject) => {
@@ -821,6 +914,7 @@ const SCHEMAS: Record<string, Schema> = {
     secondaryKey: 'tags',
     statusKey: 'status',
     hasStatus: true,
+    resumeToggle: true,
     pageSettings: {
       fields: [
         {
@@ -1000,6 +1094,7 @@ const SCHEMAS: Record<string, Schema> = {
     primaryKey: 'role',
     secondaryKey: 'company',
     statusKey: 'org_type',
+    resumeToggle: true,
     pageSettings: {
       fields: [
         {
@@ -1065,6 +1160,7 @@ const SCHEMAS: Record<string, Schema> = {
     primaryKey: 'name',
     secondaryKey: 'category',
     statusKey: 'category',
+    resumeToggle: true,
     fields: [
       {
         key: 'name',
@@ -1076,8 +1172,9 @@ const SCHEMAS: Record<string, Schema> = {
       {
         key: 'category',
         label: 'Category',
-        type: 'text',
+        type: 'combobox',
         placeholder: 'Languages',
+        optionsFromField: { list: 'skills', field: 'category' },
         help: 'Groups skills together on the home page. Use consistent names like Languages, Frameworks, Tools, Platforms.',
       },
     ],
@@ -1206,7 +1303,15 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Résumé URL',
         type: 'text',
         placeholder: 'https://…',
-        help: 'Link to your résumé PDF. Used by the Download résumé button on the experience page.',
+        help: 'Fallback static résumé PDF link. Used when the dynamic PDF download is disabled.',
+      },
+      {
+        key: 'resume_download_enabled',
+        label: 'Dynamic résumé download',
+        type: 'toggle',
+        onLabel: 'Public',
+        offLabel: 'Admin only',
+        help: 'When enabled, visitors can download a live-generated PDF from your starred items. Disabled falls back to Résumé URL.',
       },
       {
         key: 'open_to_work',
@@ -1757,6 +1862,23 @@ export default function AdminPage() {
     showToast(newVal ? 'Marked as featured.' : 'Removed from featured.', 'success');
   };
 
+  const toggleResumeInclude = async (row: Record<string, unknown>) => {
+    const newVal = !row.resume_include;
+    const { error } = await supabase
+      .from(schema.table)
+      .update({ resume_include: newVal })
+      .eq('id', row.id);
+    if (error) {
+      showToast('Failed to update.', 'error');
+      return;
+    }
+    setLists((d) => ({
+      ...d,
+      [section]: d[section].map((r) => (r.id === row.id ? { ...r, resume_include: newVal } : r)),
+    }));
+    showToast(newVal ? 'Added to resume.' : 'Removed from resume.', 'success');
+  };
+
   const deleteRow = async (id: unknown) => {
     const { error } = await supabase.from(schema.table).delete().eq('id', id);
     if (error) {
@@ -2196,7 +2318,33 @@ export default function AdminPage() {
             })}
           </nav>
         </div>
-        <div style={{ padding: '0 12px' }}>
+        <div style={{ padding: '0 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <a
+            href="/api/resume"
+            download
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              textDecoration: 'none',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              color: 'var(--text-3)',
+              font: '500 12.5px var(--font-space), sans-serif',
+              transition: 'color .2s, background .2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--accent)';
+              e.currentTarget.style.background = '#15171B';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-3)';
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <span style={{ width: '3px', height: '16px' }} />
+            Resume PDF ↓
+          </a>
           <button
             onClick={signOut}
             style={{
@@ -2497,7 +2645,7 @@ export default function AdminPage() {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '28px 1fr 150px 120px',
+                    gridTemplateColumns: '28px 1fr 150px 168px',
                     gap: '16px',
                     padding: '12px 18px',
                     background: '#0E0F12',
@@ -2532,7 +2680,7 @@ export default function AdminPage() {
                       onDrop={() => handleDrop(i)}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '28px 1fr 150px 120px',
+                        gridTemplateColumns: '28px 1fr 150px 168px',
                         gap: '16px',
                         alignItems: 'center',
                         padding: '16px 18px',
@@ -2607,6 +2755,36 @@ export default function AdminPage() {
                         onClick={(e) => e.stopPropagation()}
                         onDragStart={(e) => e.stopPropagation()}
                       >
+                        {schema.resumeToggle && (
+                          <button
+                            onClick={() => toggleResumeInclude(row)}
+                            title={row.resume_include ? 'Remove from resume' : 'Include on resume'}
+                            style={{
+                              background: 'transparent',
+                              border: `1px solid ${row.resume_include ? '#3a2010' : '#2C3037'}`,
+                              borderRadius: '7px',
+                              padding: '6px 9px',
+                              color: row.resume_include ? 'var(--accent)' : 'var(--text-4)',
+                              font: '500 11px var(--font-mono), monospace',
+                              cursor: 'pointer',
+                              transition: 'border-color .2s, color .2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#3a2010';
+                              e.currentTarget.style.color = 'var(--accent)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = row.resume_include
+                                ? '#3a2010'
+                                : '#2C3037';
+                              e.currentTarget.style.color = row.resume_include
+                                ? 'var(--accent)'
+                                : 'var(--text-4)';
+                            }}
+                          >
+                            ★
+                          </button>
+                        )}
                         {section === 'projects' && (
                           <button
                             onClick={() => toggleFeatured(row)}
@@ -3057,6 +3235,28 @@ export default function AdminPage() {
                         </option>
                       ))}
                     </select>
+                  )}
+                  {f.type === 'combobox' && (
+                    <ComboboxField
+                      value={String(val ?? '')}
+                      options={
+                        f.optionsFromField
+                          ? [
+                              ...new Set(
+                                (lists[f.optionsFromField.list] ?? [])
+                                  .map((r) => r[f.optionsFromField!.field])
+                                  .filter(
+                                    (v): v is string => typeof v === 'string' && v.length > 0,
+                                  ),
+                              ),
+                            ].sort()
+                          : []
+                      }
+                      placeholder={f.placeholder}
+                      readOnly={isReadOnly}
+                      onChange={update}
+                      inputStyle={inputStyle}
+                    />
                   )}
                   {f.type === 'image' && (
                     <ImageUploadField
