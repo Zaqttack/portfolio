@@ -14,7 +14,7 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
       migrations: ${{ steps.filter.outputs.migrations }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -25,6 +25,8 @@ jobs:
               - 'package.json'
               - 'package-lock.json'
               - 'next.config.mjs'
+              - 'open-next.config.ts'
+              - 'wrangler.jsonc'
               - 'tsconfig.json'
               - 'biome.json'
             migrations:
@@ -37,8 +39,8 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: npm
@@ -52,8 +54,8 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: npm
@@ -67,8 +69,8 @@ jobs:
     if: needs.lint.result == 'success' && needs.unit.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: npm
@@ -81,8 +83,7 @@ jobs:
           CI: true
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-      - name: Upload Playwright report on failure
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report
@@ -91,32 +92,33 @@ jobs:
 
   # ── build ──────────────────────────────────────────────────────────────────
   build:
-    name: Build (next-on-pages)
+    name: Build (opennext + Workers)
     needs: [changes, smoke]
     if: needs.changes.outputs.web == 'true' && (needs.smoke.result == 'success' || needs.smoke.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Build (next-on-pages)
-        run: npm run pages:build
+      - name: Security audit (runtime deps only)
+        run: npm audit --omit=dev --audit-level=critical
+      - name: Build
+        run: npm run build:worker
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: web-build
-          path: .vercel/output/static
+          name: worker-build
+          path: .open-next
           retention-days: 1
 
   # ── deploy ─────────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy to Cloudflare Pages
+    name: Deploy to Cloudflare Workers
     needs: [build]
     if: needs.build.result == 'success'
     runs-on: ubuntu-latest
@@ -124,18 +126,17 @@ jobs:
       contents: read
       deployments: write
     steps:
-      - uses: actions/checkout@v4
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
         with:
-          name: web-build
-          path: .vercel/output/static
-      - name: Deploy to Cloudflare Pages
+          name: worker-build
+          path: .open-next
+      - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy .vercel/output/static --project-name=portfolio --branch=main
+          command: deploy
 
   # ── migrations: lint ───────────────────────────────────────────────────────
   lint-migrations:
@@ -144,7 +145,7 @@ jobs:
     if: needs.changes.outputs.migrations == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v2
         with:
           version: latest
@@ -165,7 +166,7 @@ jobs:
     if: needs.lint-migrations.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v2
         with:
           version: latest
@@ -186,7 +187,7 @@ jobs:
     if: needs.dry-run-migrations.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v2
         with:
           version: latest
