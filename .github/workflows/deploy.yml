@@ -36,7 +36,7 @@ jobs:
   lint:
     name: Lint
     needs: [changes]
-    if: needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -51,7 +51,7 @@ jobs:
   unit:
     name: Unit tests
     needs: [changes]
-    if: needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -94,7 +94,7 @@ jobs:
   deploy:
     name: Build & Deploy to Cloudflare Workers
     needs: [changes, smoke]
-    if: needs.changes.outputs.web == 'true' && (needs.smoke.result == 'success' || needs.smoke.result == 'skipped')
+    if: (needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && (needs.smoke.result == 'success' || needs.smoke.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
