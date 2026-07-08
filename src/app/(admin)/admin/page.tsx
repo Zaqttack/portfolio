@@ -1106,6 +1106,12 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'A short summary of the organization shown on the experience page.',
       },
       {
+        key: 'logo',
+        label: 'Logo',
+        type: 'image',
+        help: 'Upload a square org logo. Max 5 MB. Shown next to the org name on the experience page.',
+      },
+      {
         key: 'url',
         label: 'Website',
         type: 'text',
