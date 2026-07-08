@@ -82,8 +82,9 @@ export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: Top
         {resumeUrl ? (
           <a
             href={resumeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            {...(resumeUrl.startsWith('/')
+              ? { download: true }
+              : { target: '_blank', rel: 'noopener noreferrer' })}
             style={{ textDecoration: 'none', color: 'var(--accent)' }}
           >
             Résumé ↓

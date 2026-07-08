@@ -25,7 +25,7 @@ export default async function WorkPage() {
       projects={projects}
       subtitle={profile?.projects_subtitle ?? null}
       writingEnabled={profile?.writing_enabled ?? false}
-      resumeUrl={profile?.resume_url ?? null}
+      resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
       profileLinks={profileLinks}
     />
   );

@@ -108,6 +108,37 @@ export async function getGallery(): Promise<GalleryImage[]> {
   return data;
 }
 
+export async function getResumeData() {
+  const [profile, links, expResult, projResult, skillsResult, education, certifications] =
+    await Promise.all([
+      supabase.from('profile').select('*').single(),
+      supabase.from('profile_links').select('*').order('display_order'),
+      supabase
+        .from('experience')
+        .select('*, experience_bullets(*), company_data:companies(*)')
+        .eq('resume_include', true)
+        .order('display_order'),
+      supabase.from('projects').select('*').eq('resume_include', true).order('display_order'),
+      supabase.from('skills').select('*').eq('resume_include', true).order('display_order'),
+      supabase.from('education').select('*').order('display_order'),
+      supabase.from('certifications').select('*').order('display_order'),
+    ]);
+
+  if (expResult.error) throw expResult.error;
+  if (projResult.error) throw projResult.error;
+  if (skillsResult.error) throw skillsResult.error;
+
+  return {
+    profile: profile.data,
+    links: links.data ?? [],
+    experience: expResult.data ?? [],
+    projects: projResult.data ?? [],
+    skills: skillsResult.data ?? [],
+    education: education.data ?? [],
+    certifications: certifications.data ?? [],
+  };
+}
+
 // Admin helpers — called from route handlers using service-role key
 
 export async function getImportStaging(): Promise<ImportStaging[]> {

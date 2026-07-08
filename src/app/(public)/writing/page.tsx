@@ -27,7 +27,7 @@ export default async function WritingPage() {
       posts={posts}
       subtitle={profile?.writing_subtitle ?? null}
       writingEnabled={profile?.writing_enabled ?? false}
-      resumeUrl={profile?.resume_url ?? null}
+      resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
       profileLinks={profileLinks}
     />
   );
