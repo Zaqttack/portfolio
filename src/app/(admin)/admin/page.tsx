@@ -199,7 +199,7 @@ function MarkdownEditor({
   );
 }
 
-type RoleEntry = { role: string; start: string; end: string };
+type RoleEntry = { role: string; start: string; end: string; highlights: string };
 
 function RolesEditor({
   value,
@@ -211,15 +211,20 @@ function RolesEditor({
   readOnly?: boolean;
 }) {
   const parse = (s: string): RoleEntry[] => {
-    const lines = s
+    if (!s.trim()) return [{ role: '', start: '', end: '', highlights: '' }];
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed as RoleEntry[];
+    } catch {}
+    // legacy pipe format — migrate on first save
+    return s
       .split('\n')
       .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length === 0) return [{ role: '', start: '', end: '' }];
-    return lines.map((line) => {
-      const [role, start, end] = line.split('|').map((x) => x.trim());
-      return { role: role ?? '', start: start ?? '', end: end ?? '' };
-    });
+      .filter(Boolean)
+      .map((line) => {
+        const [role, start, end] = line.split('|').map((x) => x.trim());
+        return { role: role ?? '', start: start ?? '', end: end ?? '', highlights: '' };
+      });
   };
 
   const [entries, setEntries] = useState<RoleEntry[]>(() => parse(value));
@@ -227,23 +232,18 @@ function RolesEditor({
 
   const commit = (next: RoleEntry[]) => {
     setEntries(next);
-    onChange(
-      next
-        .filter((e) => e.role.trim())
-        .map((e) => `${e.role.trim()} | ${e.start} | ${e.end}`)
-        .join('\n'),
-    );
+    onChange(JSON.stringify(next.filter((e) => e.role.trim())));
   };
 
   const updateEntry = (i: number, field: keyof RoleEntry, v: string) => {
     commit(entries.map((e, idx) => (idx === i ? { ...e, [field]: v } : e)));
   };
 
-  const addRow = () => commit([...entries, { role: '', start: '', end: '' }]);
+  const addRow = () => commit([...entries, { role: '', start: '', end: '', highlights: '' }]);
 
   const removeRow = (i: number) => {
     const next = entries.filter((_, idx) => idx !== i);
-    commit(next.length === 0 ? [{ role: '', start: '', end: '' }] : next);
+    commit(next.length === 0 ? [{ role: '', start: '', end: '', highlights: '' }] : next);
   };
 
   const dropRow = (toIdx: number) => {
@@ -298,77 +298,86 @@ function RolesEditor({
         <span />
       </div>
       {entries.map((e, i) => (
-        <div
-          key={i}
-          draggable={!readOnly}
-          onDragStart={() => {
-            rolesDragIdx.current = i;
-          }}
-          onDragOver={(ev) => ev.preventDefault()}
-          onDrop={() => dropRow(i)}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '16px 1fr 140px 140px 32px',
-            gap: '6px',
-            alignItems: 'center',
-          }}
-        >
-          {!readOnly && <span style={dragHandle}>⠿</span>}
-          <input
-            value={e.role}
-            onChange={(ev) => updateEntry(i, 'role', ev.target.value)}
-            placeholder="President"
-            readOnly={readOnly}
-            style={cellStyle}
-            onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
-            onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
-          />
-          <input
-            type="month"
-            value={e.start}
-            onChange={(ev) => updateEntry(i, 'start', ev.target.value)}
-            readOnly={readOnly}
-            style={{ ...cellStyle, colorScheme: 'dark' }}
-            onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
-            onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
-          />
-          <input
-            type="month"
-            value={e.end}
-            onChange={(ev) => updateEntry(i, 'end', ev.target.value)}
-            placeholder="blank = present"
-            readOnly={readOnly}
-            style={{ ...cellStyle, colorScheme: 'dark' }}
-            onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
-            onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
-          />
-          {!readOnly && (
-            <button
-              type="button"
-              onClick={() => removeRow(i)}
-              style={{
-                background: 'transparent',
-                border: '1px solid #2C3037',
-                borderRadius: '7px',
-                color: 'var(--text-4)',
-                font: '500 12px var(--font-mono), monospace',
-                cursor: 'pointer',
-                lineHeight: 1,
-                transition: 'border-color .2s, color .2s',
-              }}
-              onMouseEnter={(ev) => {
-                ev.currentTarget.style.borderColor = '#E5534B';
-                ev.currentTarget.style.color = '#E5534B';
-              }}
-              onMouseLeave={(ev) => {
-                ev.currentTarget.style.borderColor = '#2C3037';
-                ev.currentTarget.style.color = 'var(--text-4)';
-              }}
-            >
-              ✕
-            </button>
-          )}
-        </div>
+        <>
+          <div
+            draggable={!readOnly}
+            onDragStart={() => {
+              rolesDragIdx.current = i;
+            }}
+            onDragOver={(ev) => ev.preventDefault()}
+            onDrop={() => dropRow(i)}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '16px 1fr 140px 140px 32px',
+              gap: '6px',
+              alignItems: 'center',
+            }}
+          >
+            {!readOnly && <span style={dragHandle}>⠿</span>}
+            <input
+              value={e.role}
+              onChange={(ev) => updateEntry(i, 'role', ev.target.value)}
+              placeholder="President"
+              readOnly={readOnly}
+              style={cellStyle}
+              onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
+              onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
+            />
+            <input
+              type="month"
+              value={e.start}
+              onChange={(ev) => updateEntry(i, 'start', ev.target.value)}
+              readOnly={readOnly}
+              style={{ ...cellStyle, colorScheme: 'dark' }}
+              onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
+              onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
+            />
+            <input
+              type="month"
+              value={e.end}
+              onChange={(ev) => updateEntry(i, 'end', ev.target.value)}
+              placeholder="blank = present"
+              readOnly={readOnly}
+              style={{ ...cellStyle, colorScheme: 'dark' }}
+              onFocus={(ev) => (ev.target.style.borderColor = 'var(--accent)')}
+              onBlur={(ev) => (ev.target.style.borderColor = '#2C3037')}
+            />
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => removeRow(i)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #2C3037',
+                  borderRadius: '7px',
+                  color: 'var(--text-4)',
+                  font: '500 12px var(--font-mono), monospace',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                  transition: 'border-color .2s, color .2s',
+                }}
+                onMouseEnter={(ev) => {
+                  ev.currentTarget.style.borderColor = '#E5534B';
+                  ev.currentTarget.style.color = '#E5534B';
+                }}
+                onMouseLeave={(ev) => {
+                  ev.currentTarget.style.borderColor = '#2C3037';
+                  ev.currentTarget.style.color = 'var(--text-4)';
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <div style={{ marginLeft: '22px' }}>
+            <BulletsEditor
+              value={e.highlights}
+              onChange={(v) => updateEntry(i, 'highlights', v)}
+              placeholder="Led 3 workshops, Grew membership from 40 to 120…"
+              readOnly={readOnly}
+            />
+          </div>
+        </>
       ))}
       {!readOnly && (
         <button
@@ -1619,16 +1628,23 @@ export default function AdminPage() {
                 ? (data as unknown as Record<string, unknown>[]).map((row) => {
                     const roles =
                       (row.involvement_roles as
-                        | { role: string; start_date: string; end_date: string | null }[]
+                        | {
+                            role: string;
+                            start_date: string;
+                            end_date: string | null;
+                            highlights: string[] | null;
+                          }[]
                         | null) ?? [];
                     return {
                       ...row,
-                      _roles: roles
-                        .map(
-                          (r) =>
-                            `${r.role} | ${r.start_date.slice(0, 7)} | ${r.end_date ? r.end_date.slice(0, 7) : ''}`,
-                        )
-                        .join('\n'),
+                      _roles: JSON.stringify(
+                        roles.map((r) => ({
+                          role: r.role,
+                          start: r.start_date.slice(0, 7),
+                          end: r.end_date ? r.end_date.slice(0, 7) : '',
+                          highlights: (r.highlights ?? []).join('\n'),
+                        })),
+                      ),
                     };
                   })
                 : (data as unknown as Record<string, unknown>[]).map((row) =>
@@ -1877,25 +1893,22 @@ export default function AdminPage() {
 
     if (section === 'involvement' && savedId !== undefined) {
       await supabase.from('involvement_roles').delete().eq('org_id', savedId);
-      const lines = (rolesText ?? '')
-        .split('\n')
-        .map((t) => t.trim())
-        .filter(Boolean);
-      if (lines.length > 0) {
+      const roleEntries: RoleEntry[] = JSON.parse(rolesText && rolesText.trim() ? rolesText : '[]');
+      const validRoles = roleEntries.filter((r) => r.role && r.start);
+      if (validRoles.length > 0) {
         await supabase.from('involvement_roles').insert(
-          lines
-            .map((line, i) => {
-              const [role, start, end] = line.split('|').map((s) => s.trim());
-              return {
-                org_id: savedId,
-                role: role ?? '',
-                start_date: start ? `${start}-01` : null,
-                end_date: end ? `${end}-01` : null,
-                metrics: {},
-                display_order: i,
-              };
-            })
-            .filter((r) => r.role && r.start_date),
+          validRoles.map((r, i) => ({
+            org_id: savedId,
+            role: r.role,
+            start_date: `${r.start}-01`,
+            end_date: r.end ? `${r.end}-01` : null,
+            highlights: r.highlights
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean),
+            metrics: {},
+            display_order: i,
+          })),
         );
       }
     }

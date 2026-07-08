@@ -530,49 +530,114 @@ export default function ExperienceClient({
                 </p>
               )}
               {involvement.map((org) => {
-                const latestRole = org.involvement_roles?.[0];
-                const period = latestRole
-                  ? fmtPeriod(latestRole.start_date, latestRole.end_date)
-                  : '';
-                const roleLabel = latestRole ? `${latestRole.role} — ${org.name}` : org.name;
+                const roles = org.involvement_roles ?? [];
+                const earliest = roles.reduce(
+                  (min, r) => (!min || r.start_date < min ? r.start_date : min),
+                  null as string | null,
+                );
+                const latest = roles.reduce<string | null>(
+                  (max, r) =>
+                    !r.end_date ? null : max === null ? null : r.end_date > max ? r.end_date : max,
+                  roles[0]?.end_date ?? null,
+                );
                 return (
                   <div
                     key={org.id}
                     data-reveal
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr auto',
-                      gap: '20px',
                       padding: '22px 0',
                       borderBottom: '1px solid var(--border-1)',
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>
-                        {roleLabel}
+                    {/* Org header */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        gap: '16px',
+                        marginBottom: roles.length > 0 ? '14px' : 0,
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: '18px', letterSpacing: '-.01em' }}>
+                        {org.name}
                       </div>
-                      {org.description && (
+                      {earliest && (
                         <div
                           style={{
-                            fontSize: '14px',
-                            lineHeight: 1.55,
-                            color: 'var(--text-2)',
-                            maxWidth: '46em',
+                            font: '500 11px var(--font-mono), monospace',
+                            color: 'var(--text-4)',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
                           }}
                         >
-                          {org.description}
+                          {fmtPeriod(earliest, latest === undefined ? null : latest)}
                         </div>
                       )}
                     </div>
-                    {period && (
+
+                    {/* Roles */}
+                    {roles.map((role, ri) => {
+                      const bullets = role.highlights ?? [];
+                      return (
+                        <div
+                          key={role.id}
+                          style={{
+                            paddingLeft: '16px',
+                            paddingBottom: ri < roles.length - 1 ? '16px' : 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'baseline',
+                              gap: '16px',
+                            }}
+                          >
+                            <div style={{ fontWeight: 600, fontSize: '15px' }}>{role.role}</div>
+                            <div
+                              style={{
+                                font: '500 11px var(--font-mono), monospace',
+                                color: 'var(--text-4)',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {fmtPeriod(role.start_date, role.end_date)}
+                            </div>
+                          </div>
+                          {bullets.length > 0 && (
+                            <ul
+                              style={{
+                                margin: '6px 0 0',
+                                paddingLeft: '18px',
+                                fontSize: '14px',
+                                lineHeight: 1.7,
+                                color: 'var(--text-2)',
+                                maxWidth: '46em',
+                              }}
+                            >
+                              {bullets.map((b, bi) => (
+                                <li key={bi}>{b}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Fallback description if no roles */}
+                    {roles.length === 0 && org.description && (
                       <div
                         style={{
-                          font: '500 11px var(--font-mono), monospace',
-                          color: 'var(--text-4)',
-                          whiteSpace: 'nowrap',
+                          fontSize: '14px',
+                          lineHeight: 1.55,
+                          color: 'var(--text-2)',
+                          maxWidth: '46em',
                         }}
                       >
-                        {period}
+                        {org.description}
                       </div>
                     )}
                   </div>
