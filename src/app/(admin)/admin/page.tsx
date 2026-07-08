@@ -1522,15 +1522,18 @@ export default function AdminPage() {
     async (file: File): Promise<string | null> => {
       const ext = file.name.split('.').pop() ?? 'jpg';
       const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from('media').upload(path, file, { upsert: true });
-      if (error) {
-        showToast(`Upload failed: ${error.message}`, 'error');
+      const body = new FormData();
+      body.append('file', file);
+      body.append('path', path);
+      const res = await fetch('/api/upload', { method: 'POST', body });
+      const json = await res.json();
+      if (!res.ok) {
+        showToast(`Upload failed: ${json.error ?? res.statusText}`, 'error');
         return null;
       }
-      const { data } = supabase.storage.from('media').getPublicUrl(path);
-      return data.publicUrl;
+      return json.url;
     },
-    [supabase, showToast],
+    [showToast],
   );
 
   const signOut = async () => {
