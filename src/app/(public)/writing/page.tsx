@@ -5,7 +5,6 @@ import type { Post, Profile, ProfileLink } from '@/types';
 import WritingClient from './WritingClient';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
 
 export const metadata: Metadata = { title: 'Zaquariah Holland | Writing' };
 

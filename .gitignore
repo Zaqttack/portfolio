@@ -38,9 +38,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# wrangler files
+# wrangler / opennext
 .wrangler
 .dev.vars
+.open-next
 
 # AI
 .playwright-mcp

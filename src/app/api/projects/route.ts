@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getProjects } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 
-export const runtime = 'edge';
-
 export async function GET() {
   try {
     const data = await getProjects();
