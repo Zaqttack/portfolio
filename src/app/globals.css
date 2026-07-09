@@ -92,6 +92,28 @@ ol {
     transform 0.6s ease;
 }
 
+/* Admin responsive layout */
+@media (max-width: 768px) {
+  .admin-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-sidebar {
+    position: static !important;
+    height: auto !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-1);
+    padding: 12px 0 !important;
+  }
+  .admin-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-form-grid > * {
+    grid-column: span 1 !important;
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;

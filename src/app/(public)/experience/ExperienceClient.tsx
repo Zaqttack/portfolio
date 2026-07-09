@@ -297,7 +297,7 @@ export default function ExperienceClient({
                     }
                     onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
                   >
-                    Download résumé <Download size={13} />
+                    Download resume <Download size={13} />
                   </a>
                 );
               })()}

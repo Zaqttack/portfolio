@@ -30,6 +30,7 @@ export default function WritingClient({
   const featured = posts[0] ?? null;
   const archive = posts.slice(1);
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<'featured' | 'archive'>('featured');
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -55,6 +56,23 @@ export default function WritingClient({
   }, []);
 
   useEffect(() => {
+    const sectionIds = ['featured', 'archive'] as const;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveSection(e.target.id as (typeof sectionIds)[number]);
+        });
+      },
+      { rootMargin: '0px 0px -60% 0px' },
+    );
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -67,7 +85,17 @@ export default function WritingClient({
 
   return (
     <>
-      <LeftRail items={[]} />
+      <LeftRail
+        items={[
+          ...(featured
+            ? [{ href: '#featured', label: 'featured', active: activeSection === 'featured' }]
+            : []),
+          ...(archive.length > 0
+            ? [{ href: '#archive', label: 'archive', active: activeSection === 'archive' }]
+            : []),
+          { href: '/', label: '← index', active: false, isBack: true },
+        ]}
+      />
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
@@ -119,7 +147,7 @@ export default function WritingClient({
 
         {/* featured */}
         {featured && (
-          <div style={{ padding: '0 56px 30px 40px' }}>
+          <div id="featured" style={{ padding: '0 56px 30px 40px' }}>
             <a
               data-reveal
               href={`/writing/${featured.slug}`}
@@ -200,7 +228,7 @@ export default function WritingClient({
         )}
 
         {/* archive */}
-        <div style={{ padding: '0 56px 80px 40px' }}>
+        <div id="archive" style={{ padding: '0 56px 80px 40px' }}>
           <div style={{ borderTop: '1px solid var(--border-2)' }}>
             {archive.length === 0 && !featured && (
               <p style={{ padding: '40px 4px', color: 'var(--text-3)', fontSize: '14px' }}>

@@ -44,13 +44,13 @@ const BASE_CMDS: Cmd[] = [
   {
     label: 'Experience',
     kind: 'page',
-    hint: 'résumé',
+    hint: 'resume',
     run: () => {
       window.location.href = '/experience';
     },
   },
   {
-    label: 'Download résumé',
+    label: 'Download resume',
     kind: 'action',
     hint: 'pdf',
     run: () =>

@@ -600,6 +600,8 @@ interface FieldDef {
   nullable?: boolean;
   nullLabel?: string;
   locationSep?: string;
+  sectionLabel?: string;
+  halfWidth?: boolean;
 }
 
 interface PageSettingsConfig {
@@ -1260,6 +1262,8 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'Project name',
         help: 'Displayed as the project heading on the projects page.',
+        sectionLabel: 'Identity',
+        halfWidth: true,
       },
       {
         key: 'slug',
@@ -1267,6 +1271,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'project-slug',
         help: 'Auto-generated from the title. Override to set a custom URL path (/projects/your-slug).',
+        halfWidth: true,
       },
       {
         key: 'summary',
@@ -1298,6 +1303,8 @@ const SCHEMAS: Record<string, Schema> = {
         nullable: true,
         nullLabel: 'No start date',
         help: 'When you started this project. Shown as a date range on the projects page.',
+        sectionLabel: 'Timeline',
+        halfWidth: true,
       },
       {
         key: 'ended_at',
@@ -1306,6 +1313,7 @@ const SCHEMAS: Record<string, Schema> = {
         nullable: true,
         nullLabel: 'Present / ongoing',
         help: 'Leave blank to show as ongoing. Set to start date for a single-month project.',
+        halfWidth: true,
       },
       {
         key: 'repo_url',
@@ -1313,6 +1321,8 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'https://github.com/…',
         help: 'Optional link to the source repository.',
+        sectionLabel: 'Links',
+        halfWidth: true,
       },
       {
         key: 'live_url',
@@ -1320,6 +1330,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'https://…',
         help: 'Optional link to the deployed/live version.',
+        halfWidth: true,
       },
     ],
   },
@@ -1359,6 +1370,8 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'Post title',
         help: 'The headline shown in the writing list and on the post page.',
+        sectionLabel: 'Identity',
+        halfWidth: true,
       },
       {
         key: 'slug',
@@ -1366,6 +1379,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'post-slug',
         help: 'Auto-generated from the title. Override to set a custom URL path (/writing/your-slug).',
+        halfWidth: true,
       },
       {
         key: 'excerpt',
@@ -1395,6 +1409,7 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Published date',
         type: 'date',
         help: 'The date displayed on the post and used for sort order. Visibility is controlled by Status — a post must be Published to appear publicly.',
+        sectionLabel: 'Date',
       },
     ],
   },
@@ -1412,6 +1427,8 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'SWIVEL',
         help: 'Company name as it appears on the timeline.',
+        sectionLabel: 'Identity',
+        halfWidth: true,
       },
       {
         key: 'website_url',
@@ -1419,6 +1436,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'https://…',
         help: 'Optional link to the company website.',
+        halfWidth: true,
       },
       {
         key: 'logo_url',
@@ -1444,7 +1462,7 @@ const SCHEMAS: Record<string, Schema> = {
           label: 'Page subtitle',
           type: 'textarea',
           rows: 2,
-          placeholder: 'The résumé, on the page…',
+          placeholder: 'The resume, on the page…',
           help: 'Description shown below the "Experience" heading on the experience page.',
         },
       ],
@@ -1456,6 +1474,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'select',
         optionsFrom: 'companies',
         help: 'Link to a company record. Add companies first under the Companies tab.',
+        sectionLabel: 'Role',
       },
       {
         key: 'role',
@@ -1476,6 +1495,8 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Start date',
         type: 'date',
         help: 'Start date for this role. Used for sort order and the timeline display.',
+        sectionLabel: 'Timeline',
+        halfWidth: true,
       },
       {
         key: 'end_date',
@@ -1484,12 +1505,14 @@ const SCHEMAS: Record<string, Schema> = {
         nullable: true,
         nullLabel: 'Current role',
         help: 'Leave blank to show PRESENT instead of an end date.',
+        halfWidth: true,
       },
       {
         key: 'tech_tags',
         label: 'Tech stack',
         type: 'skill-tags',
         help: 'Technologies used in this role. Pulls from your Skills list — search to pick, or add a new skill inline.',
+        sectionLabel: 'Details',
       },
       {
         key: '_bullets',
@@ -1516,6 +1539,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'TypeScript',
         help: 'The skill name as it will appear on your site.',
+        halfWidth: true,
       },
       {
         key: 'category',
@@ -1524,11 +1548,12 @@ const SCHEMAS: Record<string, Schema> = {
         placeholder: 'Languages',
         optionsFromField: { list: 'skills', field: 'category' },
         help: 'Groups skills together on the home page. Use consistent names like Languages, Frameworks, Tools, Platforms.',
+        halfWidth: true,
       },
     ],
   },
   involvement: {
-    label: 'Involvement',
+    label: 'Community',
     singular: 'org',
     table: 'involvement_orgs',
     colName: 'NAME',
@@ -1542,6 +1567,16 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'ACM San Antonio',
         help: 'Name of the community org, event series, or initiative.',
+        sectionLabel: 'Identity',
+        halfWidth: true,
+      },
+      {
+        key: 'url',
+        label: 'Website',
+        type: 'text',
+        placeholder: 'https://…',
+        help: "Optional link to the org's website.",
+        halfWidth: true,
       },
       {
         key: 'description',
@@ -1558,17 +1593,11 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'Upload a square org logo. Max 5 MB. Shown next to the org name on the experience page.',
       },
       {
-        key: 'url',
-        label: 'Website',
-        type: 'text',
-        placeholder: 'https://…',
-        help: "Optional link to the org's website.",
-      },
-      {
         key: '_roles',
         label: 'Roles',
         type: 'roles',
         help: 'Your role history at this org. Leave end blank for current/ongoing. Most recent role shows on the experience page.',
+        sectionLabel: 'Roles',
       },
     ],
   },
@@ -1587,6 +1616,22 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'Zaquariah Holland',
         help: 'Your full name shown in the site header and meta tags.',
+        sectionLabel: 'Identity',
+        halfWidth: true,
+      },
+      {
+        key: 'email',
+        label: 'Email',
+        type: 'text',
+        placeholder: 'zaquariah@gmail.com',
+        help: 'Shown in the contact section and used for the mailto link.',
+        halfWidth: true,
+      },
+      {
+        key: 'location',
+        label: 'Location',
+        type: 'location',
+        help: 'Shown in the left rail hero label (e.g. "SAT · TX").',
       },
       {
         key: 'hero_title',
@@ -1595,6 +1640,15 @@ const SCHEMAS: Record<string, Schema> = {
         rows: 2,
         placeholder: "I'm {{first_name}}. I build precise, well-architected software.",
         help: 'The large heading on the home page. Use {{first_name}} as a token for your first name.',
+        sectionLabel: 'Hero & bio',
+      },
+      {
+        key: 'bio',
+        label: 'Bio',
+        type: 'textarea',
+        rows: 4,
+        placeholder: 'Short bio paragraph…',
+        help: 'A paragraph about you shown in the home page hero.',
       },
       {
         key: 'tagline',
@@ -1612,14 +1666,6 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'Optional. The "// now" blurb hides after this date and time. Leave blank to show indefinitely.',
       },
       {
-        key: 'bio',
-        label: 'Bio',
-        type: 'textarea',
-        rows: 4,
-        placeholder: 'Short bio paragraph…',
-        help: 'A paragraph about you shown in the home page hero.',
-      },
-      {
         key: 'terminal_status',
         label: 'Terminal status',
         type: 'text',
@@ -1633,34 +1679,23 @@ const SCHEMAS: Record<string, Schema> = {
         rows: 2,
         placeholder: "Let's build something — or just come argue about type systems at a meetup.",
         help: 'The heading in the Contact section at the bottom of the home page.',
-      },
-      {
-        key: 'location',
-        label: 'Location',
-        type: 'location',
-        help: 'Shown in the left rail hero label (e.g. "SAT · TX").',
-      },
-      {
-        key: 'email',
-        label: 'Email',
-        type: 'text',
-        placeholder: 'zaquariah@gmail.com',
-        help: 'Shown in the contact section and used for the mailto link.',
+        sectionLabel: 'Contact',
       },
       {
         key: 'resume_url',
-        label: 'Résumé URL',
+        label: 'Resume URL',
         type: 'text',
         placeholder: 'https://…',
-        help: 'Fallback static résumé PDF link. Used when the dynamic PDF download is disabled.',
+        help: 'Fallback static resume PDF link. Used when the dynamic PDF download is disabled.',
+        sectionLabel: 'Resume',
       },
       {
         key: 'resume_download_enabled',
-        label: 'Dynamic résumé download',
+        label: 'Dynamic resume download',
         type: 'toggle',
         onLabel: 'Public',
         offLabel: 'Admin only',
-        help: 'When enabled, visitors can download a live-generated PDF from your starred items. Disabled falls back to Résumé URL.',
+        help: 'When enabled, visitors can download a live-generated PDF from your starred items. Disabled falls back to Resume URL.',
       },
       {
         key: 'open_to_work',
@@ -1669,6 +1704,7 @@ const SCHEMAS: Record<string, Schema> = {
         onLabel: 'Active',
         offLabel: 'Inactive',
         help: 'Shows a pulsing indicator in the left rail when enabled.',
+        sectionLabel: 'Status',
       },
     ],
   },
@@ -1686,6 +1722,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'GitHub',
         help: 'Display name shown next to the link.',
+        halfWidth: true,
       },
       {
         key: 'url',
@@ -1693,6 +1730,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'https://github.com/…',
         help: 'Full URL the link points to.',
+        halfWidth: true,
       },
     ],
   },
@@ -1711,6 +1749,8 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'B.S. Computer Science',
         help: 'Degree name as it will appear on the experience page.',
+        sectionLabel: 'Identity',
+        halfWidth: true,
       },
       {
         key: 'institution',
@@ -1718,6 +1758,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'University of Texas at San Antonio',
         help: 'School or university name.',
+        halfWidth: true,
       },
       {
         key: 'start_year',
@@ -1725,6 +1766,8 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: '2018',
         help: 'Four-digit year you started.',
+        sectionLabel: 'Timeline',
+        halfWidth: true,
       },
       {
         key: 'end_year',
@@ -1732,6 +1775,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: '2022',
         help: 'Four-digit year you graduated. Leave blank for in-progress.',
+        halfWidth: true,
       },
     ],
   },
@@ -1750,6 +1794,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'AWS Solutions Architect — Associate',
         help: 'Full certification title.',
+        sectionLabel: 'Identity',
       },
       {
         key: 'issuer',
@@ -1757,6 +1802,8 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'Amazon Web Services',
         help: 'Organization that issued the certification.',
+        sectionLabel: 'Details',
+        halfWidth: true,
       },
       {
         key: 'year',
@@ -1764,6 +1811,7 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: '2023',
         help: 'Year you earned or renewed it.',
+        halfWidth: true,
       },
     ],
   },
@@ -2588,9 +2636,13 @@ export default function AdminPage() {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '224px 1fr', minHeight: '100vh' }}>
+    <div
+      className="admin-layout"
+      style={{ display: 'grid', gridTemplateColumns: '224px 1fr', minHeight: '100vh' }}
+    >
       {/* SIDEBAR */}
       <aside
+        className="admin-sidebar"
         style={{
           borderRight: '1px solid var(--border-1)',
           background: '#0C0D10',
@@ -3001,7 +3053,9 @@ export default function AdminPage() {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '28px 1fr 150px 168px',
+                    gridTemplateColumns: schema.statusKey
+                      ? '28px 1fr 150px 168px'
+                      : '28px 1fr 168px',
                     gap: '16px',
                     padding: '12px 18px',
                     background: '#0E0F12',
@@ -3013,7 +3067,7 @@ export default function AdminPage() {
                 >
                   <span />
                   <span>{schema.colName}</span>
-                  <span>STATUS</span>
+                  {schema.statusKey && <span>STATUS</span>}
                   <span style={{ textAlign: 'right' }}>ACTIONS</span>
                 </div>
                 {rows.map((row, i) => {
@@ -3025,6 +3079,9 @@ export default function AdminPage() {
                     : '';
                   const statusVal = schema.statusKey ? row[schema.statusKey] : '';
                   const pill = statusPill(statusVal as string | boolean);
+                  const statusField = schema.statusKey
+                    ? schema.fields.find((fd) => fd.key === schema.statusKey)
+                    : undefined;
                   return (
                     <div
                       key={String(row.id)}
@@ -3036,7 +3093,9 @@ export default function AdminPage() {
                       onDrop={() => handleDrop(i)}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '28px 1fr 150px 168px',
+                        gridTemplateColumns: schema.statusKey
+                          ? '28px 1fr 150px 168px'
+                          : '28px 1fr 168px',
                         gap: '16px',
                         alignItems: 'center',
                         padding: '16px 18px',
@@ -3086,26 +3145,28 @@ export default function AdminPage() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            font: '500 9.5px var(--font-mono), monospace',
-                            letterSpacing: '.04em',
-                            padding: '3px 9px',
-                            borderRadius: '20px',
-                            color: pill.fg,
-                            background: pill.bg,
-                            border: `1px solid ${pill.border}`,
-                          }}
-                        >
-                          {statusVal === true
-                            ? 'TRUE'
-                            : statusVal === false
-                              ? 'FALSE'
-                              : String(statusVal || '—').toUpperCase()}
-                        </span>
-                      </div>
+                      {schema.statusKey && (
+                        <div>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              font: '500 9.5px var(--font-mono), monospace',
+                              letterSpacing: '.04em',
+                              padding: '3px 9px',
+                              borderRadius: '20px',
+                              color: pill.fg,
+                              background: pill.bg,
+                              border: `1px solid ${pill.border}`,
+                            }}
+                          >
+                            {statusVal === true
+                              ? (statusField?.onLabel?.toUpperCase() ?? 'TRUE')
+                              : statusVal === false
+                                ? (statusField?.offLabel?.toUpperCase() ?? 'FALSE')
+                                : String(statusVal || '—').toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div
                         style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}
                         onClick={(e) => e.stopPropagation()}
@@ -3271,106 +3332,313 @@ export default function AdminPage() {
         {/* FORM */}
         {view === 'form' && editing && (
           <div style={{ padding: '28px 32px 80px', maxWidth: '720px' }}>
-            {schema.fields.map((f) => {
-              const val = editing[f.key];
-              const update = (v: unknown) => setField(f.key, v);
-              return (
-                <div key={f.key} style={{ marginBottom: '26px' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      font: '600 12px var(--font-space), sans-serif',
-                      color: 'var(--text-2)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    {f.label}
-                  </label>
-                  {f.help && (
-                    <div
-                      style={{
-                        font: '400 12px var(--font-space), sans-serif',
-                        color: 'var(--text-4)',
-                        marginBottom: '8px',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {f.help}
-                    </div>
-                  )}
-                  {f.type === 'text' && (
-                    <input
-                      value={String(val ?? '')}
-                      onChange={(e) => {
-                        update(e.target.value);
-                        if (
-                          f.key === 'title' &&
-                          !editing.id &&
-                          (section === 'projects' || section === 'posts')
-                        ) {
-                          const gen = slugify(e.target.value);
-                          if (!editing.slug || editing.slug === autoGenSlugRef.current) {
-                            autoGenSlugRef.current = gen;
-                            setField('slug', gen);
-                          }
-                        }
-                      }}
-                      placeholder={f.placeholder}
-                      readOnly={isReadOnly}
-                      style={inputStyle}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                    />
-                  )}
-                  {f.type === 'number' && (
-                    <input
-                      value={String(val ?? '')}
-                      onChange={(e) => update(e.target.value)}
-                      inputMode="numeric"
-                      placeholder={f.placeholder}
-                      readOnly={isReadOnly}
-                      style={{
-                        ...inputStyle,
-                        width: '160px',
-                        font: '500 14px var(--font-mono), monospace',
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                    />
-                  )}
-                  {f.type === 'date' && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      {val === null && f.nullable ? null : (
+            <div
+              className="admin-form-grid"
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 24px' }}
+            >
+              {schema.fields.map((f, fi) => {
+                const val = editing[f.key];
+                const update = (v: unknown) => setField(f.key, v);
+                return (
+                  <React.Fragment key={f.key}>
+                    {f.sectionLabel && (
+                      <div
+                        style={{
+                          gridColumn: 'span 2',
+                          font: '600 10px var(--font-mono), monospace',
+                          letterSpacing: '.08em',
+                          color: 'var(--text-4)',
+                          textTransform: 'uppercase',
+                          paddingTop: fi === 0 ? 0 : '8px',
+                          borderTop: fi === 0 ? 'none' : '1px solid var(--border-1)',
+                          marginTop: fi === 0 ? 0 : '4px',
+                        }}
+                      >
+                        {f.sectionLabel}
+                      </div>
+                    )}
+                    <div style={{ gridColumn: f.halfWidth ? 'span 1' : 'span 2' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          font: '600 12px var(--font-space), sans-serif',
+                          color: 'var(--text-2)',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        {f.label}
+                      </label>
+                      {f.help && (
+                        <div
+                          style={{
+                            font: '400 12px var(--font-space), sans-serif',
+                            color: 'var(--text-4)',
+                            marginBottom: '8px',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {f.help}
+                        </div>
+                      )}
+                      {f.type === 'text' && (
                         <input
-                          type="date"
-                          value={String(val ?? '').slice(0, 10)}
-                          onChange={(e) => update(e.target.value || null)}
+                          value={String(val ?? '')}
+                          onChange={(e) => {
+                            update(e.target.value);
+                            if (
+                              f.key === 'title' &&
+                              !editing.id &&
+                              (section === 'projects' || section === 'posts')
+                            ) {
+                              const gen = slugify(e.target.value);
+                              if (!editing.slug || editing.slug === autoGenSlugRef.current) {
+                                autoGenSlugRef.current = gen;
+                                setField('slug', gen);
+                              }
+                            }
+                          }}
+                          placeholder={f.placeholder}
+                          readOnly={isReadOnly}
+                          style={inputStyle}
+                          onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                          onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                        />
+                      )}
+                      {f.type === 'number' && (
+                        <input
+                          value={String(val ?? '')}
+                          onChange={(e) => update(e.target.value)}
+                          inputMode="numeric"
+                          placeholder={f.placeholder}
                           readOnly={isReadOnly}
                           style={{
                             ...inputStyle,
-                            width: 'auto',
-                            font: '500 13px var(--font-mono), monospace',
-                            colorScheme: 'dark',
+                            width: '160px',
+                            font: '500 14px var(--font-mono), monospace',
                           }}
                           onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
                           onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                         />
                       )}
-                      {f.nullable && (
+                      {f.type === 'date' && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          {val === null && f.nullable ? null : (
+                            <input
+                              type="date"
+                              value={String(val ?? '').slice(0, 10)}
+                              onChange={(e) => update(e.target.value || null)}
+                              readOnly={isReadOnly}
+                              style={{
+                                ...inputStyle,
+                                width: 'auto',
+                                font: '500 13px var(--font-mono), monospace',
+                                colorScheme: 'dark',
+                              }}
+                              onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                              onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                            />
+                          )}
+                          {f.nullable && (
+                            <button
+                              type="button"
+                              onClick={() => !isReadOnly && update(val === null ? '' : null)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: isReadOnly ? 'default' : 'pointer',
+                                padding: 0,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: '36px',
+                                  height: '20px',
+                                  borderRadius: '20px',
+                                  background: val === null ? 'var(--accent)' : '#2C3037',
+                                  position: 'relative',
+                                  transition: 'background .2s',
+                                  display: 'inline-block',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    top: '2px',
+                                    left: val === null ? '18px' : '2px',
+                                    width: '16px',
+                                    height: '16px',
+                                    borderRadius: '50%',
+                                    background: 'var(--text-1)',
+                                    transition: 'left .2s',
+                                  }}
+                                />
+                              </span>
+                              <span
+                                style={{
+                                  font: '500 12px var(--font-space), sans-serif',
+                                  color: val === null ? 'var(--text-1)' : 'var(--text-3)',
+                                }}
+                              >
+                                {f.nullLabel ?? 'Ongoing'}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {f.type === 'datetime' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <input
+                            type="datetime-local"
+                            value={String(val ?? '').slice(0, 16)}
+                            onChange={(e) => update(e.target.value || null)}
+                            readOnly={isReadOnly}
+                            style={{
+                              ...inputStyle,
+                              width: 'auto',
+                              font: '500 13px var(--font-mono), monospace',
+                              colorScheme: 'dark',
+                            }}
+                            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                          />
+                          {!!val && !isReadOnly && (
+                            <button
+                              type="button"
+                              onClick={() => update(null)}
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid #2C3037',
+                                borderRadius: '7px',
+                                padding: '8px 12px',
+                                color: 'var(--text-4)',
+                                font: '500 11.5px var(--font-space), sans-serif',
+                                cursor: 'pointer',
+                                transition: 'border-color .2s, color .2s',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = '#E5534B';
+                                e.currentTarget.style.color = '#E5534B';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = '#2C3037';
+                                e.currentTarget.style.color = 'var(--text-4)';
+                              }}
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {f.type === 'roles' && (
+                        <RolesEditor
+                          key={String(editing?.id ?? 'new')}
+                          value={String(val ?? '')}
+                          onChange={update}
+                          readOnly={isReadOnly}
+                        />
+                      )}
+                      {f.type === 'bullets' && (
+                        <BulletsEditor
+                          key={String(editing?.id ?? 'new')}
+                          value={String(val ?? '')}
+                          onChange={update}
+                          placeholder={f.placeholder}
+                          readOnly={isReadOnly}
+                        />
+                      )}
+                      {f.type === 'textarea' && (
+                        <textarea
+                          value={String(val ?? '')}
+                          onChange={(e) => update(e.target.value)}
+                          rows={f.rows || 4}
+                          placeholder={f.placeholder}
+                          readOnly={isReadOnly}
+                          style={{ ...inputStyle, lineHeight: 1.6, resize: 'vertical' }}
+                          onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                          onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                        />
+                      )}
+                      {f.type === 'markdown' && (
+                        <MarkdownEditor
+                          value={String(val ?? '')}
+                          onChange={update}
+                          rows={f.rows}
+                          placeholder={f.placeholder}
+                          readOnly={isReadOnly}
+                        />
+                      )}
+                      {f.type === 'location' &&
+                        (() => {
+                          const sep = f.locationSep ?? ' · ';
+                          const parts = String(val ?? '').split(sep);
+                          const city = parts[0] ?? '';
+                          const state = parts[1] ?? '';
+                          const compose = (c: string, s: string) => (s ? `${c}${sep}${s}` : c);
+                          const cities = state ? (US_CITIES[state] ?? []) : [];
+                          return (
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                              <select
+                                value={state}
+                                onChange={(e) => update(compose(city, e.target.value))}
+                                disabled={isReadOnly}
+                                style={{
+                                  ...inputStyle,
+                                  width: '200px',
+                                  colorScheme: 'dark',
+                                  cursor: 'pointer',
+                                }}
+                                onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                                onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                              >
+                                <option value="">— State —</option>
+                                {US_STATES.map(([abbr, name]) => (
+                                  <option key={abbr} value={abbr}>
+                                    {name} ({abbr})
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                value={city}
+                                onChange={(e) => update(compose(e.target.value, state))}
+                                disabled={isReadOnly || !state}
+                                style={{
+                                  ...inputStyle,
+                                  width: '180px',
+                                  colorScheme: 'dark',
+                                  cursor: state ? 'pointer' : 'default',
+                                  opacity: state ? 1 : 0.4,
+                                }}
+                                onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                                onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                              >
+                                <option value="">— City —</option>
+                                {cities.map((c) => (
+                                  <option key={c} value={c}>
+                                    {c}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })()}
+                      {f.type === 'toggle' && (
                         <button
-                          type="button"
-                          onClick={() => !isReadOnly && update(val === null ? '' : null)}
+                          onClick={() => !isReadOnly && update(!val)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '8px',
+                            gap: '10px',
                             background: 'transparent',
                             border: 'none',
                             cursor: isReadOnly ? 'default' : 'pointer',
@@ -3379,23 +3647,22 @@ export default function AdminPage() {
                         >
                           <span
                             style={{
-                              width: '36px',
-                              height: '20px',
+                              width: '42px',
+                              height: '24px',
                               borderRadius: '20px',
-                              background: val === null ? 'var(--accent)' : '#2C3037',
+                              background: val ? 'var(--accent)' : '#2C3037',
                               position: 'relative',
                               transition: 'background .2s',
                               display: 'inline-block',
-                              flexShrink: 0,
                             }}
                           >
                             <span
                               style={{
                                 position: 'absolute',
-                                top: '2px',
-                                left: val === null ? '18px' : '2px',
-                                width: '16px',
-                                height: '16px',
+                                top: '3px',
+                                left: val ? '21px' : '3px',
+                                width: '18px',
+                                height: '18px',
                                 borderRadius: '50%',
                                 background: 'var(--text-1)',
                                 transition: 'left .2s',
@@ -3404,348 +3671,170 @@ export default function AdminPage() {
                           </span>
                           <span
                             style={{
-                              font: '500 12px var(--font-space), sans-serif',
-                              color: val === null ? 'var(--text-1)' : 'var(--text-3)',
+                              font: '500 12.5px var(--font-space), sans-serif',
+                              color: 'var(--text-2)',
                             }}
                           >
-                            {f.nullLabel ?? 'Ongoing'}
+                            {val ? (f.onLabel ?? 'Yes') : (f.offLabel ?? 'No')}
                           </span>
                         </button>
                       )}
-                    </div>
-                  )}
-                  {f.type === 'datetime' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <input
-                        type="datetime-local"
-                        value={String(val ?? '').slice(0, 16)}
-                        onChange={(e) => update(e.target.value || null)}
-                        readOnly={isReadOnly}
-                        style={{
-                          ...inputStyle,
-                          width: 'auto',
-                          font: '500 13px var(--font-mono), monospace',
-                          colorScheme: 'dark',
-                        }}
-                        onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                        onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                      />
-                      {!!val && !isReadOnly && (
-                        <button
-                          type="button"
-                          onClick={() => update(null)}
+                      {f.type === 'select' && f.optionsFrom && (
+                        <select
+                          value={String(val ?? '')}
+                          onChange={(e) => update(e.target.value || null)}
+                          disabled={isReadOnly}
                           style={{
-                            background: 'transparent',
-                            border: '1px solid #2C3037',
-                            borderRadius: '7px',
-                            padding: '8px 12px',
-                            color: 'var(--text-4)',
-                            font: '500 11.5px var(--font-space), sans-serif',
+                            ...inputStyle,
+                            width: 'auto',
+                            minWidth: '260px',
+                            colorScheme: 'dark',
                             cursor: 'pointer',
-                            transition: 'border-color .2s, color .2s',
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = '#E5534B';
-                            e.currentTarget.style.color = '#E5534B';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = '#2C3037';
-                            e.currentTarget.style.color = 'var(--text-4)';
-                          }}
+                          onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                          onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                         >
-                          Clear
-                        </button>
+                          <option value="">— None —</option>
+                          {(lists[f.optionsFrom] ?? []).map((opt) => (
+                            <option key={String(opt.id)} value={String(opt.id)}>
+                              {String(opt.name ?? '')}
+                            </option>
+                          ))}
+                        </select>
                       )}
-                    </div>
-                  )}
-                  {f.type === 'roles' && (
-                    <RolesEditor
-                      key={String(editing?.id ?? 'new')}
-                      value={String(val ?? '')}
-                      onChange={update}
-                      readOnly={isReadOnly}
-                    />
-                  )}
-                  {f.type === 'bullets' && (
-                    <BulletsEditor
-                      key={String(editing?.id ?? 'new')}
-                      value={String(val ?? '')}
-                      onChange={update}
-                      placeholder={f.placeholder}
-                      readOnly={isReadOnly}
-                    />
-                  )}
-                  {f.type === 'textarea' && (
-                    <textarea
-                      value={String(val ?? '')}
-                      onChange={(e) => update(e.target.value)}
-                      rows={f.rows || 4}
-                      placeholder={f.placeholder}
-                      readOnly={isReadOnly}
-                      style={{ ...inputStyle, lineHeight: 1.6, resize: 'vertical' }}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                    />
-                  )}
-                  {f.type === 'markdown' && (
-                    <MarkdownEditor
-                      value={String(val ?? '')}
-                      onChange={update}
-                      rows={f.rows}
-                      placeholder={f.placeholder}
-                      readOnly={isReadOnly}
-                    />
-                  )}
-                  {f.type === 'location' &&
-                    (() => {
-                      const sep = f.locationSep ?? ' · ';
-                      const parts = String(val ?? '').split(sep);
-                      const city = parts[0] ?? '';
-                      const state = parts[1] ?? '';
-                      const compose = (c: string, s: string) => (s ? `${c}${sep}${s}` : c);
-                      const cities = state ? (US_CITIES[state] ?? []) : [];
-                      return (
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                          <select
-                            value={state}
-                            onChange={(e) => update(compose(city, e.target.value))}
-                            disabled={isReadOnly}
-                            style={{
-                              ...inputStyle,
-                              width: '200px',
-                              colorScheme: 'dark',
-                              cursor: 'pointer',
-                            }}
-                            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                          >
-                            <option value="">— State —</option>
-                            {US_STATES.map(([abbr, name]) => (
-                              <option key={abbr} value={abbr}>
-                                {name} ({abbr})
-                              </option>
-                            ))}
-                          </select>
-                          <select
-                            value={city}
-                            onChange={(e) => update(compose(e.target.value, state))}
-                            disabled={isReadOnly || !state}
-                            style={{
-                              ...inputStyle,
-                              width: '180px',
-                              colorScheme: 'dark',
-                              cursor: state ? 'pointer' : 'default',
-                              opacity: state ? 1 : 0.4,
-                            }}
-                            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                          >
-                            <option value="">— City —</option>
-                            {cities.map((c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      );
-                    })()}
-                  {f.type === 'toggle' && (
-                    <button
-                      onClick={() => !isReadOnly && update(!val)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: isReadOnly ? 'default' : 'pointer',
-                        padding: 0,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: '42px',
-                          height: '24px',
-                          borderRadius: '20px',
-                          background: val ? 'var(--accent)' : '#2C3037',
-                          position: 'relative',
-                          transition: 'background .2s',
-                          display: 'inline-block',
-                        }}
-                      >
-                        <span
-                          style={{
-                            position: 'absolute',
-                            top: '3px',
-                            left: val ? '21px' : '3px',
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '50%',
-                            background: 'var(--text-1)',
-                            transition: 'left .2s',
-                          }}
-                        />
-                      </span>
-                      <span
-                        style={{
-                          font: '500 12.5px var(--font-space), sans-serif',
-                          color: 'var(--text-2)',
-                        }}
-                      >
-                        {val ? (f.onLabel ?? 'Yes') : (f.offLabel ?? 'No')}
-                      </span>
-                    </button>
-                  )}
-                  {f.type === 'select' && f.optionsFrom && (
-                    <select
-                      value={String(val ?? '')}
-                      onChange={(e) => update(e.target.value || null)}
-                      disabled={isReadOnly}
-                      style={{
-                        ...inputStyle,
-                        width: 'auto',
-                        minWidth: '260px',
-                        colorScheme: 'dark',
-                        cursor: 'pointer',
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                    >
-                      <option value="">— None —</option>
-                      {(lists[f.optionsFrom] ?? []).map((opt) => (
-                        <option key={String(opt.id)} value={String(opt.id)}>
-                          {String(opt.name ?? '')}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  {f.type === 'combobox' && (
-                    <ComboboxField
-                      value={String(val ?? '')}
-                      options={
-                        f.optionsFromField
-                          ? [
-                              ...new Set(
-                                (lists[f.optionsFromField.list] ?? [])
-                                  .map((r) => r[f.optionsFromField!.field])
-                                  .filter(
-                                    (v): v is string => typeof v === 'string' && v.length > 0,
+                      {f.type === 'combobox' && (
+                        <ComboboxField
+                          value={String(val ?? '')}
+                          options={
+                            f.optionsFromField
+                              ? [
+                                  ...new Set(
+                                    (lists[f.optionsFromField.list] ?? [])
+                                      .map((r) => r[f.optionsFromField!.field])
+                                      .filter(
+                                        (v): v is string => typeof v === 'string' && v.length > 0,
+                                      ),
                                   ),
-                              ),
-                            ].sort()
-                          : []
-                      }
-                      placeholder={f.placeholder}
-                      readOnly={isReadOnly}
-                      onChange={update}
-                      inputStyle={inputStyle}
-                    />
-                  )}
-                  {f.type === 'image' && (
-                    <ImageUploadField
-                      value={String(val ?? '')}
-                      onChange={update}
-                      onUpload={handleImageUpload}
-                    />
-                  )}
-                  {f.type === 'skill-tags' && (
-                    <SkillTagsField
-                      value={(val as string[]) || []}
-                      skills={(lists.skills ?? []) as { name: string; category: string | null }[]}
-                      readOnly={isReadOnly}
-                      onChange={update}
-                      onCreateNew={(name, onAdd) => setAddSkillModal({ name, onAdd })}
-                    />
-                  )}
-                  {f.type === 'tags' && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '7px',
-                        alignItems: 'center',
-                        background: '#0E0F12',
-                        border: '1px solid #2C3037',
-                        borderRadius: '9px',
-                        padding: '9px 10px',
-                      }}
-                    >
-                      {((val as string[]) || []).map((tag) => (
-                        <span
-                          key={tag}
+                                ].sort()
+                              : []
+                          }
+                          placeholder={f.placeholder}
+                          readOnly={isReadOnly}
+                          onChange={update}
+                          inputStyle={inputStyle}
+                        />
+                      )}
+                      {f.type === 'image' && (
+                        <ImageUploadField
+                          value={String(val ?? '')}
+                          onChange={update}
+                          onUpload={handleImageUpload}
+                        />
+                      )}
+                      {f.type === 'skill-tags' && (
+                        <SkillTagsField
+                          value={(val as string[]) || []}
+                          skills={
+                            (lists.skills ?? []) as { name: string; category: string | null }[]
+                          }
+                          readOnly={isReadOnly}
+                          onChange={update}
+                          onCreateNew={(name, onAdd) => setAddSkillModal({ name, onAdd })}
+                        />
+                      )}
+                      {f.type === 'tags' && (
+                        <div
                           style={{
-                            display: 'inline-flex',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '7px',
                             alignItems: 'center',
-                            gap: '6px',
-                            font: '500 11px var(--font-mono), monospace',
-                            color: '#C7CBD1',
-                            background: '#17181C',
+                            background: '#0E0F12',
                             border: '1px solid #2C3037',
-                            borderRadius: '6px',
-                            padding: '4px 8px',
+                            borderRadius: '9px',
+                            padding: '9px 10px',
                           }}
                         >
-                          {tag}
+                          {((val as string[]) || []).map((tag) => (
+                            <span
+                              key={tag}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                font: '500 11px var(--font-mono), monospace',
+                                color: '#C7CBD1',
+                                background: '#17181C',
+                                border: '1px solid #2C3037',
+                                borderRadius: '6px',
+                                padding: '4px 8px',
+                              }}
+                            >
+                              {tag}
+                              {!isReadOnly && (
+                                <a
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    update((val as string[]).filter((t) => t !== tag));
+                                  }}
+                                  style={{
+                                    color: 'var(--text-4)',
+                                    textDecoration: 'none',
+                                    fontWeight: 700,
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = '#E5534B')}
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.color = 'var(--text-4)')
+                                  }
+                                >
+                                  ×
+                                </a>
+                              )}
+                            </span>
+                          ))}
                           {!isReadOnly && (
-                            <a
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                update((val as string[]).filter((t) => t !== tag));
+                            <input
+                              placeholder={f.placeholder}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ',') {
+                                  e.preventDefault();
+                                  const v = (e.target as HTMLInputElement).value
+                                    .trim()
+                                    .replace(',', '');
+                                  if (v) {
+                                    update([...((val as string[]) || []), v]);
+                                    (e.target as HTMLInputElement).value = '';
+                                  }
+                                }
                               }}
                               style={{
-                                color: 'var(--text-4)',
-                                textDecoration: 'none',
-                                fontWeight: 700,
+                                flex: 1,
+                                minWidth: '120px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-1)',
+                                font: '500 13px var(--font-space), sans-serif',
+                                padding: '4px 2px',
+                                outline: 'none',
                               }}
-                              onMouseEnter={(e) => (e.currentTarget.style.color = '#E5534B')}
-                              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-4)')}
-                            >
-                              ×
-                            </a>
+                            />
                           )}
-                        </span>
-                      ))}
-                      {!isReadOnly && (
-                        <input
-                          placeholder={f.placeholder}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ',') {
-                              e.preventDefault();
-                              const v = (e.target as HTMLInputElement).value
-                                .trim()
-                                .replace(',', '');
-                              if (v) {
-                                update([...((val as string[]) || []), v]);
-                                (e.target as HTMLInputElement).value = '';
-                              }
-                            }
-                          }}
-                          style={{
-                            flex: 1,
-                            minWidth: '120px',
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-1)',
-                            font: '500 13px var(--font-space), sans-serif',
-                            padding: '4px 2px',
-                            outline: 'none',
-                          }}
-                        />
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </React.Fragment>
+                );
+              })}
+            </div>
             {isSingleton && !isReadOnly && (
               <div
                 style={{
                   display: 'flex',
                   gap: '10px',
-                  paddingTop: '12px',
+                  paddingTop: '20px',
                   borderTop: '1px solid var(--border-1)',
+                  marginTop: '8px',
                 }}
               >
                 <button
