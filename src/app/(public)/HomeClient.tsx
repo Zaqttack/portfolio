@@ -508,7 +508,7 @@ export default function HomeClient({
                         e.currentTarget.style.color = 'var(--text-1)';
                       }}
                     >
-                      Résumé <ArrowDown size={13} />
+                      Resume <ArrowDown size={13} />
                     </a>
                   );
                 })()}
@@ -1335,7 +1335,7 @@ export default function HomeClient({
                           e.currentTarget.style.borderColor = 'var(--border-3)';
                         }}
                       >
-                        Résumé <ArrowDown size={13} />
+                        Resume <ArrowDown size={13} />
                       </a>
                     );
                   })()}

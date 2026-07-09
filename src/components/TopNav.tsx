@@ -87,7 +87,7 @@ export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: Top
               : { target: '_blank', rel: 'noopener noreferrer' })}
             style={{ textDecoration: 'none', color: 'var(--accent)' }}
           >
-            Résumé ↓
+            Resume ↓
           </a>
         )}
       </span>
