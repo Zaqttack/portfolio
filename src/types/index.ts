@@ -38,6 +38,7 @@ export interface Education {
   institution: string;
   start_year: string;
   end_year: string | null;
+  resume_include: boolean;
   display_order: number;
   created_at: string;
 }
@@ -47,6 +48,7 @@ export interface Certification {
   name: string;
   issuer: string | null;
   year: string | null;
+  resume_include: boolean;
   display_order: number;
   created_at: string;
 }
@@ -70,6 +72,7 @@ export interface Experience {
   end_date: string | null;
   org_type: 'job' | 'internship' | 'contract' | 'volunteer';
   location: string | null;
+  tech_tags: string[];
   resume_include: boolean;
   display_order: number;
   created_at: string;
@@ -91,6 +94,7 @@ export interface InvolvementOrg {
   description: string | null;
   url: string | null;
   logo: string | null;
+  resume_include: boolean;
   display_order: number;
   involvement_roles?: InvolvementRole[];
 }
@@ -115,6 +119,7 @@ export interface Achievement {
   related_org_id: string | null;
   evidence_url: string | null;
   visibility: 'public' | 'private';
+  resume_include: boolean;
   display_order: number;
   created_at: string;
 }
@@ -140,6 +145,8 @@ export interface Project {
   tags: string[];
   repo_url: string | null;
   live_url: string | null;
+  started_at: string | null;
+  ended_at: string | null;
   status: 'draft' | 'published';
   featured: boolean;
   resume_include: boolean;

@@ -76,10 +76,10 @@ export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: Top
         >
           ⌘K
         </button>
-        {link('/work', 'Projects')}
+        {link('/projects', 'Projects')}
         {writingEnabled && link('/writing', 'Writing')}
         {link('/experience', 'Experience')}
-        {resumeUrl ? (
+        {resumeUrl && (
           <a
             href={resumeUrl}
             {...(resumeUrl.startsWith('/')
@@ -89,8 +89,6 @@ export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: Top
           >
             Résumé ↓
           </a>
-        ) : (
-          <span style={{ color: 'var(--accent)' }}>Résumé ↓</span>
         )}
       </span>
     </div>

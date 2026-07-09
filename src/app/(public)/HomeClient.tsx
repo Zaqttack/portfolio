@@ -452,7 +452,7 @@ export default function HomeClient({
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <Link
                 data-magnetic
-                href="/work"
+                href="/projects"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -832,7 +832,7 @@ export default function HomeClient({
                   Latest projects
                 </h2>
                 <Link
-                  href="/work"
+                  href="/projects"
                   style={{
                     font: '500 12px var(--font-mono), monospace',
                     color: 'var(--text-2)',
@@ -854,7 +854,7 @@ export default function HomeClient({
                 {projects.slice(0, 2).map((p, i) => (
                   <Link
                     key={p.id}
-                    href="/work"
+                    href="/projects"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '44px 1fr auto',
