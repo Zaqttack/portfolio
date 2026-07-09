@@ -577,6 +577,7 @@ type FieldType =
   | 'markdown'
   | 'toggle'
   | 'tags'
+  | 'skill-tags'
   | 'location'
   | 'roles'
   | 'bullets'
@@ -710,6 +711,331 @@ function ComboboxField({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function SkillTagsField({
+  value,
+  skills,
+  readOnly,
+  onChange,
+  onCreateNew,
+}: {
+  value: string[];
+  skills: { name: string; category: string | null }[];
+  readOnly?: boolean;
+  onChange: (v: string[]) => void;
+  onCreateNew: (name: string, onAdd: (name: string) => void) => void;
+}) {
+  const [input, setInput] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const available = skills.filter(
+    (s) =>
+      !value.includes(s.name) &&
+      (input === '' || s.name.toLowerCase().includes(input.toLowerCase())),
+  );
+  const exactMatch = skills.some((s) => s.name.toLowerCase() === input.trim().toLowerCase());
+
+  const addSkill = (name: string) => {
+    if (!value.includes(name)) onChange([...value, name]);
+    setInput('');
+    setOpen(false);
+  };
+
+  const chipStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    font: '500 11px var(--font-mono), monospace',
+    color: '#C7CBD1',
+    background: '#17181C',
+    border: '1px solid #2C3037',
+    borderRadius: '6px',
+    padding: '4px 8px',
+  };
+
+  return (
+    <div
+      style={{
+        background: '#0E0F12',
+        border: '1px solid #2C3037',
+        borderRadius: '9px',
+        padding: '9px 10px',
+      }}
+    >
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginBottom: '8px' }}>
+          {value.map((tag) => (
+            <span key={tag} style={chipStyle}>
+              {tag}
+              {!readOnly && (
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onChange(value.filter((t) => t !== tag));
+                  }}
+                  style={{ color: 'var(--text-4)', textDecoration: 'none', fontWeight: 700 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#E5534B')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-4)')}
+                >
+                  ×
+                </a>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+      {!readOnly && (
+        <div style={{ position: 'relative' }}>
+          <input
+            value={input}
+            placeholder="Search or add skill…"
+            onChange={(e) => {
+              setInput(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setOpen(false);
+            }}
+            style={{
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-1)',
+              font: '500 13px var(--font-space), sans-serif',
+              padding: '4px 2px',
+              outline: 'none',
+            }}
+          />
+          {open && (available.length > 0 || (input.trim() && !exactMatch)) && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                background: '#17181C',
+                border: '1px solid #2C3037',
+                borderRadius: '9px',
+                overflow: 'hidden',
+                zIndex: 50,
+                maxHeight: '220px',
+                overflowY: 'auto',
+              }}
+            >
+              {available.map((s) => (
+                <div
+                  key={s.name}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    addSkill(s.name);
+                  }}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '9px 12px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #2C3037',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#0E0F12')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <span
+                    style={{
+                      font: '500 13px var(--font-space), sans-serif',
+                      color: 'var(--text-1)',
+                    }}
+                  >
+                    {s.name}
+                  </span>
+                  {s.category && (
+                    <span
+                      style={{
+                        font: '400 11px var(--font-mono), monospace',
+                        color: 'var(--text-4)',
+                      }}
+                    >
+                      {s.category}
+                    </span>
+                  )}
+                </div>
+              ))}
+              {input.trim() && !exactMatch && (
+                <div
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onCreateNew(input.trim(), addSkill);
+                    setInput('');
+                    setOpen(false);
+                  }}
+                  style={{
+                    padding: '9px 12px',
+                    cursor: 'pointer',
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--accent)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#0E0F12')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  + Add &ldquo;{input.trim()}&rdquo; as new skill
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddSkillModal({
+  initialName,
+  existingCategories,
+  onSave,
+  onClose,
+}: {
+  initialName: string;
+  existingCategories: string[];
+  onSave: (name: string, category: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [category, setCategory] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    await onSave(name.trim(), category.trim());
+    setSaving(false);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: '#0E0F12',
+    border: '1px solid #2C3037',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    color: 'var(--text-1)',
+    font: '500 13px var(--font-space), sans-serif',
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 300,
+        background: 'rgba(0,0,0,.6)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: '#0E0F12',
+          border: '1px solid #2C3037',
+          borderRadius: '14px',
+          padding: '28px 32px',
+          maxWidth: '400px',
+          width: '100%',
+          boxShadow: '0 24px 60px rgba(0,0,0,.7)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ font: '600 16px var(--font-space), sans-serif', marginBottom: '20px' }}>
+          Add new skill
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                font: '600 11px var(--font-mono), monospace',
+                letterSpacing: '.06em',
+                color: 'var(--text-3)',
+                textTransform: 'uppercase',
+                marginBottom: '6px',
+              }}
+            >
+              Skill name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                font: '600 11px var(--font-mono), monospace',
+                letterSpacing: '.06em',
+                color: 'var(--text-3)',
+                textTransform: 'uppercase',
+                marginBottom: '6px',
+              }}
+            >
+              Category
+            </label>
+            <ComboboxField
+              value={category}
+              options={existingCategories}
+              placeholder="e.g. Languages, Frameworks…"
+              onChange={setCategory}
+              inputStyle={inputStyle}
+            />
+          </div>
+        </div>
+        <div
+          style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: '1px solid #2C3037',
+              borderRadius: '8px',
+              padding: '9px 18px',
+              color: 'var(--text-2)',
+              font: '600 12.5px var(--font-space), sans-serif',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !name.trim()}
+            style={{
+              background: 'var(--accent)',
+              border: '1px solid var(--accent)',
+              borderRadius: '8px',
+              padding: '9px 18px',
+              color: 'var(--canvas)',
+              font: '600 12.5px var(--font-space), sans-serif',
+              cursor: saving || !name.trim() ? 'not-allowed' : 'pointer',
+              opacity: saving || !name.trim() ? 0.6 : 1,
+            }}
+          >
+            {saving ? 'Adding…' : 'Add skill'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -940,7 +1266,7 @@ const SCHEMAS: Record<string, Schema> = {
         label: 'Slug',
         type: 'text',
         placeholder: 'project-slug',
-        help: 'Auto-generated from the title. Override to set a custom URL path (/work/your-slug).',
+        help: 'Auto-generated from the title. Override to set a custom URL path (/projects/your-slug).',
       },
       {
         key: 'summary',
@@ -964,6 +1290,22 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'tags',
         placeholder: 'Add tag…',
         help: 'Tech stack and labels. Include "side" or "product" to set the filter category.',
+      },
+      {
+        key: 'started_at',
+        label: 'Start date',
+        type: 'date',
+        nullable: true,
+        nullLabel: 'No start date',
+        help: 'When you started this project. Shown as a date range on the projects page.',
+      },
+      {
+        key: 'ended_at',
+        label: 'End date',
+        type: 'date',
+        nullable: true,
+        nullLabel: 'Present / ongoing',
+        help: 'Leave blank to show as ongoing. Set to start date for a single-month project.',
       },
       {
         key: 'repo_url',
@@ -1144,6 +1486,12 @@ const SCHEMAS: Record<string, Schema> = {
         help: 'Leave blank to show PRESENT instead of an end date.',
       },
       {
+        key: 'tech_tags',
+        label: 'Tech stack',
+        type: 'skill-tags',
+        help: 'Technologies used in this role. Pulls from your Skills list — search to pick, or add a new skill inline.',
+      },
+      {
         key: '_bullets',
         label: 'Achievements',
         type: 'bullets',
@@ -1186,6 +1534,7 @@ const SCHEMAS: Record<string, Schema> = {
     colName: 'NAME',
     primaryKey: 'name',
     statusKey: 'name',
+    resumeToggle: true,
     fields: [
       {
         key: 'name',
@@ -1354,6 +1703,7 @@ const SCHEMAS: Record<string, Schema> = {
     colName: 'DEGREE',
     primaryKey: 'degree',
     secondaryKey: 'institution',
+    resumeToggle: true,
     fields: [
       {
         key: 'degree',
@@ -1392,6 +1742,7 @@ const SCHEMAS: Record<string, Schema> = {
     colName: 'NAME',
     primaryKey: 'name',
     secondaryKey: 'issuer',
+    resumeToggle: true,
     fields: [
       {
         key: 'name',
@@ -1424,6 +1775,7 @@ const SCHEMAS: Record<string, Schema> = {
     primaryKey: 'title',
     secondaryKey: 'date',
     statusKey: 'visibility',
+    resumeToggle: true,
     fields: [
       {
         key: 'title',
@@ -1624,6 +1976,10 @@ export default function AdminPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [isPageSettingsDirty, setIsPageSettingsDirty] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [addSkillModal, setAddSkillModal] = useState<{
+    name: string;
+    onAdd: (name: string) => void;
+  } | null>(null);
   const dragIdx = useRef<number | null>(null);
   const pendingNavRef = useRef<(() => void) | null>(null);
   const autoGenSlugRef = useRef('');
@@ -2812,7 +3168,7 @@ export default function AdminPage() {
                                 : 'var(--text-4)';
                             }}
                           >
-                            ★
+                            ◆
                           </button>
                         )}
                         <button
@@ -3059,20 +3415,48 @@ export default function AdminPage() {
                     </div>
                   )}
                   {f.type === 'datetime' && (
-                    <input
-                      type="datetime-local"
-                      value={String(val ?? '').slice(0, 16)}
-                      onChange={(e) => update(e.target.value || null)}
-                      readOnly={isReadOnly}
-                      style={{
-                        ...inputStyle,
-                        width: 'auto',
-                        font: '500 13px var(--font-mono), monospace',
-                        colorScheme: 'dark',
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                      onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <input
+                        type="datetime-local"
+                        value={String(val ?? '').slice(0, 16)}
+                        onChange={(e) => update(e.target.value || null)}
+                        readOnly={isReadOnly}
+                        style={{
+                          ...inputStyle,
+                          width: 'auto',
+                          font: '500 13px var(--font-mono), monospace',
+                          colorScheme: 'dark',
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                        onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                      />
+                      {!!val && !isReadOnly && (
+                        <button
+                          type="button"
+                          onClick={() => update(null)}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid #2C3037',
+                            borderRadius: '7px',
+                            padding: '8px 12px',
+                            color: 'var(--text-4)',
+                            font: '500 11.5px var(--font-space), sans-serif',
+                            cursor: 'pointer',
+                            transition: 'border-color .2s, color .2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = '#E5534B';
+                            e.currentTarget.style.color = '#E5534B';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = '#2C3037';
+                            e.currentTarget.style.color = 'var(--text-4)';
+                          }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                   )}
                   {f.type === 'roles' && (
                     <RolesEditor
@@ -3263,6 +3647,15 @@ export default function AdminPage() {
                       value={String(val ?? '')}
                       onChange={update}
                       onUpload={handleImageUpload}
+                    />
+                  )}
+                  {f.type === 'skill-tags' && (
+                    <SkillTagsField
+                      value={(val as string[]) || []}
+                      skills={(lists.skills ?? []) as { name: string; category: string | null }[]}
+                      readOnly={isReadOnly}
+                      onChange={update}
+                      onCreateNew={(name, onAdd) => setAddSkillModal({ name, onAdd })}
                     />
                   )}
                   {f.type === 'tags' && (
@@ -3474,6 +3867,40 @@ export default function AdminPage() {
         </div>
       )}
 
+      {addSkillModal && (
+        <AddSkillModal
+          initialName={addSkillModal.name}
+          existingCategories={[
+            ...new Set(
+              (lists.skills ?? [])
+                .map((s) => (s as { category: string | null }).category)
+                .filter((c): c is string => typeof c === 'string' && c.length > 0),
+            ),
+          ].sort()}
+          onSave={async (name, category) => {
+            const displayOrder = (lists.skills ?? []).length;
+            const { data: newRow, error } = await supabase
+              .from('skills')
+              .insert({
+                name,
+                category: category || null,
+                source: 'self',
+                display_order: displayOrder,
+              })
+              .select()
+              .single();
+            if (error) {
+              showToast('Failed to create skill.', 'error');
+              return;
+            }
+            setLists((d) => ({ ...d, skills: [...(d.skills ?? []), newRow] }));
+            addSkillModal.onAdd(name);
+            setAddSkillModal(null);
+            showToast(`Skill "${name}" created and added.`, 'success');
+          }}
+          onClose={() => setAddSkillModal(null)}
+        />
+      )}
       {showUnsavedModal && (
         <div
           style={{

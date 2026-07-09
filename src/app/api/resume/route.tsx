@@ -43,6 +43,7 @@ export async function GET() {
       skills={data.skills as Parameters<typeof ResumeDoc>[0]['skills']}
       education={data.education as Parameters<typeof ResumeDoc>[0]['education']}
       certifications={data.certifications as Parameters<typeof ResumeDoc>[0]['certifications']}
+      involvement={data.involvement as Parameters<typeof ResumeDoc>[0]['involvement']}
     />,
   );
 

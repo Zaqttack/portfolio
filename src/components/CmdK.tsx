@@ -26,11 +26,11 @@ const BASE_CMDS: Cmd[] = [
     },
   },
   {
-    label: 'Work',
+    label: 'Projects',
     kind: 'page',
     hint: 'projects',
     run: () => {
-      window.location.href = '/work';
+      window.location.href = '/projects';
     },
   },
   {
