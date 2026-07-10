@@ -2622,16 +2622,6 @@ export default function AdminPage() {
             onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
             onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
           />
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              background: isHex ? strVal : '#ec6a2c',
-              border: '1px solid #2C3037',
-              flexShrink: 0,
-            }}
-          />
         </div>
       );
     }
@@ -3540,16 +3530,6 @@ export default function AdminPage() {
                                 }}
                                 onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
                                 onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
-                              />
-                              <div
-                                style={{
-                                  width: '40px',
-                                  height: '40px',
-                                  borderRadius: '8px',
-                                  background: isHex ? strVal : '#ec6a2c',
-                                  border: '1px solid #2C3037',
-                                  flexShrink: 0,
-                                }}
                               />
                             </div>
                           );
