@@ -1724,19 +1724,12 @@ const SCHEMAS: Record<string, Schema> = {
         sectionLabel: 'Branding',
       },
       {
+        // TODO: replace with NEXT_PUBLIC_SITE_DOMAIN env var — stop storing in DB
         key: 'site_domain',
         label: 'Site domain',
         type: 'text',
         placeholder: 'yourname.dev',
         help: 'Domain shown in the nav bar, footer, and copyright. Omit https://',
-        halfWidth: true,
-      },
-      {
-        key: 'location_short',
-        label: 'Location (short)',
-        type: 'text',
-        placeholder: 'SAT · TX',
-        help: 'Abbreviated location shown at the bottom of the left rail.',
         halfWidth: true,
       },
       {
@@ -1760,21 +1753,15 @@ const SCHEMAS: Record<string, Schema> = {
         placeholder: '// more in the archive — coming as I write them',
         help: 'Note shown at the bottom of the writing archive.',
       },
-      {
-        key: 'resume_url',
-        label: 'Resume URL',
-        type: 'text',
-        placeholder: 'https://…',
-        help: 'Fallback static resume PDF link. Used when the dynamic PDF download is disabled.',
-        sectionLabel: 'Resume',
-      },
+      // resume_url hidden for now — may remove entirely in a future pass
       {
         key: 'resume_download_enabled',
         label: 'Dynamic resume download',
         type: 'toggle',
         onLabel: 'Public',
         offLabel: 'Admin only',
-        help: 'When enabled, visitors can download a live-generated PDF from your starred items. Disabled falls back to Resume URL.',
+        help: 'When enabled, visitors can download a live-generated PDF from your starred items.',
+        sectionLabel: 'Resume',
       },
       {
         key: 'open_to_work',

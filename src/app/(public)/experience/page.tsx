@@ -65,7 +65,7 @@ export default async function ExperiencePage() {
       writingEnabled={profile?.writing_enabled ?? false}
       projectsEnabled={profile?.projects_enabled ?? true}
       siteDomain={profile?.site_domain ?? null}
-      locationShort={profile?.location_short ?? null}
+      locationShort={profile?.location ?? null}
     />
   );
 }

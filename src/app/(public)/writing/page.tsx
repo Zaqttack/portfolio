@@ -32,7 +32,7 @@ export default async function WritingPage() {
       profileLinks={profileLinks}
       siteDomain={profile?.site_domain ?? null}
       writingFooterNote={profile?.writing_footer_note ?? null}
-      locationShort={profile?.location_short ?? null}
+      locationShort={profile?.location ?? null}
       name={profile?.name ?? null}
     />
   );

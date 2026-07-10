@@ -398,7 +398,7 @@ export default function HomeClient({
       <LeftRail
         items={railItems}
         openToWork={openToWork}
-        locationShort={profile?.location_short ?? null}
+        locationShort={profile?.location ?? null}
         name={profile?.name}
       />
 
