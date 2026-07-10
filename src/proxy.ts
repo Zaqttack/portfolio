@@ -40,5 +40,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  runtime: 'edge',
   matcher: ['/admin/:path*'],
 };
