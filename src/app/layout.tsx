@@ -19,20 +19,28 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Zaquariah Holland',
-  description:
-    'Software engineer — San Antonio, TX. Full-stack, backend-leaning. Fintech and cloud infrastructure.',
-  metadataBase: new URL('https://zaquariah.dev'),
-  openGraph: {
-    title: 'Zaquariah Holland',
-    description: 'Software engineer — San Antonio, TX.',
-    url: 'https://zaquariah.dev',
-    siteName: 'zaquariah.dev',
-    locale: 'en_US',
-    type: 'website',
-  },
-};
+const siteUrl = process.env.NEXT_PUBLIC_SITE_DOMAIN
+  ? `https://${process.env.NEXT_PUBLIC_SITE_DOMAIN}`
+  : 'http://localhost:3000';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getProfile().catch(() => null);
+  const name = profile?.name ?? process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'Portfolio';
+  const description = profile?.tagline ?? '';
+  return {
+    title: name,
+    description,
+    metadataBase: new URL(siteUrl),
+    openGraph: {
+      title: name,
+      description,
+      url: siteUrl,
+      siteName: process.env.NEXT_PUBLIC_SITE_DOMAIN ?? '',
+      locale: 'en_US',
+      type: 'website',
+    },
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile().catch(() => null);

@@ -74,7 +74,7 @@ export default function HomeClient({
   const openToWork = profile?.open_to_work ?? false;
   const writingEnabled = profile?.writing_enabled ?? true;
   const projectsEnabled = profile?.projects_enabled ?? true;
-  const firstName = profile?.name?.split(' ')[0] ?? 'Zaquariah';
+  const firstName = profile?.name?.split(' ')[0] ?? '';
   const latestRole = experience[0]?.role ?? null;
   const heroLabel =
     [latestRole, profile?.location].filter(Boolean).join(' — ') || 'SOFTWARE ENGINEER';
