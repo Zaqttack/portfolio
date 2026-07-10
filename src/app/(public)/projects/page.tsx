@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { getProfile, getProfileLinks, getProjects } from '@/lib/db';
 import type { Profile, ProfileLink, Project } from '@/types';
 import ProjectsClient from './ProjectsClient';
@@ -20,13 +21,17 @@ export default async function ProjectsPage() {
   try {
     profileLinks = await getProfileLinks();
   } catch {}
+  if (profile && profile.projects_enabled === false) notFound();
   return (
     <ProjectsClient
       projects={projects}
       subtitle={profile?.projects_subtitle ?? null}
       writingEnabled={profile?.writing_enabled ?? false}
+      projectsEnabled={profile?.projects_enabled ?? true}
       resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
       profileLinks={profileLinks}
+      siteDomain={profile?.site_domain ?? null}
+      locationShort={profile?.location_short ?? null}
     />
   );
 }

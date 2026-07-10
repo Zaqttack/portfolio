@@ -8,7 +8,9 @@ export interface Profile {
   now_expires_at: string | null;
   contact_cta: string | null;
   avatar_url: string | null;
+  avatar_enabled: boolean;
   location: string | null;
+  location_short: string | null;
   resume_url: string | null;
   email: string | null;
   github: string | null;
@@ -17,10 +19,16 @@ export interface Profile {
   website: string | null;
   open_to_work: boolean;
   writing_enabled: boolean;
+  projects_enabled: boolean;
   resume_download_enabled: boolean;
   projects_subtitle: string | null;
   writing_subtitle: string | null;
   experience_subtitle: string | null;
+  site_domain: string | null;
+  footer_tagline: string | null;
+  writing_footer_note: string | null;
+  skills_subtitle: string | null;
+  accent_color: string | null;
   updated_at: string;
 }
 

@@ -3,7 +3,13 @@
 import { ArrowUpRight } from 'lucide-react';
 import type { ProfileLink } from '@/types';
 
-export default function Footer({ profileLinks }: { profileLinks: ProfileLink[] }) {
+export default function Footer({
+  profileLinks,
+  siteDomain,
+}: {
+  profileLinks: ProfileLink[];
+  siteDomain?: string | null;
+}) {
   return (
     <footer
       style={{
@@ -52,7 +58,7 @@ export default function Footer({ profileLinks }: { profileLinks: ProfileLink[] }
         ))}
       </div>
       <span style={{ font: '500 10.5px var(--font-mono), monospace', color: 'var(--text-4)' }}>
-        © {new Date().getFullYear()} zaquariah.dev
+        © {new Date().getFullYear()} {siteDomain ?? 'zaquariah.dev'}
       </span>
     </footer>
   );

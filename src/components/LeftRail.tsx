@@ -13,11 +13,12 @@ interface RailItem {
 interface LeftRailProps {
   items: RailItem[];
   openToWork?: boolean;
+  locationShort?: string | null;
   showBack?: boolean;
   backHref?: string;
 }
 
-export default function LeftRail({ items, openToWork = false }: LeftRailProps) {
+export default function LeftRail({ items, openToWork = false, locationShort }: LeftRailProps) {
   return (
     <nav
       style={{
@@ -130,7 +131,7 @@ export default function LeftRail({ items, openToWork = false }: LeftRailProps) {
           lineHeight: 1.7,
         }}
       >
-        <div>SAT · TX</div>
+        {locationShort && <div>{locationShort}</div>}
         {openToWork && (
           <div
             style={{

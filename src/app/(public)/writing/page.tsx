@@ -27,8 +27,12 @@ export default async function WritingPage() {
       posts={posts}
       subtitle={profile?.writing_subtitle ?? null}
       writingEnabled={profile?.writing_enabled ?? false}
+      projectsEnabled={profile?.projects_enabled ?? true}
       resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
       profileLinks={profileLinks}
+      siteDomain={profile?.site_domain ?? null}
+      writingFooterNote={profile?.writing_footer_note ?? null}
+      locationShort={profile?.location_short ?? null}
     />
   );
 }

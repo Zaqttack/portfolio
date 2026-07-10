@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import { getProfile } from '@/lib/db';
 import './globals.css';
+
+export const dynamic = 'force-dynamic';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -31,9 +34,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const profile = await getProfile().catch(() => null);
+  const accentColor = profile?.accent_color ?? '#ec6a2c';
+
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+      style={{ '--accent': accentColor } as React.CSSProperties}
+    >
       <body>{children}</body>
     </html>
   );

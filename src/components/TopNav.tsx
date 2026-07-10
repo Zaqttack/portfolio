@@ -6,10 +6,18 @@ import { usePathname } from 'next/navigation';
 interface TopNavProps {
   onCmdK?: () => void;
   writingEnabled?: boolean;
+  projectsEnabled?: boolean;
   resumeUrl?: string | null;
+  siteDomain?: string | null;
 }
 
-export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: TopNavProps) {
+export default function TopNav({
+  onCmdK,
+  writingEnabled = true,
+  projectsEnabled = true,
+  resumeUrl,
+  siteDomain,
+}: TopNavProps) {
   const pathname = usePathname();
 
   const link = (href: string, label: string) => {
@@ -47,7 +55,7 @@ export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: Top
       }}
     >
       <Link href="/" style={{ textDecoration: 'none', color: 'var(--text-4)' }}>
-        zaquariah.dev
+        {siteDomain ?? 'zaquariah.dev'}
       </Link>
       <span style={{ display: 'flex', gap: '22px', alignItems: 'center' }}>
         <button
@@ -76,7 +84,7 @@ export default function TopNav({ onCmdK, writingEnabled = true, resumeUrl }: Top
         >
           ⌘K
         </button>
-        {link('/projects', 'Projects')}
+        {projectsEnabled && link('/projects', 'Projects')}
         {writingEnabled && link('/writing', 'Writing')}
         {link('/experience', 'Experience')}
         {resumeUrl && (

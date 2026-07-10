@@ -583,7 +583,8 @@ type FieldType =
   | 'bullets'
   | 'select'
   | 'image'
-  | 'combobox';
+  | 'combobox'
+  | 'color';
 
 interface FieldDef {
   key: string;
@@ -602,6 +603,7 @@ interface FieldDef {
   locationSep?: string;
   sectionLabel?: string;
   halfWidth?: boolean;
+  folder?: string;
 }
 
 interface PageSettingsConfig {
@@ -1062,10 +1064,12 @@ function ImageUploadField({
   value,
   onChange,
   onUpload,
+  folder = 'logos',
 }: {
   value: string;
   onChange: (url: string) => void;
   onUpload: (file: File) => Promise<string | null>;
+  folder?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1092,7 +1096,11 @@ function ImageUploadField({
           return;
         }
         if (Math.max(w, h) / Math.min(w, h) > 1.5) {
-          setWarn(`Image is ${w}×${h}px — non-square logos may be cropped. Square works best.`);
+          setWarn(
+            folder === 'avatars'
+              ? `Image is ${w}×${h}px — will be cropped to a circle. Square or portrait works best.`
+              : `Image is ${w}×${h}px — non-square logos may be cropped. Square works best.`,
+          );
         }
       } catch {
         // can't read dimensions, proceed
@@ -1225,7 +1233,9 @@ function ImageUploadField({
             letterSpacing: '.02em',
           }}
         >
-          SVG or PNG · square · min 128×128px · max 5 MB
+          {folder === 'avatars'
+            ? 'JPG, PNG, or WebP · min 128×128px · max 5 MB'
+            : 'SVG or PNG · square · min 128×128px · max 5 MB'}
         </div>
       )}
     </div>
@@ -1245,6 +1255,14 @@ const SCHEMAS: Record<string, Schema> = {
     resumeToggle: true,
     pageSettings: {
       fields: [
+        {
+          key: 'projects_enabled',
+          label: 'Projects Tab',
+          type: 'toggle',
+          onLabel: 'Enabled',
+          offLabel: 'Disabled',
+          help: 'When disabled, the Projects link is hidden from navigation and /projects returns 404.',
+        },
         {
           key: 'projects_subtitle',
           label: 'Page subtitle',
@@ -1631,7 +1649,23 @@ const SCHEMAS: Record<string, Schema> = {
         key: 'location',
         label: 'Location',
         type: 'location',
-        help: 'Shown in the left rail hero label (e.g. "SAT · TX").',
+        help: 'Shown in the hero subtitle on the home page (e.g. combined with your current role).',
+      },
+      {
+        key: 'avatar_url',
+        label: 'Avatar photo',
+        type: 'image',
+        folder: 'avatars',
+        help: 'Your profile photo shown in the home page hero. Upload when ready; use the toggle to show or hide it.',
+        sectionLabel: 'Avatar',
+      },
+      {
+        key: 'avatar_enabled',
+        label: 'Show avatar',
+        type: 'toggle',
+        onLabel: 'Visible',
+        offLabel: 'Hidden',
+        help: 'Toggle visibility. Has no effect if no photo is uploaded.',
       },
       {
         key: 'hero_title',
@@ -1680,6 +1714,51 @@ const SCHEMAS: Record<string, Schema> = {
         placeholder: "Let's build something — or just come argue about type systems at a meetup.",
         help: 'The heading in the Contact section at the bottom of the home page.',
         sectionLabel: 'Contact',
+      },
+      {
+        key: 'accent_color',
+        label: 'Accent color',
+        type: 'color',
+        placeholder: '#ec6a2c',
+        help: 'Primary brand color for highlights, buttons, and active states across the site.',
+        sectionLabel: 'Branding',
+      },
+      {
+        key: 'site_domain',
+        label: 'Site domain',
+        type: 'text',
+        placeholder: 'yourname.dev',
+        help: 'Domain shown in the nav bar, footer, and copyright. Omit https://',
+        halfWidth: true,
+      },
+      {
+        key: 'location_short',
+        label: 'Location (short)',
+        type: 'text',
+        placeholder: 'SAT · TX',
+        help: 'Abbreviated location shown at the bottom of the left rail.',
+        halfWidth: true,
+      },
+      {
+        key: 'skills_subtitle',
+        label: 'Skills subtitle',
+        type: 'text',
+        placeholder: 'what I reach for, day to day.',
+        help: 'Small descriptor below the Skills section label on the home page.',
+      },
+      {
+        key: 'footer_tagline',
+        label: 'Footer tagline',
+        type: 'text',
+        placeholder: 'built to show you who I am',
+        help: 'Short phrase in the home page contact section footer.',
+      },
+      {
+        key: 'writing_footer_note',
+        label: 'Writing footer note',
+        type: 'text',
+        placeholder: '// more in the archive — coming as I write them',
+        help: 'Note shown at the bottom of the writing archive.',
       },
       {
         key: 'resume_url',
@@ -2043,9 +2122,9 @@ export default function AdminPage() {
   );
 
   const handleImageUpload = useCallback(
-    async (file: File): Promise<string | null> => {
+    async (file: File, folder = 'logos'): Promise<string | null> => {
       const ext = file.name.split('.').pop() ?? 'jpg';
-      const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const body = new FormData();
       body.append('file', file);
       body.append('path', path);
@@ -2533,6 +2612,51 @@ export default function AdminPage() {
           onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
         />
       );
+    if (f.type === 'color') {
+      const strVal = String(val ?? '#ec6a2c');
+      const isHex = /^#[0-9a-fA-F]{6}$/.test(strVal);
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <input
+            type="color"
+            value={isHex ? strVal : '#ec6a2c'}
+            onChange={(e) => update(e.target.value)}
+            style={{
+              width: '40px',
+              height: '40px',
+              border: '1px solid #2C3037',
+              borderRadius: '8px',
+              background: 'transparent',
+              cursor: 'pointer',
+              padding: '2px',
+              flexShrink: 0,
+            }}
+          />
+          <input
+            value={strVal}
+            onChange={(e) => update(e.target.value)}
+            placeholder="#ec6a2c"
+            style={{
+              ...base,
+              width: '140px',
+              font: '500 13px var(--font-mono), monospace',
+            }}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+            onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+          />
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '8px',
+              background: isHex ? strVal : '#ec6a2c',
+              border: '1px solid #2C3037',
+              flexShrink: 0,
+            }}
+          />
+        </div>
+      );
+    }
     if (f.type === 'toggle')
       return (
         <button
@@ -3728,7 +3852,8 @@ export default function AdminPage() {
                         <ImageUploadField
                           value={String(val ?? '')}
                           onChange={update}
-                          onUpload={handleImageUpload}
+                          folder={f.folder}
+                          onUpload={(file) => handleImageUpload(file, f.folder ?? 'logos')}
                         />
                       )}
                       {f.type === 'skill-tags' && (

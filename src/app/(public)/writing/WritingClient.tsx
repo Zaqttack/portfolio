@@ -18,14 +18,22 @@ export default function WritingClient({
   posts,
   subtitle,
   writingEnabled,
+  projectsEnabled,
   resumeUrl,
   profileLinks,
+  siteDomain,
+  writingFooterNote,
+  locationShort,
 }: {
   posts: Post[];
   subtitle: string | null;
   writingEnabled: boolean;
+  projectsEnabled: boolean;
   resumeUrl: string | null;
   profileLinks: ProfileLink[];
+  siteDomain: string | null;
+  writingFooterNote: string | null;
+  locationShort: string | null;
 }) {
   const featured = posts[0] ?? null;
   const archive = posts.slice(1);
@@ -95,11 +103,14 @@ export default function WritingClient({
             : []),
           { href: '/', label: '← index', active: false, isBack: true },
         ]}
+        locationShort={locationShort}
       />
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
+          projectsEnabled={projectsEnabled}
+          siteDomain={siteDomain}
           resumeUrl={resumeUrl}
         />
 
@@ -320,12 +331,12 @@ export default function WritingClient({
               color: 'var(--text-4)',
             }}
           >
-            // more in the archive — coming as I write them
+            {writingFooterNote ?? '// more in the archive — coming as I write them'}
           </div>
         </div>
       </main>
 
-      <Footer profileLinks={profileLinks} />
+      <Footer profileLinks={profileLinks} siteDomain={siteDomain} />
       <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
     </>
   );
