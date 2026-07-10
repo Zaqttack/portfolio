@@ -1,6 +1,7 @@
 {
   "name": "portfolio",
   "version": "1.0.0",
+  "author": "Zaquariah Holland",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -22,7 +23,7 @@
     "@supabase/supabase-js": "^2.47.0",
     "lucide-react": "^1.23.0",
     "next": "^16.2.10",
-    "postcss": "^8.4.39",
+    "postcss": "^8.5.10",
     "postcss-preset-env": "^11.3.2",
     "rclone.js": "^0.6.6",
     "react": "^19.2.7",
@@ -43,5 +44,8 @@
     "typescript": "^5",
     "vitest": "^4.1.9",
     "wrangler": "^4.108.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }
