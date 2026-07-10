@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!pathname.startsWith('/admin')) return NextResponse.next();
@@ -40,6 +40,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  runtime: 'edge',
   matcher: ['/admin/:path*'],
 };
