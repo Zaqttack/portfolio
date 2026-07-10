@@ -2,6 +2,7 @@
   "name": "portfolio",
   "version": "1.0.0",
   "author": "Zaquariah Holland",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

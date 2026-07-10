@@ -1,4 +1,4 @@
-# Portfolio — Zaquariah Holland
+# Portfolio
 
 [![Test](https://github.com/Zaqttack/portfolio/actions/workflows/test.yml/badge.svg)](https://github.com/Zaqttack/portfolio/actions/workflows/test.yml)
 [![Deploy](https://github.com/Zaqttack/portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/Zaqttack/portfolio/actions/workflows/deploy.yml)
@@ -122,3 +122,10 @@ npm test            # Vitest unit tests
 npm run test:e2e    # Playwright E2E
 ```
 
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+Built by [Zaquariah Holland](https://zaquariah.dev)
