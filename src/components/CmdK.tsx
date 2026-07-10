@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import type { ProfileLink } from '@/types';
 
 interface Cmd {
   label: string;
@@ -14,9 +14,11 @@ interface CmdKProps {
   open: boolean;
   onClose: () => void;
   extraCmds?: Cmd[];
+  profileLinks?: ProfileLink[];
+  resumeUrl?: string | null;
 }
 
-const BASE_CMDS: Cmd[] = [
+const NAV_CMDS: Cmd[] = [
   {
     label: 'Home',
     kind: 'page',
@@ -49,44 +51,44 @@ const BASE_CMDS: Cmd[] = [
       window.location.href = '/experience';
     },
   },
-  {
-    label: 'Download resume',
-    kind: 'action',
-    hint: 'pdf',
-    run: () =>
-      window.open(
-        'https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view',
-        '_blank',
-      ),
-  },
-  {
-    label: 'GitHub',
-    kind: 'link',
-    hint: '↗',
-    run: () => window.open('https://github.com/Zaqttack', '_blank'),
-  },
-  {
-    label: 'LinkedIn',
-    kind: 'link',
-    hint: '↗',
-    run: () => window.open('https://www.linkedin.com/in/zaquariah-holland/', '_blank'),
-  },
-  {
-    label: 'Email',
-    kind: 'link',
-    hint: '↗',
-    run: () => {
-      window.location.href = 'mailto:zaquariah@gmail.com';
-    },
-  },
 ];
 
-export default function CmdK({ open, onClose, extraCmds = [] }: CmdKProps) {
+export default function CmdK({
+  open,
+  onClose,
+  extraCmds = [],
+  profileLinks = [],
+  resumeUrl,
+}: CmdKProps) {
   const [query, setQuery] = useState('');
   const [sel, setSel] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const cmds = [...BASE_CMDS, ...extraCmds];
+  const resumeCmd: Cmd[] = resumeUrl
+    ? [
+        {
+          label: 'Download resume',
+          kind: 'action',
+          hint: 'pdf',
+          run: () => window.open(resumeUrl, '_blank'),
+        },
+      ]
+    : [];
+
+  const linkCmds: Cmd[] = profileLinks.map((l) => ({
+    label: l.label,
+    kind: 'link' as const,
+    hint: '↗',
+    run: () => {
+      if (l.url.startsWith('mailto:')) {
+        window.location.href = l.url;
+      } else {
+        window.open(l.url, '_blank');
+      }
+    },
+  }));
+
+  const cmds = [...NAV_CMDS, ...resumeCmd, ...linkCmds, ...extraCmds];
   const filtered = query.trim()
     ? cmds.filter((c) =>
         (c.label + ' ' + c.kind + ' ' + c.hint).toLowerCase().includes(query.toLowerCase()),

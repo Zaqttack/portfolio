@@ -15,10 +15,14 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const project = await getProjectBySlug(slug).catch(() => null);
+  const [project, profile] = await Promise.all([
+    getProjectBySlug(slug).catch(() => null),
+    getProfile().catch(() => null),
+  ]);
   if (!project) return {};
+  const name = profile?.name ?? 'Portfolio';
   return {
-    title: `${project.title} | Zaquariah Holland`,
+    title: `${project.title} | ${name}`,
     description: project.summary ?? undefined,
   };
 }

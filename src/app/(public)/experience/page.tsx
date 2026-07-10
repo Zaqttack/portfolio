@@ -21,7 +21,11 @@ import ExperienceClient from './ExperienceClient';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Zaquariah Holland | Experience' };
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getProfile().catch(() => null);
+  const name = profile?.name ?? 'Portfolio';
+  return { title: `${name} | Experience` };
+}
 
 export default async function ExperiencePage() {
   let experience: Experience[] = [];

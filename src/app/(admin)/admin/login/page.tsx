@@ -77,7 +77,7 @@ function LoginForm() {
             marginBottom: '26px',
           }}
         >
-          restricted · zaquariah.dev
+          restricted · {process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'yoursite.dev'}
         </div>
 
         <div

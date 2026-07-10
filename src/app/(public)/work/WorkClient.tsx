@@ -304,7 +304,12 @@ export default function WorkClient({
       </main>
 
       <Footer profileLinks={profileLinks} />
-      <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
+      <CmdK
+        open={cmdkOpen}
+        onClose={() => setCmdkOpen(false)}
+        profileLinks={profileLinks}
+        resumeUrl={resumeUrl}
+      />
     </>
   );
 }

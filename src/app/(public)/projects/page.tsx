@@ -6,7 +6,11 @@ import ProjectsClient from './ProjectsClient';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Zaquariah Holland | Projects' };
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getProfile().catch(() => null);
+  const name = profile?.name ?? 'Portfolio';
+  return { title: `${name} | Projects` };
+}
 
 export default async function ProjectsPage() {
   let projects: Project[] = [];

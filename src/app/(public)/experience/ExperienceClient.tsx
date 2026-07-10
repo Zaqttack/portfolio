@@ -853,7 +853,12 @@ export default function ExperienceClient({
       </main>
 
       <Footer profileLinks={profileLinks} />
-      <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
+      <CmdK
+        open={cmdkOpen}
+        onClose={() => setCmdkOpen(false)}
+        profileLinks={profileLinks}
+        resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
+      />
     </>
   );
 }
