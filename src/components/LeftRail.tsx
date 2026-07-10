@@ -16,9 +16,20 @@ interface LeftRailProps {
   locationShort?: string | null;
   showBack?: boolean;
   backHref?: string;
+  name?: string | null;
 }
 
-export default function LeftRail({ items, openToWork = false, locationShort }: LeftRailProps) {
+export default function LeftRail({
+  items,
+  openToWork = false,
+  locationShort,
+  name,
+}: LeftRailProps) {
+  const parts = name ? name.trim().split(/\s+/) : [];
+  const monogram =
+    parts.length > 0
+      ? ((parts[0]?.[0] ?? '') + (parts.at(-1)?.[0] ?? '')).toLowerCase() || 'zq'
+      : 'zq';
   return (
     <nav
       style={{
@@ -47,7 +58,8 @@ export default function LeftRail({ items, openToWork = false, locationShort }: L
           padding: '0 18px',
         }}
       >
-        zq<span style={{ color: 'var(--accent)' }}>.</span>
+        {monogram}
+        <span style={{ color: 'var(--accent)' }}>.</span>
       </Link>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '0 18px' }}>

@@ -24,6 +24,7 @@ export default function WritingClient({
   siteDomain,
   writingFooterNote,
   locationShort,
+  name,
 }: {
   posts: Post[];
   subtitle: string | null;
@@ -34,6 +35,7 @@ export default function WritingClient({
   siteDomain: string | null;
   writingFooterNote: string | null;
   locationShort: string | null;
+  name: string | null;
 }) {
   const featured = posts[0] ?? null;
   const archive = posts.slice(1);
@@ -104,6 +106,7 @@ export default function WritingClient({
           { href: '/', label: '← index', active: false, isBack: true },
         ]}
         locationShort={locationShort}
+        name={name}
       />
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav

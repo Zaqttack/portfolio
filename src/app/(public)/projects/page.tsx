@@ -32,6 +32,7 @@ export default async function ProjectsPage() {
       profileLinks={profileLinks}
       siteDomain={profile?.site_domain ?? null}
       locationShort={profile?.location_short ?? null}
+      name={profile?.name ?? null}
     />
   );
 }

@@ -399,6 +399,7 @@ export default function HomeClient({
         items={railItems}
         openToWork={openToWork}
         locationShort={profile?.location_short ?? null}
+        name={profile?.name}
       />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>

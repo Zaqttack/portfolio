@@ -38,6 +38,7 @@ export default function ProjectsClient({
   profileLinks,
   siteDomain,
   locationShort,
+  name,
 }: {
   projects: Project[];
   subtitle: string | null;
@@ -47,6 +48,7 @@ export default function ProjectsClient({
   profileLinks: ProfileLink[];
   siteDomain: string | null;
   locationShort: string | null;
+  name: string | null;
 }) {
   const [filter, setFilter] = useState<Tag>('all');
   const [cmdkOpen, setCmdkOpen] = useState(false);
@@ -133,7 +135,7 @@ export default function ProjectsClient({
 
   return (
     <>
-      <LeftRail items={railItems} locationShort={locationShort} />
+      <LeftRail items={railItems} locationShort={locationShort} name={name} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav

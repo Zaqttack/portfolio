@@ -209,7 +209,7 @@ export default function ExperienceClient({
 
   return (
     <>
-      <LeftRail items={railItems} locationShort={locationShort} />
+      <LeftRail items={railItems} locationShort={locationShort} name={profile?.name} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav
