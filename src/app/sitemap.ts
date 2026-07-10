@@ -1,8 +1,12 @@
+const base = process.env.NEXT_PUBLIC_SITE_DOMAIN
+  ? `https://${process.env.NEXT_PUBLIC_SITE_DOMAIN}`
+  : 'http://localhost:3000';
+
 export default function sitemap() {
   return [
-    { url: 'https://zaquariah.dev', lastModified: new Date() },
-    { url: 'https://zaquariah.dev/projects', lastModified: new Date() },
-    { url: 'https://zaquariah.dev/writing', lastModified: new Date() },
-    { url: 'https://zaquariah.dev/experience', lastModified: new Date() },
+    { url: base, lastModified: new Date() },
+    { url: `${base}/projects`, lastModified: new Date() },
+    { url: `${base}/writing`, lastModified: new Date() },
+    { url: `${base}/experience`, lastModified: new Date() },
   ];
 }

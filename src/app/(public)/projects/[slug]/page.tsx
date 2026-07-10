@@ -98,6 +98,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   ]);
 
   if (!project) notFound();
+  if (profile && profile.projects_enabled === false) notFound();
 
   const resumeUrl = profile?.resume_download_enabled
     ? '/api/resume'
@@ -113,10 +114,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <LeftRail items={railItems} />
+      <LeftRail items={railItems} name={profile?.name} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
-        <TopNav writingEnabled={profile?.writing_enabled ?? true} resumeUrl={resumeUrl} />
+        <TopNav
+          writingEnabled={profile?.writing_enabled ?? true}
+          projectsEnabled={profile?.projects_enabled ?? true}
+          resumeUrl={resumeUrl}
+        />
 
         <article style={{ padding: '56px 56px 96px 40px', maxWidth: '800px' }}>
           <Link

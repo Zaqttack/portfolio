@@ -1,7 +1,6 @@
 'use client';
 
 import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
@@ -17,8 +16,15 @@ import type {
   Skill,
 } from '@/types';
 
-const ALL_SECTIONS = ['intro', 'skills', 'projects', 'writing', 'experience', 'contact'] as const;
-type Section = (typeof ALL_SECTIONS)[number];
+const ALL_SECTIONS_BASE = [
+  'intro',
+  'skills',
+  'projects',
+  'writing',
+  'experience',
+  'contact',
+] as const;
+type Section = (typeof ALL_SECTIONS_BASE)[number];
 
 const RAIL_LABELS: Record<Section, string> = {
   intro: 'intro',
@@ -67,7 +73,8 @@ export default function HomeClient({
 }) {
   const openToWork = profile?.open_to_work ?? false;
   const writingEnabled = profile?.writing_enabled ?? true;
-  const firstName = profile?.name?.split(' ')[0] ?? 'Zaquariah';
+  const projectsEnabled = profile?.projects_enabled ?? true;
+  const firstName = profile?.name?.split(' ')[0] ?? '';
   const latestRole = experience[0]?.role ?? null;
   const heroLabel =
     [latestRole, profile?.location].filter(Boolean).join(' — ') || 'SOFTWARE ENGINEER';
@@ -75,9 +82,10 @@ export default function HomeClient({
     profile?.hero_title ?? "I'm {{first_name}}. I build precise, well-architected software.",
     { first_name: firstName },
   );
-  const SECTIONS = writingEnabled
-    ? ALL_SECTIONS
-    : (ALL_SECTIONS.filter((s) => s !== 'writing') as Section[]);
+  const ALL_SECTIONS = ALL_SECTIONS_BASE.filter(
+    (s) => (s !== 'writing' || writingEnabled) && (s !== 'projects' || projectsEnabled),
+  ) as Section[];
+  const SECTIONS = ALL_SECTIONS;
   const [activeSection, setActiveSection] = useState<Section>('intro');
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const termRef = useRef<HTMLDivElement>(null);
@@ -387,12 +395,18 @@ export default function HomeClient({
         }}
       />
 
-      <LeftRail items={railItems} openToWork={openToWork} />
+      <LeftRail
+        items={railItems}
+        openToWork={openToWork}
+        locationShort={profile?.location ?? null}
+        name={profile?.name}
+      />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
-          writingEnabled={profile?.writing_enabled ?? true}
+          writingEnabled={writingEnabled}
+          projectsEnabled={projectsEnabled}
           resumeUrl={
             profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
           }
@@ -682,27 +696,27 @@ export default function HomeClient({
               </div>
             </div>
             {/* Circular avatar */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: '22px',
-                width: '84px',
-                height: '84px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                boxShadow: '0 0 0 4px var(--canvas), 0 8px 22px rgba(0,0,0,.5)',
-                background: 'var(--border-2)',
-              }}
-            >
-              <Image
-                src="/images/avatar.jpg"
-                alt="Zaquariah Holland"
-                width={84}
-                height={84}
-                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-              />
-            </div>
+            {profile?.avatar_url && profile?.avatar_enabled && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: '22px',
+                  width: '84px',
+                  height: '84px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  boxShadow: '0 0 0 4px var(--canvas), 0 8px 22px rgba(0,0,0,.5)',
+                  background: 'var(--border-2)',
+                }}
+              >
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.name}
+                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                />
+              </div>
+            )}
           </div>
         </section>
 
@@ -734,18 +748,18 @@ export default function HomeClient({
               >
                 01 / SKILLS
               </div>
-              <div
-                style={{
-                  font: '500 10.5px var(--font-mono), monospace',
-                  color: 'var(--text-4)',
-                  marginTop: '10px',
-                  lineHeight: 1.6,
-                }}
-              >
-                what I reach
-                <br />
-                for, day to day.
-              </div>
+              {(profile?.skills_subtitle ?? 'what I reach for, day to day.') && (
+                <div
+                  style={{
+                    font: '500 10.5px var(--font-mono), monospace',
+                    color: 'var(--text-4)',
+                    marginTop: '10px',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {profile?.skills_subtitle ?? 'what I reach for, day to day.'}
+                </div>
+              )}
             </div>
             <div style={{ borderTop: '1px solid var(--border-2)' }}>
               {skills.length === 0 && (
@@ -791,154 +805,161 @@ export default function HomeClient({
         </section>
 
         {/* RECENT PROJECTS */}
-        <section
-          id="projects"
-          data-section
-          style={{
-            scrollMarginTop: '20px',
-            padding: '80px 56px 80px 40px',
-            borderTop: '1px solid var(--border-1)',
-          }}
-        >
-          <div
+        {projectsEnabled && (
+          <section
+            id="projects"
+            data-section
             style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
+              scrollMarginTop: '20px',
+              padding: '80px 56px 80px 40px',
+              borderTop: '1px solid var(--border-1)',
             }}
           >
             <div
               style={{
-                font: '500 11px var(--font-mono), monospace',
-                letterSpacing: '.12em',
-                color: 'var(--accent)',
+                display: 'grid',
+                gridTemplateColumns: '200px 1fr',
+                gap: '48px',
+                alignItems: 'start',
               }}
             >
-              02 / RECENT PROJECTS
-            </div>
-            <div>
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  marginBottom: '6px',
+                  font: '500 11px var(--font-mono), monospace',
+                  letterSpacing: '.12em',
+                  color: 'var(--accent)',
                 }}
               >
-                <h2
-                  style={{ fontWeight: 600, fontSize: '26px', letterSpacing: '-.02em', margin: 0 }}
-                >
-                  Latest projects
-                </h2>
-                <Link
-                  href="/projects"
-                  style={{
-                    font: '500 12px var(--font-mono), monospace',
-                    color: 'var(--text-2)',
-                    textDecoration: 'none',
-                    transition: 'color .3s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
-                >
-                  view all <ArrowRight size={12} />
-                </Link>
+                02 / RECENT PROJECTS
               </div>
-              <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
-                {projects.length === 0 && (
-                  <p style={{ padding: '24px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
-                    No projects yet.
-                  </p>
-                )}
-                {projects.slice(0, 2).map((p, i) => (
-                  <Link
-                    key={p.id}
-                    href="/projects"
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    marginBottom: '6px',
+                  }}
+                >
+                  <h2
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: '44px 1fr auto',
-                      gap: '22px',
-                      alignItems: 'baseline',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      padding: '24px 4px',
-                      borderBottom: '1px solid var(--border-1)',
-                      transition: 'padding .35s cubic-bezier(.34,1.56,.64,1), background .3s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.paddingLeft = '16px';
-                      e.currentTarget.style.background = '#101114';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.paddingLeft = '4px';
-                      e.currentTarget.style.background = 'transparent';
+                      fontWeight: 600,
+                      fontSize: '26px',
+                      letterSpacing: '-.02em',
+                      margin: 0,
                     }}
                   >
-                    <span
+                    Latest projects
+                  </h2>
+                  <Link
+                    href="/projects"
+                    style={{
+                      font: '500 12px var(--font-mono), monospace',
+                      color: 'var(--text-2)',
+                      textDecoration: 'none',
+                      transition: 'color .3s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                  >
+                    view all <ArrowRight size={12} />
+                  </Link>
+                </div>
+                <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
+                  {projects.length === 0 && (
+                    <p style={{ padding: '24px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
+                      No projects yet.
+                    </p>
+                  )}
+                  {projects.slice(0, 2).map((p, i) => (
+                    <Link
+                      key={p.id}
+                      href="/projects"
                       style={{
-                        font: '500 12px var(--font-mono), monospace',
-                        color: 'var(--text-4)',
+                        display: 'grid',
+                        gridTemplateColumns: '44px 1fr auto',
+                        gap: '22px',
+                        alignItems: 'baseline',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        padding: '24px 4px',
+                        borderBottom: '1px solid var(--border-1)',
+                        transition: 'padding .35s cubic-bezier(.34,1.56,.64,1), background .3s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.paddingLeft = '16px';
+                        e.currentTarget.style.background = '#101114';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.paddingLeft = '4px';
+                        e.currentTarget.style.background = 'transparent';
                       }}
                     >
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span>
                       <span
                         style={{
-                          display: 'block',
-                          fontWeight: 600,
-                          fontSize: '22px',
-                          letterSpacing: '-.01em',
-                          marginBottom: '6px',
-                        }}
-                      >
-                        {p.title}
-                      </span>
-                      <span
-                        style={{
-                          display: 'block',
-                          fontSize: '14.5px',
-                          lineHeight: 1.55,
-                          color: 'var(--text-2)',
-                          maxWidth: '44em',
-                        }}
-                      >
-                        {p.summary}
-                      </span>
-                    </span>
-                    <span
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-end',
-                        gap: '8px',
-                        textAlign: 'right',
-                      }}
-                    >
-                      <span
-                        style={{
-                          font: '500 11px var(--font-mono), monospace',
+                          font: '500 12px var(--font-mono), monospace',
                           color: 'var(--text-4)',
                         }}
                       >
-                        {`'${new Date(p.created_at).getFullYear().toString().slice(2)}`}
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <span>
+                        <span
+                          style={{
+                            display: 'block',
+                            fontWeight: 600,
+                            fontSize: '22px',
+                            letterSpacing: '-.01em',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          {p.title}
+                        </span>
+                        <span
+                          style={{
+                            display: 'block',
+                            fontSize: '14.5px',
+                            lineHeight: 1.55,
+                            color: 'var(--text-2)',
+                            maxWidth: '44em',
+                          }}
+                        >
+                          {p.summary}
+                        </span>
                       </span>
                       <span
                         style={{
-                          font: '500 10.5px var(--font-mono), monospace',
-                          color: 'var(--text-3)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-end',
+                          gap: '8px',
+                          textAlign: 'right',
                         }}
                       >
-                        {p.tags.filter((t) => t !== 'product' && t !== 'side').join(' · ')}
+                        <span
+                          style={{
+                            font: '500 11px var(--font-mono), monospace',
+                            color: 'var(--text-4)',
+                          }}
+                        >
+                          {`'${new Date(p.created_at).getFullYear().toString().slice(2)}`}
+                        </span>
+                        <span
+                          style={{
+                            font: '500 10.5px var(--font-mono), monospace',
+                            color: 'var(--text-3)',
+                          }}
+                        >
+                          {p.tags.filter((t) => t !== 'product' && t !== 'side').join(' · ')}
+                        </span>
                       </span>
-                    </span>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* RECENT WRITING */}
         {writingEnabled && (
@@ -1380,8 +1401,11 @@ export default function HomeClient({
                   color: 'var(--text-4)',
                 }}
               >
-                <span>© {new Date().getFullYear()} zaquariah.dev</span>
-                <span>built to show you who I am</span>
+                <span>
+                  © {new Date().getFullYear()}{' '}
+                  {process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'zaquariah.dev'}
+                </span>
+                <span>{profile?.footer_tagline ?? 'built to show you who I am'}</span>
               </div>
             </div>
           </div>

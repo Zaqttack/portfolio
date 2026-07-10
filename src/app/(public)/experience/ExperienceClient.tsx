@@ -75,6 +75,8 @@ export default function ExperienceClient({
   profileLinks,
   subtitle,
   writingEnabled,
+  projectsEnabled,
+  locationShort,
 }: {
   experience: Experience[];
   involvement: InvolvementOrg[];
@@ -85,6 +87,8 @@ export default function ExperienceClient({
   profileLinks: ProfileLink[];
   subtitle: string | null;
   writingEnabled: boolean;
+  projectsEnabled: boolean;
+  locationShort: string | null;
 }) {
   const [activeSection, setActiveSection] = useState<
     'history' | 'community' | 'education' | 'awards'
@@ -203,12 +207,13 @@ export default function ExperienceClient({
 
   return (
     <>
-      <LeftRail items={railItems} />
+      <LeftRail items={railItems} locationShort={locationShort} name={profile?.name} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
+          projectsEnabled={projectsEnabled}
           resumeUrl={
             profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
           }

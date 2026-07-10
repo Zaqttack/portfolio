@@ -33,14 +33,20 @@ export default function ProjectsClient({
   projects,
   subtitle,
   writingEnabled,
+  projectsEnabled,
   resumeUrl,
   profileLinks,
+  locationShort,
+  name,
 }: {
   projects: Project[];
   subtitle: string | null;
   writingEnabled: boolean;
+  projectsEnabled: boolean;
   resumeUrl: string | null;
   profileLinks: ProfileLink[];
+  locationShort: string | null;
+  name: string | null;
 }) {
   const [filter, setFilter] = useState<Tag>('all');
   const [cmdkOpen, setCmdkOpen] = useState(false);
@@ -127,12 +133,13 @@ export default function ProjectsClient({
 
   return (
     <>
-      <LeftRail items={railItems} />
+      <LeftRail items={railItems} locationShort={locationShort} name={name} />
 
       <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
+          projectsEnabled={projectsEnabled}
           resumeUrl={resumeUrl}
         />
 

@@ -52,7 +52,7 @@ export default function Footer({ profileLinks }: { profileLinks: ProfileLink[] }
         ))}
       </div>
       <span style={{ font: '500 10.5px var(--font-mono), monospace', color: 'var(--text-4)' }}>
-        © {new Date().getFullYear()} zaquariah.dev
+        © {new Date().getFullYear()} {process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'zaquariah.dev'}
       </span>
     </footer>
   );
