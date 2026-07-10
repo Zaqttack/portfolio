@@ -21,7 +21,6 @@ export default function WritingClient({
   projectsEnabled,
   resumeUrl,
   profileLinks,
-  siteDomain,
   writingFooterNote,
   locationShort,
   name,
@@ -32,7 +31,6 @@ export default function WritingClient({
   projectsEnabled: boolean;
   resumeUrl: string | null;
   profileLinks: ProfileLink[];
-  siteDomain: string | null;
   writingFooterNote: string | null;
   locationShort: string | null;
   name: string | null;
@@ -113,7 +111,6 @@ export default function WritingClient({
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
           projectsEnabled={projectsEnabled}
-          siteDomain={siteDomain}
           resumeUrl={resumeUrl}
         />
 
@@ -339,7 +336,7 @@ export default function WritingClient({
         </div>
       </main>
 
-      <Footer profileLinks={profileLinks} siteDomain={siteDomain} />
+      <Footer profileLinks={profileLinks} />
       <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
     </>
   );

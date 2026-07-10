@@ -30,7 +30,6 @@ export default async function WritingPage() {
       projectsEnabled={profile?.projects_enabled ?? true}
       resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
       profileLinks={profileLinks}
-      siteDomain={profile?.site_domain ?? null}
       writingFooterNote={profile?.writing_footer_note ?? null}
       locationShort={profile?.location ?? null}
       name={profile?.name ?? null}

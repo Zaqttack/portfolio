@@ -24,7 +24,6 @@ export interface Profile {
   projects_subtitle: string | null;
   writing_subtitle: string | null;
   experience_subtitle: string | null;
-  site_domain: string | null;
   footer_tagline: string | null;
   writing_footer_note: string | null;
   skills_subtitle: string | null;

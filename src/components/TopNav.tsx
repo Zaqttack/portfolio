@@ -8,7 +8,6 @@ interface TopNavProps {
   writingEnabled?: boolean;
   projectsEnabled?: boolean;
   resumeUrl?: string | null;
-  siteDomain?: string | null;
 }
 
 export default function TopNav({
@@ -16,7 +15,6 @@ export default function TopNav({
   writingEnabled = true,
   projectsEnabled = true,
   resumeUrl,
-  siteDomain,
 }: TopNavProps) {
   const pathname = usePathname();
 
@@ -55,7 +53,7 @@ export default function TopNav({
       }}
     >
       <Link href="/" style={{ textDecoration: 'none', color: 'var(--text-4)' }}>
-        {siteDomain ?? 'zaquariah.dev'}
+        {process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'zaquariah.dev'}
       </Link>
       <span style={{ display: 'flex', gap: '22px', alignItems: 'center' }}>
         <button

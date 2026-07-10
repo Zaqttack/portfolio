@@ -407,7 +407,6 @@ export default function HomeClient({
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
           projectsEnabled={projectsEnabled}
-          siteDomain={profile?.site_domain ?? null}
           resumeUrl={
             profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
           }
@@ -1403,7 +1402,8 @@ export default function HomeClient({
                 }}
               >
                 <span>
-                  © {new Date().getFullYear()} {profile?.site_domain ?? 'zaquariah.dev'}
+                  © {new Date().getFullYear()}{' '}
+                  {process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'zaquariah.dev'}
                 </span>
                 <span>{profile?.footer_tagline ?? 'built to show you who I am'}</span>
               </div>

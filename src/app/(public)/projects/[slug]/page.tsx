@@ -120,7 +120,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <TopNav
           writingEnabled={profile?.writing_enabled ?? true}
           projectsEnabled={profile?.projects_enabled ?? true}
-          siteDomain={profile?.site_domain ?? null}
           resumeUrl={resumeUrl}
         />
 
@@ -292,7 +291,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         `}</style>
       </main>
 
-      <Footer profileLinks={profileLinks} siteDomain={profile?.site_domain ?? null} />
+      <Footer profileLinks={profileLinks} />
     </>
   );
 }

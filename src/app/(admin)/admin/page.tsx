@@ -1724,15 +1724,6 @@ const SCHEMAS: Record<string, Schema> = {
         sectionLabel: 'Branding',
       },
       {
-        // TODO: replace with NEXT_PUBLIC_SITE_DOMAIN env var — stop storing in DB
-        key: 'site_domain',
-        label: 'Site domain',
-        type: 'text',
-        placeholder: 'yourname.dev',
-        help: 'Domain shown in the nav bar, footer, and copyright. Omit https://',
-        halfWidth: true,
-      },
-      {
         key: 'skills_subtitle',
         label: 'Skills subtitle',
         type: 'text',
@@ -3515,6 +3506,54 @@ export default function AdminPage() {
                           onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                         />
                       )}
+                      {f.type === 'color' &&
+                        (() => {
+                          const strVal = String(val ?? '#ec6a2c');
+                          const isHex = /^#[0-9a-fA-F]{6}$/.test(strVal);
+                          return (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <input
+                                type="color"
+                                value={isHex ? strVal : '#ec6a2c'}
+                                onChange={(e) => update(e.target.value)}
+                                disabled={isReadOnly}
+                                style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  border: '1px solid #2C3037',
+                                  borderRadius: '8px',
+                                  background: 'transparent',
+                                  cursor: isReadOnly ? 'default' : 'pointer',
+                                  padding: '2px',
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <input
+                                value={strVal}
+                                onChange={(e) => update(e.target.value)}
+                                placeholder="#ec6a2c"
+                                readOnly={isReadOnly}
+                                style={{
+                                  ...inputStyle,
+                                  width: '140px',
+                                  font: '500 13px var(--font-mono), monospace',
+                                }}
+                                onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                                onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
+                              />
+                              <div
+                                style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '8px',
+                                  background: isHex ? strVal : '#ec6a2c',
+                                  border: '1px solid #2C3037',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            </div>
+                          );
+                        })()}
                       {f.type === 'number' && (
                         <input
                           value={String(val ?? '')}

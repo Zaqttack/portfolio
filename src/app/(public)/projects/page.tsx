@@ -30,7 +30,6 @@ export default async function ProjectsPage() {
       projectsEnabled={profile?.projects_enabled ?? true}
       resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
       profileLinks={profileLinks}
-      siteDomain={profile?.site_domain ?? null}
       locationShort={profile?.location ?? null}
       name={profile?.name ?? null}
     />

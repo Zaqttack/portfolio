@@ -76,7 +76,6 @@ export default function ExperienceClient({
   subtitle,
   writingEnabled,
   projectsEnabled,
-  siteDomain,
   locationShort,
 }: {
   experience: Experience[];
@@ -89,7 +88,6 @@ export default function ExperienceClient({
   subtitle: string | null;
   writingEnabled: boolean;
   projectsEnabled: boolean;
-  siteDomain: string | null;
   locationShort: string | null;
 }) {
   const [activeSection, setActiveSection] = useState<
@@ -216,7 +214,6 @@ export default function ExperienceClient({
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
           projectsEnabled={projectsEnabled}
-          siteDomain={siteDomain}
           resumeUrl={
             profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
           }
@@ -855,7 +852,7 @@ export default function ExperienceClient({
         </section>
       </main>
 
-      <Footer profileLinks={profileLinks} siteDomain={siteDomain} />
+      <Footer profileLinks={profileLinks} />
       <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
     </>
   );
