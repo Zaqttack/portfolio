@@ -1412,7 +1412,13 @@ export default function HomeClient({
         </section>
       </main>
 
-      <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} extraCmds={extraCmds} />
+      <CmdK
+        open={cmdkOpen}
+        onClose={() => setCmdkOpen(false)}
+        extraCmds={extraCmds}
+        profileLinks={profileLinks}
+        resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
+      />
     </>
   );
 }

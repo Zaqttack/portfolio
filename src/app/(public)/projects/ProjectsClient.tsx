@@ -346,7 +346,12 @@ export default function ProjectsClient({
       </main>
 
       <Footer profileLinks={profileLinks} />
-      <CmdK open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
+      <CmdK
+        open={cmdkOpen}
+        onClose={() => setCmdkOpen(false)}
+        profileLinks={profileLinks}
+        resumeUrl={resumeUrl}
+      />
     </>
   );
 }

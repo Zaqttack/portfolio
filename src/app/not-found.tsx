@@ -1,7 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getProfile } from '@/lib/db';
 
-export const metadata: Metadata = { title: 'Zaquariah Holland | Not Found' };
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getProfile().catch(() => null);
+  const name = profile?.name ?? 'Portfolio';
+  return { title: `${name} | Not Found` };
+}
 
 export default function NotFound() {
   return (

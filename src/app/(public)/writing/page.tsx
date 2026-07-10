@@ -6,7 +6,11 @@ import WritingClient from './WritingClient';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Zaquariah Holland | Writing' };
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getProfile().catch(() => null);
+  const name = profile?.name ?? 'Portfolio';
+  return { title: `${name} | Writing` };
+}
 
 export default async function WritingPage() {
   let posts: Post[] = [];
