@@ -1,0 +1,16 @@
+# Used by Wrangler when running the Worker locally (npm run preview).
+# Wrangler doesn't read .env — copy this to .dev.vars and fill in your values.
+# NEXT_PUBLIC_* vars still come from .env since they're baked at build time.
+# In production these live as Cloudflare Worker runtime secrets, not here.
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_<key>
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_PROJECT_ID=<project-ref>
+
+# Admin
+ADMIN_USER_ID=
+
+# Cloudflare Turnstile
+TURNSTILE_SECRET_KEY=
