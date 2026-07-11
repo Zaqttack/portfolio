@@ -568,43 +568,41 @@ export default function ExperienceClient({
                     <div
                       style={{
                         display: 'flex',
-                        justifyContent: 'space-between',
                         alignItems: 'center',
-                        gap: '16px',
+                        gap: '10px',
                         marginBottom: roles.length > 0 ? '14px' : 0,
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {org.logo && (
-                          <img
-                            src={org.logo}
-                            alt={org.name}
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '6px',
-                              objectFit: 'cover',
-                              border: '1px solid var(--border-2)',
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
+                      {org.logo && (
+                        <img
+                          src={org.logo}
+                          alt={org.name}
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '6px',
+                            objectFit: 'cover',
+                            border: '1px solid var(--border-2)',
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      <div>
                         <div style={{ fontWeight: 700, fontSize: '18px', letterSpacing: '-.01em' }}>
                           {org.name}
                         </div>
+                        {earliest && (
+                          <div
+                            style={{
+                              font: '500 11px var(--font-mono), monospace',
+                              color: 'var(--accent)',
+                              marginTop: '2px',
+                            }}
+                          >
+                            {fmtPeriod(earliest, latest === undefined ? null : latest)}
+                          </div>
+                        )}
                       </div>
-                      {earliest && (
-                        <div
-                          style={{
-                            font: '500 11px var(--font-mono), monospace',
-                            color: 'var(--text-4)',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {fmtPeriod(earliest, latest === undefined ? null : latest)}
-                        </div>
-                      )}
                     </div>
 
                     {/* Roles */}
@@ -627,16 +625,18 @@ export default function ExperienceClient({
                             }}
                           >
                             <div style={{ fontWeight: 600, fontSize: '15px' }}>{role.role}</div>
-                            <div
-                              style={{
-                                font: '500 11px var(--font-mono), monospace',
-                                color: 'var(--text-4)',
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {fmtPeriod(role.start_date, role.end_date)}
-                            </div>
+                            {roles.length > 1 && (
+                              <div
+                                style={{
+                                  font: '500 11px var(--font-mono), monospace',
+                                  color: 'var(--text-4)',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {fmtPeriod(role.start_date, role.end_date)}
+                              </div>
+                            )}
                           </div>
                           {bullets.length > 0 && (
                             <ul
