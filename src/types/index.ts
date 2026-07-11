@@ -212,6 +212,14 @@ export interface BotSignature {
   created_at: string;
 }
 
+export interface SearchResult {
+  kind: 'project' | 'post' | 'skill' | 'job' | 'achievement';
+  label: string;
+  hint: string;
+  searchText: string;
+  url: string;
+}
+
 export interface AdminActivity {
   id: string;
   actor: string | null;

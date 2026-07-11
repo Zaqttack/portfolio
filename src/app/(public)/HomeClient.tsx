@@ -13,6 +13,7 @@ import type {
   Profile,
   ProfileLink,
   Project,
+  SearchResult,
   Skill,
 } from '@/types';
 
@@ -88,6 +89,7 @@ export default function HomeClient({
   const SECTIONS = ALL_SECTIONS;
   const [activeSection, setActiveSection] = useState<Section>('intro');
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [searchIndex, setSearchIndex] = useState<SearchResult[]>([]);
   const termRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -102,6 +104,14 @@ export default function HomeClient({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Prefetch search index in background after mount
+  useEffect(() => {
+    fetch('/api/search')
+      .then((r) => r.json())
+      .then((data: SearchResult[]) => setSearchIndex(data))
+      .catch(() => {});
   }, []);
 
   // Cursor glow
@@ -1418,6 +1428,9 @@ export default function HomeClient({
         extraCmds={extraCmds}
         profileLinks={profileLinks}
         resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
+        writingEnabled={writingEnabled}
+        projectsEnabled={projectsEnabled}
+        searchIndex={searchIndex}
       />
     </>
   );

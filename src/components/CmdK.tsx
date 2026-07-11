@@ -1,12 +1,22 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { ProfileLink } from '@/types';
+import type { ProfileLink, SearchResult } from '@/types';
 
 interface Cmd {
   label: string;
-  kind: 'page' | 'section' | 'action' | 'link';
+  kind:
+    | 'page'
+    | 'section'
+    | 'action'
+    | 'link'
+    | 'project'
+    | 'post'
+    | 'skill'
+    | 'job'
+    | 'achievement';
   hint: string;
+  searchText?: string;
   run: () => void;
 }
 
@@ -16,42 +26,76 @@ interface CmdKProps {
   extraCmds?: Cmd[];
   profileLinks?: ProfileLink[];
   resumeUrl?: string | null;
+  writingEnabled?: boolean;
+  projectsEnabled?: boolean;
+  searchIndex?: SearchResult[];
 }
 
-const NAV_CMDS: Cmd[] = [
-  {
-    label: 'Home',
-    kind: 'page',
-    hint: 'index',
-    run: () => {
-      window.location.href = '/';
+function buildNavCmds(writingEnabled: boolean, projectsEnabled: boolean): Cmd[] {
+  const cmds: Cmd[] = [
+    {
+      label: 'Home',
+      kind: 'page',
+      hint: 'index',
+      run: () => {
+        window.location.href = '/';
+      },
     },
-  },
-  {
-    label: 'Projects',
-    kind: 'page',
-    hint: 'projects',
-    run: () => {
-      window.location.href = '/projects';
-    },
-  },
-  {
-    label: 'Writing',
-    kind: 'page',
-    hint: 'blog',
-    run: () => {
-      window.location.href = '/writing';
-    },
-  },
-  {
+  ];
+  if (projectsEnabled) {
+    cmds.push({
+      label: 'Projects',
+      kind: 'page',
+      hint: 'projects',
+      run: () => {
+        window.location.href = '/projects';
+      },
+    });
+  }
+  if (writingEnabled) {
+    cmds.push({
+      label: 'Writing',
+      kind: 'page',
+      hint: 'blog',
+      run: () => {
+        window.location.href = '/writing';
+      },
+    });
+  }
+  cmds.push({
     label: 'Experience',
     kind: 'page',
     hint: 'resume',
     run: () => {
       window.location.href = '/experience';
     },
-  },
-];
+  });
+  return cmds;
+}
+
+function toCmd(r: SearchResult): Cmd {
+  return {
+    label: r.label,
+    kind: r.kind,
+    hint: r.hint,
+    searchText: r.searchText,
+    run: () => {
+      window.location.href = r.url;
+    },
+  };
+}
+
+function matchesQuery(cmd: Cmd, q: string): boolean {
+  const text = `${cmd.label} ${cmd.kind} ${cmd.hint} ${cmd.searchText ?? ''}`.toLowerCase();
+  return text.includes(q);
+}
+
+function scoreCmd(cmd: Cmd, q: string): number {
+  const label = cmd.label.toLowerCase();
+  if (label.startsWith(q)) return 3;
+  if (label.includes(q)) return 2;
+  return 1;
+}
 
 export default function CmdK({
   open,
@@ -59,10 +103,15 @@ export default function CmdK({
   extraCmds = [],
   profileLinks = [],
   resumeUrl,
+  writingEnabled = true,
+  projectsEnabled = true,
+  searchIndex = [],
 }: CmdKProps) {
   const [query, setQuery] = useState('');
   const [sel, setSel] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const navCmds = buildNavCmds(writingEnabled, projectsEnabled);
 
   const resumeCmd: Cmd[] = resumeUrl
     ? [
@@ -88,12 +137,17 @@ export default function CmdK({
     },
   }));
 
-  const cmds = [...NAV_CMDS, ...resumeCmd, ...linkCmds, ...extraCmds];
-  const filtered = query.trim()
-    ? cmds.filter((c) =>
-        (c.label + ' ' + c.kind + ' ' + c.hint).toLowerCase().includes(query.toLowerCase()),
-      )
-    : cmds;
+  const staticCmds = [...navCmds, ...resumeCmd, ...linkCmds, ...extraCmds];
+  const contentCmds = searchIndex.map(toCmd);
+
+  const q = query.trim().toLowerCase();
+
+  const filtered: Cmd[] = q
+    ? [
+        ...staticCmds.filter((c) => matchesQuery(c, q)),
+        ...contentCmds.filter((c) => matchesQuery(c, q)),
+      ].sort((a, b) => scoreCmd(b, q) - scoreCmd(a, q))
+    : staticCmds;
 
   useEffect(() => {
     if (open) {
@@ -201,7 +255,7 @@ export default function CmdK({
         <div style={{ maxHeight: '320px', overflowY: 'auto', padding: '8px' }}>
           {filtered.map((cmd, i) => (
             <div
-              key={cmd.label}
+              key={`${cmd.kind}-${cmd.label}`}
               onClick={() => {
                 cmd.run();
                 onClose();
@@ -227,6 +281,7 @@ export default function CmdK({
                     color: 'var(--text-4)',
                     textTransform: 'uppercase',
                     width: '52px',
+                    flexShrink: 0,
                   }}
                 >
                   {cmd.kind}
@@ -241,7 +296,14 @@ export default function CmdK({
                 </span>
               </span>
               <span
-                style={{ font: '500 10.5px var(--font-mono), monospace', color: 'var(--text-4)' }}
+                style={{
+                  font: '500 10.5px var(--font-mono), monospace',
+                  color: 'var(--text-4)',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '180px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
               >
                 {cmd.hint}
               </span>
