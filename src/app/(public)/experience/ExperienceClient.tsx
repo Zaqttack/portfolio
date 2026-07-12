@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
+import MobileNav from '@/components/MobileNav';
 import TopNav from '@/components/TopNav';
 import type {
   Achievement,
@@ -15,6 +16,7 @@ import type {
   InvolvementOrg,
   Profile,
   ProfileLink,
+  Skill,
 } from '@/types';
 
 type CompanyGroup = {
@@ -72,6 +74,7 @@ export default function ExperienceClient({
   education,
   certifications,
   achievements,
+  skills,
   profileLinks,
   subtitle,
   writingEnabled,
@@ -84,6 +87,7 @@ export default function ExperienceClient({
   education: Education[];
   certifications: Certification[];
   achievements: Achievement[];
+  skills: Skill[];
   profileLinks: ProfileLink[];
   subtitle: string | null;
   writingEnabled: boolean;
@@ -91,7 +95,7 @@ export default function ExperienceClient({
   locationShort: string | null;
 }) {
   const [activeSection, setActiveSection] = useState<
-    'history' | 'community' | 'education' | 'awards'
+    'history' | 'community' | 'education' | 'awards' | 'skills'
   >('history');
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -149,7 +153,7 @@ export default function ExperienceClient({
 
   // Scroll-spy for active section
   useEffect(() => {
-    const sectionIds = ['history', 'community', 'education', 'awards'] as const;
+    const sectionIds = ['history', 'community', 'education', 'awards', 'skills'] as const;
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -197,26 +201,56 @@ export default function ExperienceClient({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const resumeUrl = profile?.resume_download_enabled
+    ? '/api/resume'
+    : (profile?.resume_url ?? null);
+
   const railItems = [
     { href: '#history', label: 'history', active: activeSection === 'history' },
     { href: '#community', label: 'community', active: activeSection === 'community' },
     { href: '#education', label: 'education', active: activeSection === 'education' },
     { href: '#awards', label: 'awards', active: activeSection === 'awards' },
+    { href: '#skills', label: 'skills', active: activeSection === 'skills' },
     { href: '/', label: '← home', active: false, isBack: true },
   ];
 
+  const skillsByCategory = Object.entries(
+    skills.reduce<Record<string, string[]>>((acc, s) => {
+      const cat = (s.category ?? 'OTHER').toUpperCase();
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(s.name);
+      return acc;
+    }, {}),
+  );
+
   return (
     <>
+      <MobileNav
+        name={profile?.name}
+        railItems={railItems}
+        openToWork={profile?.open_to_work ?? false}
+        locationShort={locationShort}
+        writingEnabled={writingEnabled}
+        projectsEnabled={projectsEnabled}
+        resumeUrl={resumeUrl}
+        onCmdK={() => setCmdkOpen(true)}
+      />
+
       <LeftRail items={railItems} locationShort={locationShort} name={profile?.name} />
 
-      <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
+      <main
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          marginLeft: 'max(var(--main-ml), calc((100vw - var(--content-max-w)) / 2))',
+          maxWidth: 'var(--content-max-w)',
+        }}
+      >
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
           projectsEnabled={projectsEnabled}
-          resumeUrl={
-            profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
-          }
+          resumeUrl={resumeUrl}
         />
 
         <header style={{ padding: '56px 56px 12px 40px' }}>
@@ -271,16 +305,13 @@ export default function ExperienceClient({
                 </p>
               )}
             </div>
-            {(profile?.resume_download_enabled || profile?.resume_url) &&
+            {resumeUrl &&
               (() => {
-                const href = profile?.resume_download_enabled
-                  ? '/api/resume'
-                  : profile!.resume_url!;
                 const isDownload = profile?.resume_download_enabled;
                 return (
                   <a
                     ref={magnetRef}
-                    href={href}
+                    href={resumeUrl}
                     {...(isDownload
                       ? { download: true }
                       : { target: '_blank', rel: 'noopener noreferrer' })}
@@ -289,7 +320,7 @@ export default function ExperienceClient({
                       alignItems: 'center',
                       gap: '8px',
                       background: 'var(--accent)',
-                      color: 'var(--canvas)',
+                      color: 'var(--bg)',
                       font: '600 13px var(--font-space), sans-serif',
                       textDecoration: 'none',
                       padding: '13px 20px',
@@ -850,6 +881,74 @@ export default function ExperienceClient({
             </div>
           </div>
         </section>
+
+        {/* SKILLS — full breakdown */}
+        <section
+          id="skills"
+          style={{
+            scrollMarginTop: '20px',
+            padding: '36px 56px 80px 40px',
+            borderTop: '1px solid var(--border-1)',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '200px 1fr',
+              gap: '48px',
+              alignItems: 'start',
+            }}
+          >
+            <div
+              style={{
+                font: '500 11px var(--font-mono), monospace',
+                letterSpacing: '.12em',
+                color: 'var(--accent)',
+              }}
+            >
+              / SKILLS
+            </div>
+            <div style={{ borderTop: '1px solid var(--border-2)' }}>
+              {skillsByCategory.length === 0 && (
+                <p style={{ padding: '22px 0', color: 'var(--text-meta)', fontSize: '14px' }}>
+                  No skills listed yet.
+                </p>
+              )}
+              {skillsByCategory.map(([cat, names]) => (
+                <div
+                  key={cat}
+                  data-reveal
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '160px 1fr',
+                    gap: '20px',
+                    padding: '15px 0',
+                    borderBottom: '1px solid var(--border-1)',
+                  }}
+                >
+                  <span
+                    style={{
+                      font: '500 10.5px var(--font-mono), monospace',
+                      letterSpacing: '.08em',
+                      color: 'var(--text-meta-2)',
+                    }}
+                  >
+                    {cat}
+                  </span>
+                  <span
+                    style={{
+                      font: '500 13px var(--font-mono), monospace',
+                      color: 'var(--text-strong)',
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {names.join(' · ')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer profileLinks={profileLinks} />
@@ -857,7 +956,7 @@ export default function ExperienceClient({
         open={cmdkOpen}
         onClose={() => setCmdkOpen(false)}
         profileLinks={profileLinks}
-        resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
+        resumeUrl={resumeUrl}
       />
     </>
   );

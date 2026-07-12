@@ -28,6 +28,7 @@ export interface Profile {
   writing_footer_note: string | null;
   skills_subtitle: string | null;
   accent_color: string | null;
+  hero_variant: 'terminal' | 'email' | 'chat' | 'notecard' | 'playground' | null;
   updated_at: string;
 }
 
@@ -142,6 +143,15 @@ export interface Skill {
   display_order: number;
 }
 
+export interface ProjectImage {
+  id: string;
+  project_id: string;
+  url: string;
+  caption: string | null;
+  display_order: number;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -160,6 +170,7 @@ export interface Project {
   display_order: number;
   created_at: string;
   updated_at: string;
+  project_images?: ProjectImage[];
 }
 
 export interface Post {

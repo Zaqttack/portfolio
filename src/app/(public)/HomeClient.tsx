@@ -2,9 +2,12 @@
 
 import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
+import type { HeroVariant } from '@/components/HeroCard';
+import HeroCard from '@/components/HeroCard';
 import LeftRail from '@/components/LeftRail';
+import MobileNav from '@/components/MobileNav';
 import TopNav from '@/components/TopNav';
 import type {
   Experience,
@@ -83,6 +86,8 @@ export default function HomeClient({
     profile?.hero_title ?? "I'm {{first_name}}. I build precise, well-architected software.",
     { first_name: firstName },
   );
+  const heroVariant: HeroVariant = (profile?.hero_variant as HeroVariant) ?? 'terminal';
+
   const ALL_SECTIONS = ALL_SECTIONS_BASE.filter(
     (s) => (s !== 'writing' || writingEnabled) && (s !== 'projects' || projectsEnabled),
   ) as Section[];
@@ -90,7 +95,6 @@ export default function HomeClient({
   const [activeSection, setActiveSection] = useState<Section>('intro');
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [searchIndex, setSearchIndex] = useState<SearchResult[]>([]);
-  const termRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -106,7 +110,7 @@ export default function HomeClient({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Prefetch search index in background after mount
+  // Prefetch search index
   useEffect(() => {
     fetch('/api/search')
       .then((r) => r.json())
@@ -236,124 +240,6 @@ export default function HomeClient({
     return () => cleanup.forEach((fn) => fn());
   }, []);
 
-  // Typing terminal
-  useEffect(() => {
-    const out = termRef.current;
-    if (!out) return;
-    out.innerHTML = '';
-    const accent = 'var(--accent)',
-      txt = '#C7CBD1',
-      dim = 'var(--text-4)';
-
-    const projSlugs = projects
-      .slice(0, 3)
-      .map((p) =>
-        p.title
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '')
-          .slice(0, 14),
-      )
-      .join('  ');
-    const projMore = projects.length > 3 ? `  (+${projects.length - 3})` : '';
-
-    const stackLine = skills
-      .slice(0, 6)
-      .map((s) => s.name.toLowerCase())
-      .join('  ');
-
-    type SeqItem = {
-      t: string;
-      color?: string;
-      prompt?: true;
-      pre?: string;
-      chunk?: true;
-      dim?: true;
-    };
-
-    const seq: SeqItem[] = [
-      { t: 'whoami', prompt: true },
-      {
-        t: `\n${firstName.toLowerCase()}${latestRole ? ` — ${latestRole.toLowerCase()}` : ''}\n`,
-        color: txt,
-      },
-      { t: 'status', prompt: true, pre: '\n' },
-      {
-        t: `\n${openToWork ? 'open to work' : (profile?.terminal_status ?? 'heads-down · building')} `,
-        color: txt,
-      },
-      { t: openToWork ? '✓' : '◆', color: accent, chunk: true },
-      ...(projects.length > 0
-        ? ([
-            { t: 'ls ./projects', prompt: true, pre: '\n\n' },
-            {
-              t: `\n${projects.length} ${projects.length === 1 ? 'project' : 'projects'}  `,
-              color: dim,
-            },
-            { t: projSlugs, color: txt, chunk: true },
-            ...(projMore ? [{ t: projMore, color: dim, chunk: true }] : []),
-            { t: '\n', color: txt, chunk: true },
-          ] as SeqItem[])
-        : []),
-      ...(stackLine
-        ? ([
-            {
-              t: 'stack',
-              prompt: true,
-              pre: projects.length > 0 ? '\n' : '\n\n',
-            },
-            { t: `\n${stackLine}\n`, color: txt },
-          ] as SeqItem[])
-        : []),
-    ];
-
-    let si = 0;
-    let tt: ReturnType<typeof setTimeout>;
-    const promptSpan = () => {
-      const s = document.createElement('span');
-      s.style.color = accent;
-      s.textContent = '➜ ~ ';
-      out.appendChild(s);
-    };
-    const typeStr = (str: string, color: string, done: () => void) => {
-      const span = document.createElement('span');
-      span.style.color = color;
-      out.appendChild(span);
-      let i = 0;
-      const step = () => {
-        span.textContent += str[i++];
-        if (i < str.length) tt = setTimeout(step, 24 + Math.random() * 26);
-        else tt = setTimeout(done, 260);
-      };
-      step();
-    };
-    const run = () => {
-      if (si >= seq.length) return;
-      const item = seq[si++];
-      if (item.pre) out.appendChild(document.createTextNode(item.pre));
-      if (item.chunk) {
-        const s = document.createElement('span');
-        s.style.color = item.color ?? txt;
-        s.textContent = item.t;
-        out.appendChild(s);
-        tt = setTimeout(run, 80);
-        return;
-      }
-      if (item.prompt) {
-        promptSpan();
-        typeStr(item.t, txt, run);
-      } else {
-        const s = document.createElement('span');
-        s.style.color = item.color ?? txt;
-        s.textContent = item.t;
-        out.appendChild(s);
-        tt = setTimeout(run, 200);
-      }
-    };
-    tt = setTimeout(run, 550);
-    return () => clearTimeout(tt);
-  }, [firstName, openToWork, latestRole, profile?.terminal_status, projects, skills]);
-
   const railItems = SECTIONS.map((id) => ({
     href: `#${id}`,
     label: RAIL_LABELS[id],
@@ -363,6 +249,10 @@ export default function HomeClient({
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     },
   }));
+
+  const resumeUrl = profile?.resume_download_enabled
+    ? '/api/resume'
+    : (profile?.resume_url ?? null);
 
   const extraCmds = [
     {
@@ -385,6 +275,17 @@ export default function HomeClient({
     },
   ];
 
+  const skillsByCategory = Object.entries(
+    skills.reduce<Record<string, string[]>>((acc, s) => {
+      const cat = (s.category ?? 'OTHER').toUpperCase();
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(s.name);
+      return acc;
+    }, {}),
+  );
+  // Home preview: first 3 skill names total (flat), no category grouping
+  const previewSkillNames = skills.slice(0, 3).map((s) => s.name);
+
   return (
     <>
       {/* Cursor glow */}
@@ -405,6 +306,17 @@ export default function HomeClient({
         }}
       />
 
+      <MobileNav
+        name={profile?.name}
+        railItems={railItems}
+        openToWork={openToWork}
+        locationShort={profile?.location ?? null}
+        writingEnabled={writingEnabled}
+        projectsEnabled={projectsEnabled}
+        resumeUrl={resumeUrl}
+        onCmdK={() => setCmdkOpen(true)}
+      />
+
       <LeftRail
         items={railItems}
         openToWork={openToWork}
@@ -412,14 +324,19 @@ export default function HomeClient({
         name={profile?.name}
       />
 
-      <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
+      <main
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          marginLeft: 'max(var(--main-ml), calc((100vw - var(--content-max-w)) / 2))',
+          maxWidth: 'var(--content-max-w)',
+        }}
+      >
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
           projectsEnabled={projectsEnabled}
-          resumeUrl={
-            profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)
-          }
+          resumeUrl={resumeUrl}
         />
 
         {/* HERO */}
@@ -441,7 +358,7 @@ export default function HomeClient({
               style={{
                 font: '500 11px var(--font-mono), monospace',
                 letterSpacing: '.14em',
-                color: 'var(--text-3)',
+                color: 'var(--text-meta)',
                 marginBottom: '26px',
               }}
             >
@@ -465,7 +382,7 @@ export default function HomeClient({
               style={{
                 fontSize: '17px',
                 lineHeight: 1.65,
-                color: 'var(--text-2)',
+                color: 'var(--text-body)',
                 maxWidth: '33em',
                 margin: '0 0 32px',
               }}
@@ -482,7 +399,7 @@ export default function HomeClient({
                   alignItems: 'center',
                   gap: '8px',
                   background: 'var(--accent)',
-                  color: 'var(--canvas)',
+                  color: 'var(--bg)',
                   font: '600 13px var(--font-space), sans-serif',
                   textDecoration: 'none',
                   padding: '13px 20px',
@@ -494,48 +411,8 @@ export default function HomeClient({
                 }
                 onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
               >
-                View projects <ArrowUpRight size={14} />
+                View work <ArrowUpRight size={14} />
               </Link>
-              {(profile?.resume_download_enabled || profile?.resume_url) &&
-                (() => {
-                  const href = profile?.resume_download_enabled
-                    ? '/api/resume'
-                    : profile!.resume_url!;
-                  const isDownload = profile?.resume_download_enabled;
-                  return (
-                    <a
-                      href={href}
-                      {...(isDownload
-                        ? { download: true }
-                        : { target: '_blank', rel: 'noopener noreferrer' })}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        color: 'var(--text-1)',
-                        font: '600 13px var(--font-space), sans-serif',
-                        textDecoration: 'none',
-                        padding: '13px 20px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-3)',
-                        transition:
-                          'transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, color .3s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.borderColor = 'var(--accent)';
-                        e.currentTarget.style.color = 'var(--accent)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.borderColor = 'var(--border-3)';
-                        e.currentTarget.style.color = 'var(--text-1)';
-                      }}
-                    >
-                      Resume <ArrowDown size={13} />
-                    </a>
-                  );
-                })()}
               <a
                 href="#contact"
                 onClick={(e) => {
@@ -546,64 +423,17 @@ export default function HomeClient({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  color: 'var(--text-2)',
+                  color: 'var(--text-body)',
                   font: '600 13px var(--font-space), sans-serif',
                   textDecoration: 'none',
                   padding: '13px 6px',
                   transition: 'color .3s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-1)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
               >
                 Get in touch
               </a>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'center',
-                marginTop: '22px',
-                font: '500 12px var(--font-mono), monospace',
-                color: 'var(--text-3)',
-              }}
-            >
-              {profileLinks.map((link, i) => (
-                <Fragment key={link.id}>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                      textDecoration: 'none',
-                      transition: 'color .3s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
-                  >
-                    {link.label} <ArrowUpRight size={11} />
-                  </a>
-                  {i < profileLinks.length - 1 && (
-                    <span style={{ color: 'var(--border-3)' }}>/</span>
-                  )}
-                </Fragment>
-              ))}
-              {profileLinks.length > 0 && profile?.email && (
-                <span style={{ color: 'var(--border-3)' }}>/</span>
-              )}
-              {profile?.email && (
-                <a
-                  href={`mailto:${profile.email}`}
-                  style={{ textDecoration: 'none', transition: 'color .3s' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
-                >
-                  {profile.email}
-                </a>
-              )}
             </div>
             {profile?.tagline &&
               (!profile.now_expires_at || new Date(profile.now_expires_at) > new Date()) && (
@@ -620,117 +450,30 @@ export default function HomeClient({
                   }}
                 >
                   <span style={{ color: 'var(--accent)', whiteSpace: 'nowrap' }}>// now</span>
-                  <span style={{ color: 'var(--text-2)', lineHeight: 1.65 }}>
+                  <span style={{ color: 'var(--text-body)', lineHeight: 1.65 }}>
                     {profile.tagline}
                   </span>
                 </div>
               )}
           </div>
 
-          {/* Terminal + avatar */}
-          <div style={{ position: 'relative', paddingTop: '34px' }}>
-            <div
-              style={{
-                border: '1px solid var(--border-2)',
-                borderRadius: '11px',
-                overflow: 'hidden',
-                background: 'var(--panel-1)',
-                boxShadow: '0 24px 60px rgba(0,0,0,.5)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '9px 12px',
-                  borderBottom: '1px solid var(--border-1)',
-                  background: 'var(--panel-2)',
-                }}
-              >
-                <span
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: 'var(--border-3)',
-                  }}
-                />
-                <span
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: 'var(--border-3)',
-                  }}
-                />
-                <span
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: 'var(--border-3)',
-                  }}
-                />
-                <span
-                  style={{
-                    marginLeft: '6px',
-                    font: '500 9.5px var(--font-mono), monospace',
-                    color: 'var(--text-4)',
-                  }}
-                >
-                  {firstName.toLowerCase()} — zsh
-                </span>
-              </div>
-              <div
-                style={{
-                  padding: '16px 15px',
-                  font: '500 12px/1.85 var(--font-mono), monospace',
-                  minHeight: '120px',
-                }}
-              >
-                <div
-                  ref={termRef}
-                  style={{ whiteSpace: 'pre-wrap', color: '#C7CBD1', display: 'inline' }}
-                />
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: '7px',
-                    height: '1.05em',
-                    transform: 'translateY(2px)',
-                    background: 'var(--accent)',
-                    animation: 'blink 1.05s steps(1) infinite',
-                  }}
-                />
-              </div>
-            </div>
-            {/* Circular avatar */}
-            {profile?.avatar_url && profile?.avatar_enabled && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: '22px',
-                  width: '84px',
-                  height: '84px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  boxShadow: '0 0 0 4px var(--canvas), 0 8px 22px rgba(0,0,0,.5)',
-                  background: 'var(--border-2)',
-                }}
-              >
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.name}
-                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                />
-              </div>
-            )}
-          </div>
+          {/* Hero card (configurable variant) */}
+          <HeroCard
+            variant={heroVariant}
+            name={profile?.name ?? firstName}
+            firstName={firstName}
+            role={latestRole}
+            openToWork={openToWork}
+            terminalStatus={profile?.terminal_status ?? null}
+            nowBlurb={profile?.tagline ?? null}
+            projects={projects}
+            skills={skills}
+            avatarUrl={profile?.avatar_url ?? null}
+            avatarEnabled={profile?.avatar_enabled ?? false}
+          />
         </section>
 
-        {/* SKILLS */}
+        {/* SKILLS — preview (3 categories) */}
         <section
           id="skills"
           data-section
@@ -762,7 +505,7 @@ export default function HomeClient({
                 <div
                   style={{
                     font: '500 10.5px var(--font-mono), monospace',
-                    color: 'var(--text-4)',
+                    color: 'var(--text-meta-2)',
                     marginTop: '10px',
                     lineHeight: 1.6,
                   }}
@@ -773,43 +516,43 @@ export default function HomeClient({
             </div>
             <div style={{ borderTop: '1px solid var(--border-2)' }}>
               {skills.length === 0 && (
-                <p style={{ padding: '15px 0', color: 'var(--text-3)', fontSize: '14px' }}>
+                <p style={{ padding: '15px 0', color: 'var(--text-meta)', fontSize: '14px' }}>
                   No skills listed yet.
                 </p>
               )}
-              {Object.entries(
-                skills.reduce<Record<string, string[]>>((acc, s) => {
-                  const cat = (s.category ?? 'OTHER').toUpperCase();
-                  if (!acc[cat]) acc[cat] = [];
-                  acc[cat].push(s.name);
-                  return acc;
-                }, {}),
-              ).map(([cat, names]) => (
+              {previewSkillNames.length > 0 && (
                 <div
-                  key={cat}
                   data-reveal
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: '160px 1fr',
-                    gap: '20px',
                     padding: '15px 0',
                     borderBottom: '1px solid var(--border-1)',
+                    font: '500 13px var(--font-mono), monospace',
+                    color: 'var(--text-strong)',
                   }}
                 >
-                  <span
-                    style={{
-                      font: '500 10.5px var(--font-mono), monospace',
-                      letterSpacing: '.08em',
-                      color: 'var(--text-4)',
-                    }}
-                  >
-                    {cat}
-                  </span>
-                  <span style={{ font: '500 13px var(--font-mono), monospace', color: '#C7CBD1' }}>
-                    {names.join(' · ')}
-                  </span>
+                  {previewSkillNames.join(' · ')}
                 </div>
-              ))}
+              )}
+              {skills.length > 0 && (
+                <div style={{ paddingTop: '14px' }}>
+                  <Link
+                    href="/experience#skills"
+                    style={{
+                      font: '500 12px var(--font-mono), monospace',
+                      color: 'var(--text-body)',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'color .3s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
+                  >
+                    → full breakdown on Experience <ArrowRight size={12} />
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -865,19 +608,19 @@ export default function HomeClient({
                     href="/projects"
                     style={{
                       font: '500 12px var(--font-mono), monospace',
-                      color: 'var(--text-2)',
+                      color: 'var(--text-body)',
                       textDecoration: 'none',
                       transition: 'color .3s',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
                   >
                     view all <ArrowRight size={12} />
                   </Link>
                 </div>
                 <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
                   {projects.length === 0 && (
-                    <p style={{ padding: '24px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
+                    <p style={{ padding: '24px 4px', color: 'var(--text-meta)', fontSize: '14px' }}>
                       No projects yet.
                     </p>
                   )}
@@ -885,8 +628,8 @@ export default function HomeClient({
                     <Link
                       key={p.id}
                       href="/projects"
+                      className="list-row"
                       style={{
-                        display: 'grid',
                         gridTemplateColumns: '44px 1fr auto',
                         gap: '22px',
                         alignItems: 'baseline',
@@ -898,7 +641,7 @@ export default function HomeClient({
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.paddingLeft = '16px';
-                        e.currentTarget.style.background = '#101114';
+                        e.currentTarget.style.background = 'var(--bg-hover)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.paddingLeft = '4px';
@@ -906,9 +649,10 @@ export default function HomeClient({
                       }}
                     >
                       <span
+                        className="list-row-meta"
                         style={{
                           font: '500 12px var(--font-mono), monospace',
-                          color: 'var(--text-4)',
+                          color: 'var(--text-meta-2)',
                         }}
                       >
                         {String(i + 1).padStart(2, '0')}
@@ -930,7 +674,7 @@ export default function HomeClient({
                             display: 'block',
                             fontSize: '14.5px',
                             lineHeight: 1.55,
-                            color: 'var(--text-2)',
+                            color: 'var(--text-body)',
                             maxWidth: '44em',
                           }}
                         >
@@ -949,7 +693,7 @@ export default function HomeClient({
                         <span
                           style={{
                             font: '500 11px var(--font-mono), monospace',
-                            color: 'var(--text-4)',
+                            color: 'var(--text-meta-2)',
                           }}
                         >
                           {`'${new Date(p.created_at).getFullYear().toString().slice(2)}`}
@@ -957,7 +701,7 @@ export default function HomeClient({
                         <span
                           style={{
                             font: '500 10.5px var(--font-mono), monospace',
-                            color: 'var(--text-3)',
+                            color: 'var(--text-meta)',
                           }}
                         >
                           {p.tags.filter((t) => t !== 'product' && t !== 'side').join(' · ')}
@@ -1022,19 +766,19 @@ export default function HomeClient({
                     href="/writing"
                     style={{
                       font: '500 12px var(--font-mono), monospace',
-                      color: 'var(--text-2)',
+                      color: 'var(--text-body)',
                       textDecoration: 'none',
                       transition: 'color .3s',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
                   >
                     all writing <ArrowRight size={12} />
                   </Link>
                 </div>
                 <div style={{ borderTop: '1px solid var(--border-2)', marginTop: '16px' }}>
                   {posts.length === 0 && (
-                    <p style={{ padding: '24px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
+                    <p style={{ padding: '24px 4px', color: 'var(--text-meta)', fontSize: '14px' }}>
                       No posts yet.
                     </p>
                   )}
@@ -1042,8 +786,8 @@ export default function HomeClient({
                     <Link
                       key={p.id}
                       href="/writing"
+                      className="list-row"
                       style={{
-                        display: 'grid',
                         gridTemplateColumns: '110px 1fr',
                         gap: '22px',
                         alignItems: 'baseline',
@@ -1055,7 +799,7 @@ export default function HomeClient({
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.paddingLeft = '16px';
-                        e.currentTarget.style.background = '#101114';
+                        e.currentTarget.style.background = 'var(--bg-hover)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.paddingLeft = '4px';
@@ -1063,9 +807,10 @@ export default function HomeClient({
                       }}
                     >
                       <span
+                        className="list-row-meta"
                         style={{
                           font: '500 11px var(--font-mono), monospace',
-                          color: 'var(--text-4)',
+                          color: 'var(--text-meta-2)',
                         }}
                       >
                         {p.published_at ? fmtPostDate(p.published_at) : ''}
@@ -1087,7 +832,7 @@ export default function HomeClient({
                             display: 'block',
                             fontSize: '14px',
                             lineHeight: 1.55,
-                            color: 'var(--text-2)',
+                            color: 'var(--text-body)',
                             maxWidth: '44em',
                           }}
                         >
@@ -1147,12 +892,12 @@ export default function HomeClient({
                   href="/experience"
                   style={{
                     font: '500 12px var(--font-mono), monospace',
-                    color: 'var(--text-2)',
+                    color: 'var(--text-body)',
                     textDecoration: 'none',
                     transition: 'color .3s',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
                 >
                   full history <ArrowRight size={12} />
                 </Link>
@@ -1214,9 +959,9 @@ export default function HomeClient({
                         width: i === 0 ? '12px' : '10px',
                         height: i === 0 ? '12px' : '10px',
                         borderRadius: '50%',
-                        background: i === 0 ? 'var(--accent)' : 'var(--canvas)',
-                        border: i === 0 ? 'none' : '1.5px solid var(--text-4)',
-                        boxShadow: '0 0 0 4px var(--canvas)',
+                        background: i === 0 ? 'var(--accent)' : 'var(--bg)',
+                        border: i === 0 ? 'none' : '1.5px solid var(--text-meta-2)',
+                        boxShadow: '0 0 0 4px var(--bg)',
                       }}
                     />
                     <div
@@ -1229,12 +974,13 @@ export default function HomeClient({
                       }}
                     >
                       <div style={{ fontWeight: 600, fontSize: '19px' }}>
-                        {item.role} — <span style={{ color: 'var(--text-2)' }}>{item.company}</span>
+                        {item.role} —{' '}
+                        <span style={{ color: 'var(--text-body)' }}>{item.company}</span>
                       </div>
                       <div
                         style={{
                           font: '500 11px var(--font-mono), monospace',
-                          color: i === 0 ? 'var(--accent)' : 'var(--text-4)',
+                          color: i === 0 ? 'var(--accent)' : 'var(--text-meta-2)',
                         }}
                       >
                         {item.dates}
@@ -1244,7 +990,7 @@ export default function HomeClient({
                       style={{
                         fontSize: '14.5px',
                         lineHeight: 1.6,
-                        color: 'var(--text-2)',
+                        color: 'var(--text-body)',
                         maxWidth: '44em',
                         marginTop: '6px',
                       }}
@@ -1317,7 +1063,7 @@ export default function HomeClient({
                       alignItems: 'center',
                       gap: '9px',
                       background: 'var(--accent)',
-                      color: 'var(--canvas)',
+                      color: 'var(--bg)',
                       font: '600 14px var(--font-space), sans-serif',
                       textDecoration: 'none',
                       padding: '14px 22px',
@@ -1349,7 +1095,7 @@ export default function HomeClient({
                           alignItems: 'center',
                           gap: '6px',
                           font: '500 12px var(--font-mono), monospace',
-                          color: 'var(--text-1)',
+                          color: 'var(--text)',
                           textDecoration: 'none',
                           padding: '13px 17px',
                           border: '1px solid var(--border-3)',
@@ -1359,7 +1105,7 @@ export default function HomeClient({
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.borderColor = 'var(--text-4)';
+                          e.currentTarget.style.borderColor = 'var(--text-meta-2)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
@@ -1381,7 +1127,7 @@ export default function HomeClient({
                       alignItems: 'center',
                       gap: '6px',
                       font: '500 12px var(--font-mono), monospace',
-                      color: 'var(--text-1)',
+                      color: 'var(--text)',
                       textDecoration: 'none',
                       padding: '13px 17px',
                       border: '1px solid var(--border-3)',
@@ -1390,7 +1136,7 @@ export default function HomeClient({
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.borderColor = 'var(--text-4)';
+                      e.currentTarget.style.borderColor = 'var(--text-meta-2)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
@@ -1408,7 +1154,7 @@ export default function HomeClient({
                   display: 'flex',
                   justifyContent: 'space-between',
                   font: '500 10.5px var(--font-mono), monospace',
-                  color: 'var(--text-4)',
+                  color: 'var(--text-meta-2)',
                 }}
               >
                 <span>
@@ -1427,7 +1173,7 @@ export default function HomeClient({
         onClose={() => setCmdkOpen(false)}
         extraCmds={extraCmds}
         profileLinks={profileLinks}
-        resumeUrl={profile?.resume_download_enabled ? '/api/resume' : (profile?.resume_url ?? null)}
+        resumeUrl={resumeUrl}
         writingEnabled={writingEnabled}
         projectsEnabled={projectsEnabled}
         searchIndex={searchIndex}

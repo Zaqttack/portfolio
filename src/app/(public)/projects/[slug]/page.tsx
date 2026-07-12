@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
+import MobileNav from '@/components/MobileNav';
+import ProjectImageCarousel from '@/components/ProjectImageCarousel';
 import TopNav from '@/components/TopNav';
 import { getProfile, getProfileLinks, getProjectBySlug } from '@/lib/db';
 
@@ -112,19 +114,35 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const year = `'${new Date(project.created_at).getFullYear().toString().slice(2)}`;
 
   const railItems = [
-    { href: '/projects', label: '← back', active: false },
-    { href: '/', label: 'home', active: false },
+    { href: '/projects', label: '← projects', active: false },
+    { href: '/', label: 'home', active: false, isBack: true },
   ];
 
   return (
     <>
+      <MobileNav
+        name={profile?.name}
+        railItems={railItems}
+        writingEnabled={profile?.writing_enabled ?? true}
+        projectsEnabled={profile?.projects_enabled ?? true}
+        resumeUrl={resumeUrl}
+      />
+
       <LeftRail items={railItems} name={profile?.name} />
 
-      <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
+      <main
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          marginLeft: 'max(var(--main-ml), calc((100vw - var(--content-max-w)) / 2))',
+          maxWidth: 'var(--content-max-w)',
+        }}
+      >
         <TopNav
           writingEnabled={profile?.writing_enabled ?? true}
           projectsEnabled={profile?.projects_enabled ?? true}
           resumeUrl={resumeUrl}
+          sticky
         />
 
         <article style={{ padding: '56px 56px 96px 40px', maxWidth: '800px' }}>
@@ -268,9 +286,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
 
+          {(project.project_images?.length ?? 0) > 0 && (
+            <div style={{ borderTop: '1px solid var(--border-1)', paddingTop: '36px' }}>
+              <ProjectImageCarousel images={project.project_images!} />
+            </div>
+          )}
+
           {project.body && (
             <div
-              style={{ borderTop: '1px solid var(--border-1)', paddingTop: '36px' }}
+              style={{
+                borderTop:
+                  (project.project_images?.length ?? 0) > 0 ? 'none' : '1px solid var(--border-1)',
+                paddingTop: '36px',
+              }}
               dangerouslySetInnerHTML={{ __html: md2html(project.body) }}
             />
           )}

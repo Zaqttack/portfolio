@@ -1,17 +1,66 @@
+/* ─── Default tokens (dark) ─────────────────────────────────────────────── */
 :root {
   --accent: #ec6a2c;
-  --canvas: #0b0c0e;
-  --panel-1: #0e0f12;
-  --panel-2: #121317;
-  --text-1: #e7e8ea;
-  --text-2: #9a9ea6;
-  --text-3: #7e838c;
-  --text-4: #565b64;
-  --text-5: #4a4e56;
+  /* new semantic names */
+  --bg: #0b0c0e;
+  --bg-panel: #0e0f12;
+  --bg-panel-2: #121317;
+  --bg-hover: #101114;
+  --bg-selected: #17181c;
+  --bg-track: #1a1c20;
+  --text: #e7e8ea;
+  --text-strong: #c7cbd1;
+  --text-body: #9a9ea6;
+  --text-meta: #7e838c;
+  --text-meta-2: #565b64;
+  --text-faint: #4a4e56;
   --border-1: #191b1f;
   --border-2: #23262c;
   --border-3: #2c3037;
+  --accent-soft-bg: #1a1310;
+  --accent-soft-border: #3a2a1e;
+  --shadow-rgb: 0, 0, 0;
+  /* legacy aliases — existing components keep working */
+  --canvas: var(--bg);
+  --panel-1: var(--bg-panel);
+  --panel-2: var(--bg-panel-2);
+  --text-1: var(--text);
+  --text-2: var(--text-body);
+  --text-3: var(--text-meta);
+  --text-4: var(--text-meta-2);
+  --text-5: var(--text-faint);
+  /* layout */
   --rail-w: 118px;
+  --main-ml: var(--rail-w);
+  --content-max-w: 1280px;
+}
+
+/* ─── Light theme ────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg: #faf6ef;
+  --bg-panel: #ffffff;
+  --bg-panel-2: #f4eee2;
+  --bg-hover: #f2ecde;
+  --bg-selected: #eae1cd;
+  --bg-track: #ede5d3;
+  --text: #211c14;
+  --text-strong: #332c20;
+  --text-body: #655d4c;
+  --text-meta: #8a806a;
+  --text-meta-2: #a39880;
+  --text-faint: #c2b79e;
+  --border-1: #e7dfcb;
+  --border-2: #dacfb2;
+  --border-3: #c7b996;
+  --accent-soft-bg: #fbe7d3;
+  --accent-soft-border: #eec79c;
+  --shadow-rgb: 60, 42, 16;
+  color-scheme: light;
+}
+
+/* ─── Dark theme (explicit) ──────────────────────────────────────────────── */
+[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 *,
@@ -27,8 +76,8 @@ html {
 
 body {
   margin: 0;
-  background: var(--canvas);
-  color: var(--text-1);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-space), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -41,7 +90,7 @@ a {
 
 ::selection {
   background: var(--accent);
-  color: var(--canvas);
+  color: var(--bg);
 }
 
 img,
@@ -55,7 +104,7 @@ ol {
   padding-left: 1.1em;
 }
 
-/* Animations */
+/* ─── Animations ─────────────────────────────────────────────────────────── */
 @keyframes blink {
   50% {
     opacity: 0;
@@ -85,14 +134,49 @@ ol {
   }
 }
 
-/* Reveal utility — JS sets initial state, CSS handles transition */
+/* ─── Scroll reveal ──────────────────────────────────────────────────────── */
 [data-reveal] {
   transition:
     opacity 0.6s ease,
     transform 0.6s ease;
 }
 
-/* Admin responsive layout */
+/* ─── Mobile breakpoint utilities ────────────────────────────────────────── */
+@media (max-width: 780px) {
+  :root {
+    --main-ml: 0px;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 781px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* Responsive list rows — stack vertically on mobile */
+.list-row {
+  display: grid;
+}
+
+@media (max-width: 780px) {
+  .list-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  /* hide the fixed-width date/index column on mobile (it reflows as first child) */
+  .list-row > .list-row-meta {
+    order: -1;
+  }
+}
+
+/* ─── Admin responsive layout ────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .admin-layout {
     grid-template-columns: 1fr !important;
@@ -114,7 +198,7 @@ ol {
   }
 }
 
-/* Scrollbar */
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -122,5 +206,5 @@ ol {
 ::-webkit-scrollbar-thumb {
   background: var(--border-2);
   border-radius: 6px;
-  border: 2px solid var(--canvas);
+  border: 2px solid var(--bg);
 }
