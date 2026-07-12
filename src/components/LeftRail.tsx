@@ -14,8 +14,6 @@ interface LeftRailProps {
   items: RailItem[];
   openToWork?: boolean;
   locationShort?: string | null;
-  showBack?: boolean;
-  backHref?: string;
   name?: string | null;
 }
 
@@ -32,6 +30,7 @@ export default function LeftRail({
       : 'zq';
   return (
     <nav
+      className="desktop-only"
       style={{
         position: 'fixed',
         left: 0,
@@ -44,7 +43,7 @@ export default function LeftRail({
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '22px 0 20px',
-        background: 'rgba(11,12,14,0.72)',
+        background: 'var(--bg)',
         backdropFilter: 'blur(6px)',
       }}
     >
@@ -54,7 +53,7 @@ export default function LeftRail({
           textDecoration: 'none',
           font: '700 12px var(--font-mono), monospace',
           letterSpacing: '.02em',
-          color: 'var(--text-1)',
+          color: 'var(--text)',
           padding: '0 18px',
         }}
       >
@@ -83,8 +82,8 @@ export default function LeftRail({
                   background: active
                     ? 'var(--accent)'
                     : item.isBack
-                      ? 'var(--text-4)'
-                      : 'var(--text-1)',
+                      ? 'var(--text-meta-2)'
+                      : 'var(--text)',
                   transition: 'width .35s cubic-bezier(.34,1.56,.64,1), background .3s',
                 }}
               />
@@ -92,7 +91,11 @@ export default function LeftRail({
                 style={{
                   font: '500 9px var(--font-mono), monospace',
                   letterSpacing: '.04em',
-                  color: active ? 'var(--accent)' : item.isBack ? 'var(--text-3)' : 'var(--text-1)',
+                  color: active
+                    ? 'var(--accent)'
+                    : item.isBack
+                      ? 'var(--text-meta)'
+                      : 'var(--text)',
                   transition: 'color .3s',
                 }}
               >
@@ -139,7 +142,7 @@ export default function LeftRail({
           padding: '0 18px',
           font: '500 8.5px var(--font-mono), monospace',
           letterSpacing: '.04em',
-          color: 'var(--text-5)',
+          color: 'var(--text-faint)',
           lineHeight: 1.7,
         }}
       >
@@ -151,7 +154,7 @@ export default function LeftRail({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              color: 'var(--text-3)',
+              color: 'var(--text-meta)',
             }}
           >
             <span

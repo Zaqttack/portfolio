@@ -1,12 +1,12 @@
 'use client';
 
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
+import MobileNav from '@/components/MobileNav';
 import TopNav from '@/components/TopNav';
 import type { ProfileLink, Project } from '@/types';
 
@@ -122,7 +122,7 @@ export default function ProjectsClient({
   const pillStyle = (t: Tag): React.CSSProperties => ({
     font: '500 11px var(--font-mono), monospace',
     letterSpacing: '.03em',
-    color: filter === t ? 'var(--canvas)' : 'var(--text-2)',
+    color: filter === t ? 'var(--bg)' : 'var(--text-body)',
     background: filter === t ? 'var(--accent)' : 'transparent',
     border: filter === t ? '1px solid var(--accent)' : '1px solid var(--border-3)',
     borderRadius: '20px',
@@ -133,9 +133,25 @@ export default function ProjectsClient({
 
   return (
     <>
+      <MobileNav
+        name={name}
+        railItems={railItems}
+        writingEnabled={writingEnabled}
+        projectsEnabled={projectsEnabled}
+        resumeUrl={resumeUrl}
+        onCmdK={() => setCmdkOpen(true)}
+      />
+
       <LeftRail items={railItems} locationShort={locationShort} name={name} />
 
-      <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
+      <main
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          marginLeft: 'max(var(--main-ml), calc((100vw - var(--content-max-w)) / 2))',
+          maxWidth: 'var(--content-max-w)',
+        }}
+      >
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
@@ -151,14 +167,14 @@ export default function ProjectsClient({
               alignItems: 'center',
               gap: '4px',
               font: '500 11px var(--font-mono), monospace',
-              color: 'var(--text-3)',
+              color: 'var(--text-meta)',
               textDecoration: 'none',
               transition: 'color .3s',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-meta)')}
           >
-            <ArrowLeft size={12} /> home
+            ← home
           </Link>
           <h1
             style={{
@@ -175,7 +191,7 @@ export default function ProjectsClient({
               style={{
                 fontSize: '16px',
                 lineHeight: 1.6,
-                color: 'var(--text-2)',
+                color: 'var(--text-body)',
                 maxWidth: '40em',
                 margin: '0 0 26px',
               }}
@@ -199,22 +215,28 @@ export default function ProjectsClient({
         <div style={{ padding: '0 56px 80px 40px' }}>
           <div style={{ borderTop: '1px solid var(--border-2)' }}>
             {visible.length === 0 && (
-              <p style={{ padding: '40px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
+              <p style={{ padding: '40px 4px', color: 'var(--text-meta)', fontSize: '14px' }}>
                 No projects here yet.
               </p>
             )}
             {visible.map((p) => {
               const tag = projectTag(p);
               const stack = p.tags.filter((t) => t !== 'product' && t !== 'side');
+              const visibleStack = stack.slice(0, 3);
+              const overflowCount = stack.length - 3;
               const hasDetail = !!p.body?.trim();
               const date = projectDate(p);
+              const coverUrl =
+                p.project_images && p.project_images.length > 0
+                  ? p.project_images[0].url
+                  : (p.cover_image ?? null);
               return (
                 <div
                   key={p.id}
                   data-reveal
                   onClick={() => hasDetail && router.push(`/projects/${p.slug}`)}
+                  className="list-row"
                   style={{
-                    display: 'grid',
                     gridTemplateColumns: '1fr auto',
                     gap: '22px',
                     padding: '30px 4px',
@@ -224,7 +246,7 @@ export default function ProjectsClient({
                     transition: 'background .2s',
                   }}
                   onMouseEnter={(e) => {
-                    if (hasDetail) e.currentTarget.style.background = '#101114';
+                    if (hasDetail) e.currentTarget.style.background = 'var(--bg-hover)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
@@ -237,6 +259,7 @@ export default function ProjectsClient({
                         alignItems: 'center',
                         gap: '10px',
                         marginBottom: '8px',
+                        flexWrap: 'wrap',
                       }}
                     >
                       <span style={{ fontWeight: 600, fontSize: '24px', letterSpacing: '-.01em' }}>
@@ -246,10 +269,12 @@ export default function ProjectsClient({
                         style={{
                           font: '500 9px var(--font-mono), monospace',
                           letterSpacing: '.06em',
-                          color: tag === 'product' ? 'var(--accent)' : 'var(--text-3)',
+                          color: tag === 'product' ? 'var(--accent)' : 'var(--text-meta)',
                           border:
-                            tag === 'product' ? '1px solid #3a2a1e' : '1px solid var(--border-3)',
-                          background: tag === 'product' ? '#1a1310' : 'transparent',
+                            tag === 'product'
+                              ? '1px solid var(--accent-soft-border)'
+                              : '1px solid var(--border-3)',
+                          background: tag === 'product' ? 'var(--accent-soft-bg)' : 'transparent',
                           borderRadius: '20px',
                           padding: '2px 9px',
                         }}
@@ -261,7 +286,7 @@ export default function ProjectsClient({
                       style={{
                         fontSize: '14.5px',
                         lineHeight: 1.6,
-                        color: 'var(--text-2)',
+                        color: 'var(--text-body)',
                         maxWidth: '46em',
                         margin: '0 0 12px',
                       }}
@@ -269,12 +294,12 @@ export default function ProjectsClient({
                       {p.summary}
                     </p>
                     <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap' }}>
-                      {stack.map((s) => (
+                      {visibleStack.map((s) => (
                         <span
                           key={s}
                           style={{
                             font: '500 10.5px var(--font-mono), monospace',
-                            color: 'var(--text-3)',
+                            color: 'var(--text-meta)',
                             border: '1px solid var(--border-2)',
                             borderRadius: '5px',
                             padding: '3px 8px',
@@ -283,6 +308,21 @@ export default function ProjectsClient({
                           {s}
                         </span>
                       ))}
+                      {overflowCount > 0 && (
+                        <span
+                          title={stack.slice(3).join(', ')}
+                          style={{
+                            font: '500 10.5px var(--font-mono), monospace',
+                            color: 'var(--text-faint)',
+                            border: '1px dashed var(--border-2)',
+                            borderRadius: '5px',
+                            padding: '3px 8px',
+                            cursor: 'default',
+                          }}
+                        >
+                          +{overflowCount}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div
@@ -295,10 +335,24 @@ export default function ProjectsClient({
                       paddingTop: '4px',
                     }}
                   >
+                    {coverUrl && (
+                      <img
+                        src={coverUrl}
+                        alt=""
+                        style={{
+                          width: '120px',
+                          height: '80px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-2)',
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
                     <span
                       style={{
                         font: '500 11px var(--font-mono), monospace',
-                        color: 'var(--text-4)',
+                        color: 'var(--text-meta-2)',
                         textAlign: 'right',
                       }}
                     >
@@ -309,32 +363,11 @@ export default function ProjectsClient({
                         <span
                           style={{
                             font: '500 11px var(--font-mono), monospace',
-                            color: 'var(--text-3)',
+                            color: 'var(--text-meta)',
                           }}
                         >
                           read more →
                         </span>
-                      )}
-                      {p.live_url && (
-                        <a
-                          href={p.live_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                            font: '500 11px var(--font-mono), monospace',
-                            color: 'var(--text-2)',
-                            textDecoration: 'none',
-                            transition: 'color .3s',
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
-                        >
-                          visit <ArrowUpRight size={11} />
-                        </a>
                       )}
                     </div>
                   </div>

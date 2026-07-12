@@ -7,6 +7,7 @@ import {
   getInvolvement,
   getProfile,
   getProfileLinks,
+  getSkills,
 } from '@/lib/db';
 import type {
   Achievement,
@@ -16,6 +17,7 @@ import type {
   InvolvementOrg,
   Profile,
   ProfileLink,
+  Skill,
 } from '@/types';
 import ExperienceClient from './ExperienceClient';
 
@@ -34,6 +36,7 @@ export default async function ExperiencePage() {
   let education: Education[] = [];
   let certifications: Certification[] = [];
   let achievements: Achievement[] = [];
+  let skills: Skill[] = [];
   let profileLinks: ProfileLink[] = [];
   try {
     experience = await getExperience();
@@ -54,6 +57,9 @@ export default async function ExperiencePage() {
     achievements = await getAchievements();
   } catch {}
   try {
+    skills = await getSkills();
+  } catch {}
+  try {
     profileLinks = await getProfileLinks();
   } catch {}
   return (
@@ -64,6 +70,7 @@ export default async function ExperiencePage() {
       education={education}
       certifications={certifications}
       achievements={achievements}
+      skills={skills}
       profileLinks={profileLinks}
       subtitle={profile?.experience_subtitle ?? null}
       writingEnabled={profile?.writing_enabled ?? false}

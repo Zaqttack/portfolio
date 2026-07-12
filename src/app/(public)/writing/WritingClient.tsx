@@ -1,11 +1,12 @@
 'use client';
 
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
+import MobileNav from '@/components/MobileNav';
 import TopNav from '@/components/TopNav';
 import type { Post, ProfileLink } from '@/types';
 
@@ -91,22 +92,37 @@ export default function WritingClient({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const railItems = [
+    ...(featured
+      ? [{ href: '#featured', label: 'featured', active: activeSection === 'featured' }]
+      : []),
+    ...(archive.length > 0
+      ? [{ href: '#archive', label: 'archive', active: activeSection === 'archive' }]
+      : []),
+    { href: '/', label: '← home', active: false, isBack: true },
+  ];
+
   return (
     <>
-      <LeftRail
-        items={[
-          ...(featured
-            ? [{ href: '#featured', label: 'featured', active: activeSection === 'featured' }]
-            : []),
-          ...(archive.length > 0
-            ? [{ href: '#archive', label: 'archive', active: activeSection === 'archive' }]
-            : []),
-          { href: '/', label: '← index', active: false, isBack: true },
-        ]}
-        locationShort={locationShort}
+      <MobileNav
         name={name}
+        railItems={railItems}
+        writingEnabled={writingEnabled}
+        projectsEnabled={projectsEnabled}
+        resumeUrl={resumeUrl}
+        onCmdK={() => setCmdkOpen(true)}
       />
-      <main style={{ position: 'relative', zIndex: 2, marginLeft: 'var(--rail-w)' }}>
+
+      <LeftRail items={railItems} locationShort={locationShort} name={name} />
+
+      <main
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          marginLeft: 'max(var(--main-ml), calc((100vw - var(--content-max-w)) / 2))',
+          maxWidth: 'var(--content-max-w)',
+        }}
+      >
         <TopNav
           onCmdK={() => setCmdkOpen(true)}
           writingEnabled={writingEnabled}
@@ -122,14 +138,14 @@ export default function WritingClient({
               alignItems: 'center',
               gap: '4px',
               font: '500 11px var(--font-mono), monospace',
-              color: 'var(--text-3)',
+              color: 'var(--text-meta)',
               textDecoration: 'none',
               transition: 'color .3s',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-meta)')}
           >
-            <ArrowLeft size={12} /> home
+            ← home
           </Link>
           <h1
             style={{
@@ -146,7 +162,7 @@ export default function WritingClient({
               style={{
                 fontSize: '16px',
                 lineHeight: 1.6,
-                color: 'var(--text-2)',
+                color: 'var(--text-body)',
                 maxWidth: '40em',
                 margin: 0,
               }}
@@ -169,7 +185,7 @@ export default function WritingClient({
                 border: '1px solid var(--border-2)',
                 borderRadius: '14px',
                 padding: '32px',
-                background: 'var(--panel-1)',
+                background: 'var(--bg-panel)',
                 transition: 'border-color .3s, transform .35s cubic-bezier(.34,1.56,.64,1)',
               }}
               onMouseEnter={(e) => {
@@ -187,7 +203,7 @@ export default function WritingClient({
                   gap: '14px',
                   alignItems: 'center',
                   font: '500 11px var(--font-mono), monospace',
-                  color: 'var(--text-4)',
+                  color: 'var(--text-meta-2)',
                   marginBottom: '16px',
                 }}
               >
@@ -216,7 +232,7 @@ export default function WritingClient({
                 style={{
                   fontSize: '15.5px',
                   lineHeight: 1.65,
-                  color: 'var(--text-2)',
+                  color: 'var(--text-body)',
                   maxWidth: '46em',
                   margin: '0 0 16px',
                 }}
@@ -242,7 +258,7 @@ export default function WritingClient({
         <div id="archive" style={{ padding: '0 56px 80px 40px' }}>
           <div style={{ borderTop: '1px solid var(--border-2)' }}>
             {archive.length === 0 && !featured && (
-              <p style={{ padding: '40px 4px', color: 'var(--text-3)', fontSize: '14px' }}>
+              <p style={{ padding: '40px 4px', color: 'var(--text-meta)', fontSize: '14px' }}>
                 No posts yet.
               </p>
             )}
@@ -251,8 +267,8 @@ export default function WritingClient({
                 key={p.id}
                 data-reveal
                 href={`/writing/${p.slug}`}
+                className="list-row"
                 style={{
-                  display: 'grid',
                   gridTemplateColumns: '120px 1fr auto',
                   gap: '22px',
                   alignItems: 'baseline',
@@ -264,7 +280,7 @@ export default function WritingClient({
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.paddingLeft = '16px';
-                  e.currentTarget.style.background = '#101114';
+                  e.currentTarget.style.background = 'var(--bg-hover)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.paddingLeft = '4px';
@@ -272,7 +288,11 @@ export default function WritingClient({
                 }}
               >
                 <span
-                  style={{ font: '500 11px var(--font-mono), monospace', color: 'var(--text-4)' }}
+                  className="list-row-meta"
+                  style={{
+                    font: '500 11px var(--font-mono), monospace',
+                    color: 'var(--text-meta-2)',
+                  }}
                 >
                   {p.published_at ? formatPostDate(p.published_at) : ''}
                 </span>
@@ -293,7 +313,7 @@ export default function WritingClient({
                       display: 'block',
                       fontSize: '14px',
                       lineHeight: 1.55,
-                      color: 'var(--text-2)',
+                      color: 'var(--text-body)',
                       maxWidth: '46em',
                     }}
                   >
@@ -314,7 +334,7 @@ export default function WritingClient({
                     <span
                       style={{
                         font: '500 10.5px var(--font-mono), monospace',
-                        color: 'var(--text-3)',
+                        color: 'var(--text-meta)',
                       }}
                     >
                       {p.tags[0]}
@@ -328,7 +348,7 @@ export default function WritingClient({
             style={{
               paddingTop: '26px',
               font: '500 11px var(--font-mono), monospace',
-              color: 'var(--text-4)',
+              color: 'var(--text-meta-2)',
             }}
           >
             {writingFooterNote ?? '// more in the archive — coming as I write them'}

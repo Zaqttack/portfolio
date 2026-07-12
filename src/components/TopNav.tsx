@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
 
 interface TopNavProps {
   onCmdK?: () => void;
   writingEnabled?: boolean;
   projectsEnabled?: boolean;
   resumeUrl?: string | null;
+  sticky?: boolean;
 }
 
 export default function TopNav({
@@ -15,6 +17,7 @@ export default function TopNav({
   writingEnabled = true,
   projectsEnabled = true,
   resumeUrl,
+  sticky = false,
 }: TopNavProps) {
   const pathname = usePathname();
 
@@ -25,14 +28,14 @@ export default function TopNav({
         href={href}
         style={{
           textDecoration: 'none',
-          color: active ? 'var(--accent)' : 'var(--text-2)',
+          color: active ? 'var(--accent)' : 'var(--text-body)',
           transition: 'color .3s',
         }}
         onMouseEnter={(e) => {
-          if (!active) (e.target as HTMLElement).style.color = 'var(--text-1)';
+          if (!active) (e.target as HTMLElement).style.color = 'var(--text)';
         }}
         onMouseLeave={(e) => {
-          if (!active) (e.target as HTMLElement).style.color = 'var(--text-2)';
+          if (!active) (e.target as HTMLElement).style.color = 'var(--text-body)';
         }}
       >
         {label}
@@ -42,6 +45,7 @@ export default function TopNav({
 
   return (
     <div
+      className="desktop-only"
       style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -50,38 +54,42 @@ export default function TopNav({
         padding: '13px 40px',
         font: '500 11.5px var(--font-mono), monospace',
         letterSpacing: '.02em',
+        background: 'var(--bg)',
+        ...(sticky ? { position: 'sticky', top: 0, zIndex: 30 } : {}),
       }}
     >
-      <Link href="/" style={{ textDecoration: 'none', color: 'var(--text-4)' }}>
+      <Link href="/" style={{ textDecoration: 'none', color: 'var(--text-meta-2)' }}>
         {process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'zaquariah.dev'}
       </Link>
       <span style={{ display: 'flex', gap: '22px', alignItems: 'center' }}>
-        <button
-          onClick={onCmdK}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'transparent',
-            border: '1px solid var(--border-3)',
-            borderRadius: '6px',
-            padding: '5px 9px',
-            cursor: 'pointer',
-            color: 'var(--text-3)',
-            font: '500 10px var(--font-mono), monospace',
-            transition: 'border-color .3s, color .3s',
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--text-4)';
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-1)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-3)';
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)';
-          }}
-        >
-          ⌘K
-        </button>
+        {onCmdK && (
+          <button
+            onClick={onCmdK}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'transparent',
+              border: '1px solid var(--border-3)',
+              borderRadius: '6px',
+              padding: '5px 9px',
+              cursor: 'pointer',
+              color: 'var(--text-meta)',
+              font: '500 10px var(--font-mono), monospace',
+              transition: 'border-color .3s, color .3s',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--text-meta-2)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-3)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-meta)';
+            }}
+          >
+            ⌘K
+          </button>
+        )}
         {projectsEnabled && link('/projects', 'Projects')}
         {writingEnabled && link('/writing', 'Writing')}
         {link('/experience', 'Experience')}
@@ -96,6 +104,7 @@ export default function TopNav({
             Resume ↓
           </a>
         )}
+        <ThemeToggle />
       </span>
     </div>
   );

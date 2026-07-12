@@ -14,6 +14,7 @@ import type {
   Profile,
   ProfileLink,
   Project,
+  ProjectImage,
   Skill,
 } from '@/types';
 import { supabase } from './supabase';
@@ -85,21 +86,51 @@ export async function getCertifications(): Promise<Certification[]> {
 export async function getProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from('projects')
-    .select('*')
+    .select('*, project_images(*)')
     .eq('status', 'published')
     .order('display_order');
-  if (error) throw error;
-  return data;
+  if (error) {
+    // project_images table may not exist yet — fall back to plain select
+    const { data: fallback, error: e2 } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('status', 'published')
+      .order('display_order');
+    if (e2) throw e2;
+    return fallback ?? [];
+  }
+  return (data ?? []).map((p) => ({
+    ...p,
+    project_images: ((p.project_images as ProjectImage[] | null) ?? []).sort(
+      (a, b) => a.display_order - b.display_order,
+    ),
+  }));
 }
 
 export async function getProjectBySlug(slug: string): Promise<Project | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('projects')
-    .select('*')
+    .select('*, project_images(*)')
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle();
-  return data;
+  if (error) {
+    // project_images table may not exist yet — fall back to plain select
+    const { data: fallback } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .maybeSingle();
+    return fallback ?? null;
+  }
+  if (!data) return null;
+  return {
+    ...data,
+    project_images: ((data.project_images as ProjectImage[] | null) ?? []).sort(
+      (a, b) => a.display_order - b.display_order,
+    ),
+  };
 }
 
 export async function getPosts(): Promise<Post[]> {

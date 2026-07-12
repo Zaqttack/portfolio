@@ -584,7 +584,8 @@ type FieldType =
   | 'select'
   | 'image'
   | 'combobox'
-  | 'color';
+  | 'color'
+  | 'project-images';
 
 interface FieldDef {
   key: string;
@@ -598,6 +599,7 @@ interface FieldDef {
   defaultValue?: unknown;
   optionsFrom?: string;
   optionsFromField?: { list: string; field: string };
+  staticOptions?: { id: string; name: string }[];
   nullable?: boolean;
   nullLabel?: string;
   locationSep?: string;
@@ -1242,6 +1244,220 @@ function ImageUploadField({
   );
 }
 
+type ProjectImageEntry = { url: string; caption: string | null; display_order: number };
+
+function ProjectImagesField({
+  value,
+  onChange,
+  onUpload,
+}: {
+  value: ProjectImageEntry[];
+  onChange: (v: ProjectImageEntry[]) => void;
+  onUpload: (file: File) => Promise<string | null>;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const imgInputStyle: React.CSSProperties = {
+    flex: 1,
+    background: '#0E0F12',
+    border: '1px solid #2C3037',
+    borderRadius: '8px',
+    padding: '8px 10px',
+    color: 'var(--text-1)',
+    font: '400 12px var(--font-space), sans-serif',
+    outline: 'none',
+    minWidth: 0,
+  };
+
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= value.length) return;
+    const next = [...value];
+    const tmp = next[i];
+    next[i] = next[j];
+    next[j] = tmp;
+    onChange(next.map((img, idx) => ({ ...img, display_order: idx })));
+  };
+
+  const remove = (i: number) => {
+    onChange(
+      value.filter((_, idx) => idx !== i).map((img, idx) => ({ ...img, display_order: idx })),
+    );
+  };
+
+  const handleFile = async (file: File) => {
+    setUploading(true);
+    const url = await onUpload(file);
+    if (url) {
+      onChange([...value, { url, caption: null, display_order: value.length }]);
+    }
+    setUploading(false);
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
+  const arrowBtn: React.CSSProperties = {
+    background: 'transparent',
+    border: '1px solid #2C3037',
+    borderRadius: '5px',
+    width: '26px',
+    height: '26px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: 'var(--text-3)',
+    fontSize: '12px',
+    padding: 0,
+    flexShrink: 0,
+  };
+
+  return (
+    <div>
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
+          {value.map((img, i) => (
+            <div
+              key={`${img.url}-${i}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: '#0E0F12',
+                border: '1px solid #2C3037',
+                borderRadius: '9px',
+                padding: '10px 12px',
+              }}
+            >
+              <img
+                src={img.url}
+                alt=""
+                style={{
+                  width: '60px',
+                  height: '44px',
+                  objectFit: 'cover',
+                  borderRadius: '5px',
+                  flexShrink: 0,
+                  border: '1px solid #2C3037',
+                }}
+              />
+              <input
+                value={img.caption ?? ''}
+                onChange={(e) => {
+                  const next = [...value];
+                  next[i] = { ...img, caption: e.target.value || null };
+                  onChange(next);
+                }}
+                placeholder="Caption (optional)"
+                style={imgInputStyle}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <button
+                  type="button"
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0}
+                  style={{ ...arrowBtn, opacity: i === 0 ? 0.3 : 1 }}
+                  title="Move up"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(i, 1)}
+                  disabled={i === value.length - 1}
+                  style={{ ...arrowBtn, opacity: i === value.length - 1 ? 0.3 : 1 }}
+                  title="Move down"
+                >
+                  ↓
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #2C3037',
+                  borderRadius: '5px',
+                  width: '26px',
+                  height: '26px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'var(--text-4)',
+                  fontSize: '14px',
+                  padding: 0,
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#E5534B';
+                  e.currentTarget.style.color = '#E5534B';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#2C3037';
+                  e.currentTarget.style.color = 'var(--text-4)';
+                }}
+                title="Remove"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        style={{
+          background: 'transparent',
+          border: '1px solid #2C3037',
+          borderRadius: '7px',
+          padding: '8px 14px',
+          color: 'var(--text-2)',
+          font: '500 12.5px var(--font-space), sans-serif',
+          cursor: uploading ? 'default' : 'pointer',
+          transition: 'border-color .2s, color .2s',
+        }}
+        onMouseEnter={(e) => {
+          if (!uploading) {
+            e.currentTarget.style.borderColor = 'var(--accent)';
+            e.currentTarget.style.color = 'var(--accent)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = '#2C3037';
+          e.currentTarget.style.color = 'var(--text-2)';
+        }}
+      >
+        {uploading ? 'Uploading…' : value.length === 0 ? '+ Add image' : '+ Add another'}
+      </button>
+      {value.length > 0 && (
+        <div
+          style={{
+            marginTop: '8px',
+            font: '400 11px var(--font-mono), monospace',
+            color: 'var(--text-4)',
+            letterSpacing: '.02em',
+          }}
+        >
+          First image is used as the cover on the projects listing.
+        </div>
+      )}
+    </div>
+  );
+}
+
 const SCHEMAS: Record<string, Schema> = {
   projects: {
     label: 'Projects',
@@ -1349,6 +1565,13 @@ const SCHEMAS: Record<string, Schema> = {
         placeholder: 'https://…',
         help: 'Optional link to the deployed/live version.',
         halfWidth: true,
+      },
+      {
+        key: '_images',
+        label: 'Images',
+        type: 'project-images',
+        help: 'Screenshots or photos. First image is used as the cover on the projects listing page.',
+        sectionLabel: 'Media',
       },
     ],
   },
@@ -1705,6 +1928,19 @@ const SCHEMAS: Record<string, Schema> = {
         type: 'text',
         placeholder: 'heads-down · building',
         help: 'The status text shown in the home page terminal when not open to work.',
+      },
+      {
+        key: 'hero_variant',
+        label: 'Hero card style',
+        type: 'select',
+        staticOptions: [
+          { id: 'terminal', name: 'Terminal (code animation)' },
+          { id: 'email', name: 'Email' },
+          { id: 'chat', name: 'Chat bubble' },
+          { id: 'notecard', name: 'Notecard (handwritten)' },
+          { id: 'playground', name: 'Playground (browser chrome)' },
+        ],
+        help: 'Visual style of the hero card shown on the home page. Defaults to Terminal if not set.',
       },
       {
         key: 'contact_cta',
@@ -2184,7 +2420,9 @@ export default function AdminPage() {
               ? '*, experience_bullets(*), company_data:companies(*)'
               : s === 'involvement'
                 ? '*, involvement_roles(*)'
-                : '*',
+                : s === 'projects'
+                  ? '*, project_images(*)'
+                  : '*',
           );
         if (schema.table !== 'import_staging') query = query.order('display_order' as string);
         else query = query.order('created_at', { ascending: false });
@@ -2219,13 +2457,20 @@ export default function AdminPage() {
                       ),
                     };
                   })
-                : (data as unknown as Record<string, unknown>[]).map((row) =>
-                    schema.table === 'import_staging'
-                      ? { ...row, raw_payload: JSON.stringify(row.raw_payload, null, 2) }
-                      : schema.table === 'achievements'
-                        ? { ...row, _visibility_public: row.visibility === 'public' }
-                        : row,
-                  );
+                : s === 'projects'
+                  ? (data as unknown as Record<string, unknown>[]).map((row) => {
+                      const imgs = ((row.project_images as ProjectImageEntry[] | null) ?? []).sort(
+                        (a, b) => a.display_order - b.display_order,
+                      );
+                      return { ...row, _images: imgs };
+                    })
+                  : (data as unknown as Record<string, unknown>[]).map((row) =>
+                      schema.table === 'import_staging'
+                        ? { ...row, raw_payload: JSON.stringify(row.raw_payload, null, 2) }
+                        : schema.table === 'achievements'
+                          ? { ...row, _visibility_public: row.visibility === 'public' }
+                          : row,
+                    );
           setLists((d) => ({ ...d, [s]: rows }));
         }
       }
@@ -2389,10 +2634,13 @@ export default function AdminPage() {
     const payload = { ...editing } as Record<string, unknown>;
     const bulletsText = payload._bullets as string | undefined;
     const rolesText = payload._roles as string | undefined;
+    const imagesData = payload._images as ProjectImageEntry[] | undefined;
     delete payload._bullets;
     delete payload._roles;
+    delete payload._images;
     delete payload.experience_bullets;
     delete payload.involvement_roles;
+    delete payload.project_images;
     delete payload.company_data;
     delete payload.created_at;
     delete payload.updated_at;
@@ -2496,6 +2744,20 @@ export default function AdminPage() {
               .map((s) => s.trim())
               .filter(Boolean),
             metrics: {},
+            display_order: i,
+          })),
+        );
+      }
+    }
+
+    if (section === 'projects' && savedId !== undefined) {
+      await supabase.from('project_images').delete().eq('project_id', savedId);
+      if (imagesData && imagesData.length > 0) {
+        await supabase.from('project_images').insert(
+          imagesData.map((img, i) => ({
+            project_id: savedId,
+            url: img.url,
+            caption: img.caption,
             display_order: i,
           })),
         );
@@ -3437,13 +3699,13 @@ export default function AdminPage() {
                       <div
                         style={{
                           gridColumn: 'span 2',
-                          font: '600 10px var(--font-mono), monospace',
-                          letterSpacing: '.08em',
-                          color: 'var(--text-4)',
+                          font: '600 13px var(--font-space), sans-serif',
+                          letterSpacing: '.04em',
+                          color: 'var(--accent)',
                           textTransform: 'uppercase',
-                          paddingTop: fi === 0 ? 0 : '8px',
+                          paddingTop: fi === 0 ? 0 : '20px',
                           borderTop: fi === 0 ? 'none' : '1px solid var(--border-1)',
-                          marginTop: fi === 0 ? 0 : '4px',
+                          marginTop: fi === 0 ? 0 : '12px',
                         }}
                       >
                         {f.sectionLabel}
@@ -3809,7 +4071,7 @@ export default function AdminPage() {
                           </span>
                         </button>
                       )}
-                      {f.type === 'select' && f.optionsFrom && (
+                      {f.type === 'select' && (f.optionsFrom || f.staticOptions) && (
                         <select
                           value={String(val ?? '')}
                           onChange={(e) => update(e.target.value || null)}
@@ -3825,11 +4087,17 @@ export default function AdminPage() {
                           onBlur={(e) => (e.target.style.borderColor = '#2C3037')}
                         >
                           <option value="">— None —</option>
-                          {(lists[f.optionsFrom] ?? []).map((opt) => (
-                            <option key={String(opt.id)} value={String(opt.id)}>
-                              {String(opt.name ?? '')}
-                            </option>
-                          ))}
+                          {f.staticOptions
+                            ? f.staticOptions.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                  {opt.name}
+                                </option>
+                              ))
+                            : (lists[f.optionsFrom!] ?? []).map((opt) => (
+                                <option key={String(opt.id)} value={String(opt.id)}>
+                                  {String(opt.name ?? '')}
+                                </option>
+                              ))}
                         </select>
                       )}
                       {f.type === 'combobox' && (
@@ -3860,6 +4128,13 @@ export default function AdminPage() {
                           onChange={update}
                           folder={f.folder}
                           onUpload={(file) => handleImageUpload(file, f.folder ?? 'logos')}
+                        />
+                      )}
+                      {f.type === 'project-images' && (
+                        <ProjectImagesField
+                          value={(val as ProjectImageEntry[]) || []}
+                          onChange={update}
+                          onUpload={(file) => handleImageUpload(file, 'projects')}
                         />
                       )}
                       {f.type === 'skill-tags' && (
