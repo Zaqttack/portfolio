@@ -10,6 +10,7 @@ interface HeroCardProps {
   name: string;
   firstName: string;
   role: string | null;
+  email: string | null;
   openToWork: boolean;
   terminalStatus: string | null;
   nowBlurb: string | null;
@@ -40,6 +41,38 @@ function Avatar({ url, name }: { url: string; name: string }) {
   );
 }
 
+function BubbleIn({ text }: { text: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+      <div
+        style={{
+          background: 'var(--bg-panel-2)',
+          border: '1px solid var(--border-2)',
+          borderRadius: '12px 12px 12px 3px',
+          padding: '9px 12px',
+          font: '400 13px var(--font-space), sans-serif',
+          color: 'var(--text-body)',
+          maxWidth: '80%',
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function resolveStatus(openToWork: boolean, terminalStatus: string | null): string {
+  if (openToWork) return 'open to work';
+  return terminalStatus ?? 'heads-down · building';
+}
+
+function joinList(items: string[]): string {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
 /* ── Terminal ──────────────────────────────────────────────────────────────── */
 function TerminalCard({
   firstName,
@@ -53,8 +86,7 @@ function TerminalCard({
   name,
 }: HeroCardProps) {
   const termRef = useRef<HTMLDivElement>(null);
-
-  const statusText = openToWork ? 'open to work ✓' : (terminalStatus ?? 'heads-down · building ◆');
+  const statusLine = openToWork ? 'open to work ✓' : `${terminalStatus ?? 'heads-down · building'}`;
   const accent = 'var(--accent)';
   const txt = 'var(--text-strong)';
   const dim = 'var(--text-meta-2)';
@@ -90,9 +122,9 @@ function TerminalCard({
 
     const seq: SeqItem[] = [
       { t: 'whoami', prompt: true },
-      { t: `\n${firstName.toLowerCase()}${role ? ` — ${role.toLowerCase()}` : ''}\n`, color: txt },
+      { t: `\n${firstName.toLowerCase()}${role ? ` / ${role.toLowerCase()}` : ''}\n`, color: txt },
       { t: 'status', prompt: true, pre: '\n' },
-      { t: `\n${statusText}\n`, color: txt, chunk: true },
+      { t: `\n${statusLine}\n`, color: txt, chunk: true },
       ...(projects.length > 0
         ? ([
             { t: 'ls ./projects', prompt: true, pre: '\n' },
@@ -162,7 +194,7 @@ function TerminalCard({
 
     tt = setTimeout(run, 550);
     return () => clearTimeout(tt);
-  }, [firstName, role, statusText, projects, skills]);
+  }, [firstName, role, statusLine, projects, skills]);
 
   return (
     <div style={{ position: 'relative', paddingTop: '34px' }}>
@@ -239,16 +271,20 @@ function EmailCard({
   name,
   firstName,
   role,
+  email,
   openToWork,
-  nowBlurb: _nowBlurb,
+  terminalStatus,
   projects,
   skills,
   avatarUrl,
   avatarEnabled,
 }: HeroCardProps) {
-  const email = `hey@${(typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SITE_DOMAIN : null) ?? 'zaquariah.dev'}`;
-  const statusText = openToWork ? 'open to work' : 'heads-down · building';
-  const topSkills = skills.slice(0, 4).map((s) => s.name);
+  const statusText = resolveStatus(openToWork, terminalStatus);
+  const domain =
+    (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SITE_DOMAIN : null) ??
+    'zaquariah.dev';
+  const displayEmail = email ?? `hey@${domain}`;
+  const topSkills = skills.slice(0, 5);
 
   return (
     <div style={{ position: 'relative', paddingTop: '34px' }}>
@@ -312,7 +348,7 @@ function EmailCard({
                 color: 'var(--text-meta)',
               }}
             >
-              {email} · now
+              {displayEmail} · now
             </div>
           </div>
         </div>
@@ -326,7 +362,7 @@ function EmailCard({
             color: 'var(--text)',
           }}
         >
-          Hey — a quick update
+          RE: Glad to Connect!
         </div>
         {/* Body */}
         <div
@@ -337,15 +373,10 @@ function EmailCard({
             color: 'var(--text-body)',
           }}
         >
-          Hey! Currently {statusText}
-          {role ? ` as a ${role.toLowerCase()}` : ''} — mostly working across{' '}
-          {topSkills.length > 0
-            ? topSkills.slice(0, -1).join(', ') +
-              (topSkills.length > 1 ? `, and ${topSkills.at(-1)}` : topSkills[0])
-            : 'the full stack'}{' '}
-          these days.
+          Hello! I&apos;m currently {statusText}
+          {role ? ` as a ${role.toLowerCase()}` : ''}.
         </div>
-        {/* Attachments */}
+        {/* Attachments: projects */}
         {projects.length > 0 && (
           <div
             style={{
@@ -374,6 +405,20 @@ function EmailCard({
             ))}
           </div>
         )}
+        {/* Signature footer: skills */}
+        {topSkills.length > 0 && (
+          <div
+            style={{
+              padding: '10px 16px 12px',
+              borderTop: '1px solid var(--border-1)',
+              font: '500 10px var(--font-mono), monospace',
+              color: 'var(--text-meta-2)',
+              letterSpacing: '.04em',
+            }}
+          >
+            {topSkills.map((s) => s.name).join(' · ')}
+          </div>
+        )}
       </div>
       {avatarUrl && avatarEnabled && <Avatar url={avatarUrl} name={name} />}
     </div>
@@ -386,17 +431,28 @@ function ChatCard({
   firstName,
   role,
   openToWork,
+  terminalStatus,
   nowBlurb,
   projects,
   skills,
   avatarUrl,
   avatarEnabled,
 }: HeroCardProps) {
-  const statusText = openToWork ? 'open to work ✓' : 'heads-down · building ◆';
-  const topSkills = skills
-    .slice(0, 4)
-    .map((s) => s.name)
-    .join(' · ');
+  const statusText = resolveStatus(openToWork, terminalStatus);
+  const topSkillNames = skills.slice(0, 5).map((s) => s.name);
+
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const msg1 = `${cap(statusText)}${role ? ` as a ${role.toLowerCase()}` : ''}${nowBlurb ? `. ${nowBlurb.replace(/\.$/, '')}` : ''}.`;
+
+  const outBubble = {
+    background: 'var(--accent-soft-bg)',
+    border: '1px solid var(--accent-soft-border)',
+    borderRadius: '12px 12px 3px 12px',
+    padding: '9px 12px',
+    font: '400 13px var(--font-space), sans-serif',
+    color: 'var(--text)',
+    maxWidth: '80%',
+  };
 
   return (
     <div style={{ position: 'relative', paddingTop: '34px' }}>
@@ -438,84 +494,86 @@ function ChatCard({
           </div>
           <div>
             <div style={{ fontWeight: 600, fontSize: '13px' }}>{name}</div>
-            {topSkills && (
-              <div
-                style={{
-                  font: '500 10px var(--font-mono), monospace',
-                  color: 'var(--text-meta)',
-                }}
-              >
-                {topSkills}
-              </div>
-            )}
+            <div
+              style={{
+                font: '500 10px var(--font-mono), monospace',
+                color: 'var(--text-meta)',
+              }}
+            >
+              {openToWork ? 'open to work' : 'online'}
+            </div>
           </div>
         </div>
         {/* Messages */}
         <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* Incoming */}
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <div
-              style={{
-                background: 'var(--bg-panel-2)',
-                border: '1px solid var(--border-2)',
-                borderRadius: '12px 12px 12px 3px',
-                padding: '9px 12px',
-                font: '400 13px var(--font-space), sans-serif',
-                color: 'var(--text-body)',
-                maxWidth: '80%',
-              }}
-            >
-              hey, what are you up to?
-            </div>
+          {/* Exchange 1: status + context */}
+          <BubbleIn text="hey, what's new with you?" />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={outBubble}>{msg1}</div>
           </div>
-          {/* Outgoing */}
+
+          {/* Exchange 2: projects */}
+          <BubbleIn text="working on anything lately?" />
           <div
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '7px' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: '5px',
+            }}
           >
-            <div
-              style={{
-                background: 'var(--accent-soft-bg)',
-                border: '1px solid var(--accent-soft-border)',
-                borderRadius: '12px 12px 3px 12px',
-                padding: '9px 12px',
-                font: '400 13px var(--font-space), sans-serif',
-                color: 'var(--text)',
-                maxWidth: '80%',
-              }}
-            >
-              {statusText}
-              {nowBlurb ? ` — ${nowBlurb}.` : '.'}
-            </div>
-            {/* Attachment chips */}
-            {projects.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '6px',
-                  flexWrap: 'wrap',
-                  justifyContent: 'flex-end',
-                }}
-              >
-                {projects.slice(0, 3).map((p) => (
-                  <span
-                    key={p.id}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      font: '500 10px var(--font-mono), monospace',
-                      color: 'var(--text-meta)',
-                      border: '1px solid var(--border-2)',
-                      borderRadius: '5px',
-                      padding: '2px 7px',
-                    }}
-                  >
-                    📎 {p.title}
-                  </span>
-                ))}
-              </div>
+            {projects.length > 0 ? (
+              <>
+                <div style={outBubble}>a few things in progress</div>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '5px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  {projects.slice(0, 3).map((p) => (
+                    <span
+                      key={p.id}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        font: '500 10px var(--font-mono), monospace',
+                        color: 'var(--text-meta)',
+                        border: '1px solid var(--border-2)',
+                        borderRadius: '5px',
+                        padding: '2px 7px',
+                      }}
+                    >
+                      📎 {p.title}
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={outBubble}>nothing to show just yet!</div>
             )}
           </div>
+
+          {/* Exchange 3: skills as natural text */}
+          {topSkillNames.length > 0 && (
+            <>
+              <BubbleIn text="nice! what are you using these days?" />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={outBubble}>a few things like {joinList(topSkillNames)}</div>
+              </div>
+            </>
+          )}
+          {topSkillNames.length === 0 && openToWork && (
+            <>
+              <BubbleIn text="are you open to new work?" />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={outBubble}>yep, open to the right fit. reach out!</div>
+              </div>
+            </>
+          )}
         </div>
       </div>
       {avatarUrl && avatarEnabled && <Avatar url={avatarUrl} name={name} />}
@@ -528,23 +586,46 @@ function NotecardCard({
   name,
   role,
   openToWork,
+  terminalStatus,
   projects,
   skills,
   avatarUrl,
   avatarEnabled,
 }: HeroCardProps) {
-  const statusText = openToWork ? 'open to work ✓' : 'heads-down · building ◆';
-  const projectList = projects
-    .slice(0, 3)
-    .map((p) => p.title)
-    .join(', ');
-  const skillList = skills
-    .slice(0, 5)
-    .map((s) => s.name)
-    .join(' · ');
+  const statusText = openToWork ? 'open to work ✓' : `${terminalStatus ?? 'heads-down · building'}`;
+
+  const noteItems: { label: string | null; text: string; accent?: boolean; bold?: boolean }[] = [
+    { label: null, text: role ?? 'builder', bold: false },
+    { label: 'status', text: statusText, bold: true, accent: true },
+    ...(projects.length > 0
+      ? [
+          {
+            label: 'projects',
+            text: projects
+              .slice(0, 3)
+              .map((p) => p.title)
+              .join(', '),
+          },
+        ]
+      : []),
+    ...(skills.length > 0
+      ? [
+          {
+            label: 'skills',
+            text: skills
+              .slice(0, 5)
+              .map((s) => s.name)
+              .join(' · '),
+          },
+        ]
+      : []),
+  ];
+
+  const rotations = [-0.4, 0.5, -0.3, 0.6, -0.2];
+  const indents = [2, 6, 0, 8, 3];
 
   return (
-    <div style={{ position: 'relative', paddingTop: '34px' }}>
+    <div style={{ position: 'relative', paddingTop: '34px', overflow: 'hidden' }}>
       <div
         style={{
           borderRadius: '4px',
@@ -571,28 +652,35 @@ function NotecardCard({
               fontWeight: 700,
               borderBottom: '1.5px solid #2a1f10',
               paddingBottom: '2px',
-              marginBottom: '16px',
+              marginBottom: '18px',
               display: 'inline-block',
             }}
           >
             {name}
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 600, lineHeight: 2.15, marginBottom: '2px' }}>
-            → {role ?? 'full-stack engineer'}
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 600, lineHeight: 2.15 }}>
-            → status: <span style={{ color: '#a8431e' }}>{statusText}</span>
-          </div>
-          {projectList && (
-            <div style={{ fontSize: '19px', fontWeight: 500, lineHeight: 2.15 }}>
-              → projects: {projectList}
+          {noteItems.map((item, i) => (
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '7px',
+                fontSize: '19px',
+                fontWeight: item.bold ? 600 : 500,
+                lineHeight: 2.0,
+                transform: `rotate(${rotations[i % rotations.length]}deg)`,
+                marginLeft: `${indents[i % indents.length]}px`,
+              }}
+            >
+              <span style={{ fontSize: '13px', flexShrink: 0 }}>•</span>
+              {item.label && (
+                <span style={{ fontSize: '13px', color: '#8a6a42', flexShrink: 0 }}>
+                  {item.label}:
+                </span>
+              )}
+              <span style={item.accent ? { color: '#a8431e' } : {}}>{item.text}</span>
             </div>
-          )}
-          {skillList && (
-            <div style={{ fontSize: '19px', fontWeight: 500, lineHeight: 2.15 }}>
-              → stack: {skillList}
-            </div>
-          )}
+          ))}
         </div>
       </div>
       {avatarUrl && avatarEnabled && <Avatar url={avatarUrl} name={name} />}
@@ -606,11 +694,19 @@ function PlaygroundCard({
   firstName,
   role,
   openToWork,
+  terminalStatus,
   projects,
   skills,
   avatarUrl,
   avatarEnabled,
 }: HeroCardProps) {
+  const statusText = resolveStatus(openToWork, terminalStatus);
+  const domain =
+    (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SITE_DOMAIN : null) ??
+    'zaquariah.dev';
+  const projectCount = projects.length;
+  const skillCount = skills.length;
+
   return (
     <div style={{ position: 'relative', paddingTop: '34px' }}>
       <div
@@ -655,16 +751,21 @@ function PlaygroundCard({
               color: 'var(--text-meta-2)',
             }}
           >
-            {(typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SITE_DOMAIN : null) ??
-              'zaquariah.dev'}
-            /status
+            {domain}
           </div>
         </div>
 
-        {/* Card content */}
+        {/* Content — mirrors site layout patterns */}
         <div style={{ padding: '16px' }}>
-          {/* Profile row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          {/* Header: avatar + name/role + status badge */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px',
+              marginBottom: '14px',
+            }}
+          >
             <div
               style={{
                 width: '36px',
@@ -681,48 +782,61 @@ function PlaygroundCard({
             >
               {firstName[0]?.toUpperCase() ?? 'Z'}
             </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '14px' }}>{name}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div
-                style={{ font: '500 11px var(--font-mono), monospace', color: 'var(--text-meta)' }}
-              >
-                {role ?? 'software engineer'}
-              </div>
-            </div>
-            {/* Status badge */}
-            <div style={{ marginLeft: 'auto' }}>
-              <span
                 style={{
-                  display: 'inline-block',
-                  font: '500 10px var(--font-mono), monospace',
-                  letterSpacing: '.04em',
-                  color: openToWork ? 'var(--accent)' : 'var(--text-meta-2)',
-                  background: openToWork ? 'var(--accent-soft-bg)' : 'var(--bg-track)',
-                  border: `1px solid ${openToWork ? 'var(--accent-soft-border)' : 'var(--border-2)'}`,
-                  borderRadius: '20px',
-                  padding: '3px 9px',
-                  whiteSpace: 'nowrap',
+                  fontWeight: 700,
+                  fontSize: '15px',
+                  letterSpacing: '-.01em',
+                  lineHeight: 1.2,
                 }}
               >
-                {openToWork ? 'open to work' : 'building'}
-              </span>
+                {name}
+              </div>
+              <div
+                style={{
+                  font: '500 10px var(--font-mono), monospace',
+                  color: 'var(--text-meta)',
+                  marginTop: '2px',
+                }}
+              >
+                {role ?? 'builder'}
+              </div>
             </div>
+            <span
+              style={{
+                display: 'inline-block',
+                font: '500 9px var(--font-mono), monospace',
+                letterSpacing: '.04em',
+                color: openToWork ? 'var(--accent)' : 'var(--text-meta-2)',
+                background: openToWork ? 'var(--accent-soft-bg)' : 'var(--bg-track)',
+                border: `1px solid ${openToWork ? 'var(--accent-soft-border)' : 'var(--border-2)'}`,
+                borderRadius: '20px',
+                padding: '3px 9px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {statusText}
+            </span>
           </div>
 
-          {/* Projects */}
-          {projects.length > 0 && (
-            <div style={{ marginBottom: '10px' }}>
+          <div style={{ borderTop: '1px solid var(--border-1)', marginBottom: '14px' }} />
+
+          {/* 01 / PROJECTS */}
+          {projectCount > 0 && (
+            <div style={{ marginBottom: skillCount > 0 ? '12px' : '0' }}>
               <div
                 style={{
                   font: '500 9px var(--font-mono), monospace',
-                  letterSpacing: '.1em',
-                  color: 'var(--text-faint)',
-                  marginBottom: '6px',
+                  letterSpacing: '.12em',
+                  color: 'var(--accent)',
+                  marginBottom: '7px',
                 }}
               >
-                PROJECTS
+                01 / PROJECTS
               </div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                 {projects.slice(0, 4).map((p) => (
                   <span
                     key={p.id}
@@ -742,20 +856,20 @@ function PlaygroundCard({
             </div>
           )}
 
-          {/* Stack */}
-          {skills.length > 0 && (
+          {/* 02 / SKILLS (or 01 if no projects) */}
+          {skillCount > 0 && (
             <div>
               <div
                 style={{
                   font: '500 9px var(--font-mono), monospace',
-                  letterSpacing: '.1em',
-                  color: 'var(--text-faint)',
-                  marginBottom: '6px',
+                  letterSpacing: '.12em',
+                  color: 'var(--accent)',
+                  marginBottom: '7px',
                 }}
               >
-                STACK
+                {projectCount > 0 ? '02 / SKILLS' : '01 / SKILLS'}
               </div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                 {skills.slice(0, 6).map((s) => (
                   <span
                     key={s.id}
