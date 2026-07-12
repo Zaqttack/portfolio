@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useEffect, useRef } from 'react';
 import type { Project, Skill } from '@/types';
 
@@ -691,8 +692,6 @@ function NotecardCard({
 /* ── Playground ─────────────────────────────────────────────────────────────── */
 function PlaygroundCard({
   name,
-  firstName,
-  role,
   openToWork,
   terminalStatus,
   projects,
@@ -700,12 +699,30 @@ function PlaygroundCard({
   avatarUrl,
   avatarEnabled,
 }: HeroCardProps) {
-  const statusText = resolveStatus(openToWork, terminalStatus);
   const domain =
     (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SITE_DOMAIN : null) ??
     'zaquariah.dev';
-  const projectCount = projects.length;
-  const skillCount = skills.length;
+  const statusText = resolveStatus(openToWork, terminalStatus);
+
+  const palette = [
+    { label: 'accent', color: 'var(--accent)' },
+    { label: 'text', color: 'var(--text)' },
+    { label: 'body', color: 'var(--text-body)' },
+    { label: 'border', color: 'var(--border-2)' },
+    { label: 'surface', color: 'var(--bg-panel-2)' },
+  ];
+
+  const sectionLabel: React.CSSProperties = {
+    font: '500 9px var(--font-mono), monospace',
+    letterSpacing: '.12em',
+    color: 'var(--accent)',
+    marginBottom: '8px',
+  };
+
+  const divider = {
+    borderTop: '1px solid var(--border-1)',
+    marginBottom: '14px',
+  };
 
   return (
     <div style={{ position: 'relative', paddingTop: '34px' }}>
@@ -755,93 +772,133 @@ function PlaygroundCard({
           </div>
         </div>
 
-        {/* Content — mirrors site layout patterns */}
         <div style={{ padding: '16px' }}>
-          {/* Header: avatar + name/role + status badge */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '10px',
-              marginBottom: '14px',
-            }}
-          >
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: 'var(--accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                font: '700 14px var(--font-space), sans-serif',
-                color: 'var(--bg)',
-                flexShrink: 0,
-              }}
-            >
-              {firstName[0]?.toUpperCase() ?? 'Z'}
+          {/* PALETTE */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={sectionLabel}>PALETTE</div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {palette.map(({ label, color }) => (
+                <div
+                  key={label}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '6px',
+                      background: color,
+                      border: '1px solid var(--border-1)',
+                    }}
+                  />
+                  <span
+                    style={{
+                      font: '500 8px var(--font-mono), monospace',
+                      color: 'var(--text-meta-2)',
+                    }}
+                  >
+                    {label}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontWeight: 700,
-                  fontSize: '15px',
-                  letterSpacing: '-.01em',
-                  lineHeight: 1.2,
-                }}
-              >
-                {name}
-              </div>
-              <div
-                style={{
-                  font: '500 10px var(--font-mono), monospace',
-                  color: 'var(--text-meta)',
-                  marginTop: '2px',
-                }}
-              >
-                {role ?? 'builder'}
-              </div>
-            </div>
-            <span
-              style={{
-                display: 'inline-block',
-                font: '500 9px var(--font-mono), monospace',
-                letterSpacing: '.04em',
-                color: openToWork ? 'var(--accent)' : 'var(--text-meta-2)',
-                background: openToWork ? 'var(--accent-soft-bg)' : 'var(--bg-track)',
-                border: `1px solid ${openToWork ? 'var(--accent-soft-border)' : 'var(--border-2)'}`,
-                borderRadius: '20px',
-                padding: '3px 9px',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-              }}
-            >
-              {statusText}
-            </span>
           </div>
 
-          <div style={{ borderTop: '1px solid var(--border-1)', marginBottom: '14px' }} />
+          <div style={divider} />
 
-          {/* 01 / PROJECTS */}
-          {projectCount > 0 && (
-            <div style={{ marginBottom: skillCount > 0 ? '12px' : '0' }}>
-              <div
-                style={{
-                  font: '500 9px var(--font-mono), monospace',
-                  letterSpacing: '.12em',
-                  color: 'var(--accent)',
-                  marginBottom: '7px',
-                }}
-              >
-                01 / PROJECTS
+          {/* TYPE */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={sectionLabel}>TYPE</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    fontWeight: 700,
+                    fontSize: '17px',
+                    letterSpacing: '-.01em',
+                    color: 'var(--text)',
+                    lineHeight: 1,
+                  }}
+                >
+                  Space Grotesk
+                </span>
+                <span
+                  style={{
+                    font: '400 8px var(--font-mono), monospace',
+                    color: 'var(--text-meta-2)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  display · 700
+                </span>
               </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono), monospace',
+                    fontWeight: 500,
+                    fontSize: '11px',
+                    color: 'var(--text-meta)',
+                    lineHeight: 1,
+                  }}
+                >
+                  JetBrains Mono
+                </span>
+                <span
+                  style={{
+                    font: '400 8px var(--font-mono), monospace',
+                    color: 'var(--text-meta-2)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  mono · 500
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span
+                  style={{
+                    font: '500 9px var(--font-mono), monospace',
+                    color: openToWork ? 'var(--accent)' : 'var(--text-meta-2)',
+                    background: openToWork ? 'var(--accent-soft-bg)' : 'var(--bg-track)',
+                    border: `1px solid ${openToWork ? 'var(--accent-soft-border)' : 'var(--border-2)'}`,
+                    borderRadius: '20px',
+                    padding: '2px 8px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {statusText}
+                </span>
+                <span
+                  style={{
+                    font: '400 8px var(--font-mono), monospace',
+                    color: 'var(--text-meta-2)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  badge · state
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={divider} />
+
+          {/* COMPONENTS */}
+          {projects.length > 0 && (
+            <div style={{ marginBottom: '14px' }}>
+              <div style={sectionLabel}>COMPONENTS</div>
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                 {projects.slice(0, 4).map((p) => (
                   <span
                     key={p.id}
                     style={{
-                      font: '500 10.5px var(--font-mono), monospace',
+                      font: '500 10px var(--font-mono), monospace',
                       color: 'var(--text-body)',
                       background: 'var(--bg-selected)',
                       border: '1px solid var(--border-2)',
@@ -856,25 +913,18 @@ function PlaygroundCard({
             </div>
           )}
 
-          {/* 02 / SKILLS (or 01 if no projects) */}
-          {skillCount > 0 && (
+          {skills.length > 0 && projects.length > 0 && <div style={divider} />}
+
+          {/* TOKENS */}
+          {skills.length > 0 && (
             <div>
-              <div
-                style={{
-                  font: '500 9px var(--font-mono), monospace',
-                  letterSpacing: '.12em',
-                  color: 'var(--accent)',
-                  marginBottom: '7px',
-                }}
-              >
-                {projectCount > 0 ? '02 / SKILLS' : '01 / SKILLS'}
-              </div>
+              <div style={sectionLabel}>TOKENS</div>
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                {skills.slice(0, 6).map((s) => (
+                {skills.slice(0, 8).map((s) => (
                   <span
                     key={s.id}
                     style={{
-                      font: '500 10.5px var(--font-mono), monospace',
+                      font: '500 10px var(--font-mono), monospace',
                       color: 'var(--accent)',
                       background: 'var(--accent-soft-bg)',
                       border: '1px solid var(--accent-soft-border)',
