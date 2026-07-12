@@ -1,7 +1,7 @@
 -- Seed data for local development
 -- run after applying migrations: supabase db reset
 
-insert into profile (name, tagline, bio, location, email, github, linkedin, resume_url, open_to_work) values (
+insert into profile (name, tagline, bio, location, email, github, linkedin, resume_url, open_to_work, hero_variant) values (
   'Zaquariah Holland',
   'Software engineer — San Antonio, TX',
   'Full-stack, backend-leaning. Five years shipping fintech software at SWIVEL. I care about reliability, clean interfaces, and getting things done.',
@@ -10,7 +10,8 @@ insert into profile (name, tagline, bio, location, email, github, linkedin, resu
   'https://github.com/Zaqttack',
   'https://linkedin.com/in/zaquariah-holland',
   'https://drive.google.com/file/d/1BaO6_zvsUadRQ8kNX5aBOaWNnBrjAUCs/view',
-  false
+  false,
+  'terminal'
 );
 
 -- experience (hardcoded IDs for FK references below)
