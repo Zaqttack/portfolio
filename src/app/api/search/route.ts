@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import type { SearchResult } from '@/types';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function GET() {
   const [profile, projects, posts, skills, experience, achievements] = await Promise.all([

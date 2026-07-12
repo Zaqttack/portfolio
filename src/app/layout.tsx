@@ -60,6 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang="en"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${caveat.variable}`}
       style={{ '--accent': accentColor } as React.CSSProperties}
     >
