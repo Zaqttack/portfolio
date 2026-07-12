@@ -343,12 +343,9 @@ export default function HomeClient({
         <section
           id="intro"
           data-section
+          className="hero-grid"
           style={{
             scrollMarginTop: 0,
-            display: 'grid',
-            gridTemplateColumns: '1.15fr .85fr',
-            gap: '52px',
-            alignItems: 'center',
             minHeight: 'calc(100vh - 92px)',
             padding: '36px 56px 64px 40px',
           }}
@@ -463,6 +460,7 @@ export default function HomeClient({
             name={profile?.name ?? firstName}
             firstName={firstName}
             role={latestRole}
+            email={profile?.email ?? null}
             openToWork={openToWork}
             terminalStatus={profile?.terminal_status ?? null}
             nowBlurb={profile?.tagline ?? null}
