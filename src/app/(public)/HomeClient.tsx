@@ -475,20 +475,14 @@ export default function HomeClient({
         <section
           id="skills"
           data-section
+          className="section-outer"
           style={{
             scrollMarginTop: '20px',
             padding: '80px 56px 80px 40px',
             borderTop: '1px solid var(--border-1)',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="section-grid">
             <div>
               <div
                 style={{
@@ -560,20 +554,14 @@ export default function HomeClient({
           <section
             id="projects"
             data-section
+            className="section-outer"
             style={{
               scrollMarginTop: '20px',
               padding: '80px 56px 80px 40px',
               borderTop: '1px solid var(--border-1)',
             }}
           >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                gap: '48px',
-                alignItems: 'start',
-              }}
-            >
+            <div className="section-grid">
               <div
                 style={{
                   font: '500 11px var(--font-mono), monospace',
@@ -718,20 +706,14 @@ export default function HomeClient({
           <section
             id="writing"
             data-section
+            className="section-outer"
             style={{
               scrollMarginTop: '20px',
               padding: '80px 56px 80px 40px',
               borderTop: '1px solid var(--border-1)',
             }}
           >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                gap: '48px',
-                alignItems: 'start',
-              }}
-            >
+            <div className="section-grid">
               <div
                 style={{
                   font: '500 11px var(--font-mono), monospace',
@@ -849,20 +831,14 @@ export default function HomeClient({
         <section
           id="experience"
           data-section
+          className="section-outer"
           style={{
             scrollMarginTop: '20px',
             padding: '80px 56px 90px 40px',
             borderTop: '1px solid var(--border-1)',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="section-grid">
             <div
               style={{
                 font: '500 11px var(--font-mono), monospace',
@@ -1006,20 +982,14 @@ export default function HomeClient({
         <section
           id="contact"
           data-section
+          className="section-outer"
           style={{
             scrollMarginTop: '20px',
             padding: '96px 56px 40px 40px',
             borderTop: '1px solid var(--border-1)',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="section-grid">
             <div
               style={{
                 font: '500 11px var(--font-mono), monospace',
