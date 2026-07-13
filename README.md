@@ -20,8 +20,10 @@ A self-hosted developer portfolio with a database-driven admin panel. All conten
 - Admin portal at `/admin` — CRUD for all content, protected by Supabase Auth + user ID allowlist
 - Configurable accent color, avatar, section visibility, and copy from the admin UI
 - Resume PDF generated on-demand from your data
-- Page view analytics with bot classification, no cookies required
-- Sitemap and robots.txt driven by your domain env var
+- Custom page view analytics — referrer, country, bot classification, unique visitor approximation; no cookies, no third-party required
+- Cloudflare Web Analytics support — enable with one env var for aggregate dashboards (top pages, countries, Core Web Vitals)
+- Dynamic sitemap, robots.txt, and `llms.txt` — all driven by your domain and feature flags, update automatically when you toggle sections
+- JSON-LD structured data (Person, WebSite, SoftwareApplication) and Open Graph images generated from your profile data
 - `import_staging` review queue for importing work data from a second machine
 
 ## Setup
@@ -63,6 +65,7 @@ All variables for `npm run dev` and manual local deploys.
 | `ADMIN_USER_ID` | Set after first login (step 5) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile → Add site |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile → Add site |
+| `NEXT_PUBLIC_GSC_VERIFICATION` | *(Optional)* Google Search Console → Verify → HTML tag → content value |
 
 #### GitHub Actions — repository secrets
 
@@ -116,7 +119,82 @@ Sign-in is locked to existing users — new accounts can't be created from the l
 
 Go to `/admin` and fill out your profile — name, bio, tagline, social links, experience, projects, and skills. The site renders entirely from this data.
 
-### 7. Update the README badges
+### 7. SEO and analytics setup
+
+#### What's automatic
+
+Everything below is generated from your profile data and content — no code changes required for a fork.
+
+| What | Where | Updates when |
+|---|---|---|
+| `/sitemap.xml` | Dynamic — includes only enabled pages + live project/post slugs with real `lastModified` | Profile flags change (≤1 hr), new content published |
+| `/robots.txt` | Disallows `/admin`, `/api`, disabled sections. Allows AI search bots (ChatGPT, Perplexity, Claude search). | Profile flags change (immediate) |
+| `/llms.txt` | AI-readable content map — identity, projects, writing, skills, experience. Guides ChatGPT/Perplexity/Claude to your best pages. | Content changes (≤1 hr) |
+| Open Graph + Twitter card | On every public page — title, description, image | Profile data changes |
+| JSON-LD `Person` + `WebSite` | Root layout — powers Google Knowledge Panel eligibility | Profile data changes |
+| JSON-LD `SoftwareApplication` | Each project detail page | Per project |
+| OG images | `/opengraph-image` (root, uses avatar + name) and `/projects/[slug]/opengraph-image` (cover image or generated card) | Profile / project data |
+
+**Feature flags are consistent across all SEO surfaces.** If you disable writing or projects in the admin UI, those sections are automatically excluded from the sitemap, disallowed in robots.txt, and omitted from llms.txt. Toggle in admin → no code changes needed.
+
+#### Google Search Console
+
+Search Console tells Google your site exists, shows you what search terms surface it, and flags indexing errors.
+
+1. Go to [search.google.com/search-console](https://search.google.com/search-console) and add a **Domain** property (not URL prefix — Domain covers all subdomains and both http/https)
+2. Verify ownership via **DNS TXT record** — this is the simplest method if your domain is on Cloudflare:
+   - Copy the `google-site-verification=...` TXT record value from Search Console
+   - In [Cloudflare dashboard](https://dash.cloudflare.com) → your domain → **DNS → Records → Add record**
+   - Type: `TXT`, Name: `@`, Content: the full `google-site-verification=...` string, TTL: Auto
+   - Click **Verify** in Search Console — usually confirms within a minute
+3. Submit your sitemap: **Sitemaps → Add a new sitemap** → enter `sitemap.xml` → Submit
+4. Request indexing for your homepage: **URL Inspection** → enter your domain → **Request Indexing**
+
+> **Alternative — HTML meta tag verification:** If you'd rather not touch DNS, set `NEXT_PUBLIC_GSC_VERIFICATION` in your env to the token value from `<meta name="google-site-verification" content="TOKEN">` (just the token, not the full tag). Add this to your GitHub Actions secrets and Cloudflare Worker secrets too so the tag appears in production.
+
+#### Bing Webmaster Tools *(optional, feeds Microsoft Copilot)*
+
+1. Go to [bing.com/webmasters](https://www.bing.com/webmasters) and sign in with a Microsoft account
+2. Add your site and verify — choose **XML file** or **DNS** (the same Google TXT record works here too, or import from Search Console automatically)
+3. Submit sitemap: **Sitemaps → Submit sitemap** → `https://yourdomain.com/sitemap.xml`
+
+#### Cloudflare Web Analytics *(recommended — free, no cookies)*
+
+You're already on Cloudflare. Web Analytics gives you top pages, countries, referrers, devices, and Core Web Vitals with no cookies and no GDPR banner required.
+
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → select your Worker → **Web Analytics** tab (or go to **Analytics & Logs → Web Analytics** in the sidebar)
+2. Click **Enable** — Cloudflare generates a beacon token for your site
+3. Copy the token (a ~32-character hex string from the script tag it shows you)
+4. Add it to your env:
+   ```bash
+   NEXT_PUBLIC_CF_BEACON_TOKEN=your_token_here
+   ```
+   Also add to GitHub Actions secrets (for CI builds) and Cloudflare Worker env vars
+5. Redeploy — the beacon script is injected automatically when the token is set
+
+The script only loads when `NEXT_PUBLIC_CF_BEACON_TOKEN` is present, so local dev and staging environments without the token stay clean.
+
+#### Custom page view analytics *(built-in, no setup required)*
+
+The site logs every public page hit to the `page_views` Supabase table automatically. Unlike Cloudflare Web Analytics (which gives aggregates), this gives you raw, queryable data:
+
+- **Which pages get traffic** — see if a specific project page is getting hits
+- **Where traffic comes from** — `referrer` shows if Google, LinkedIn, or someone's GitHub README is sending visitors
+- **Geography** — `country` from Cloudflare's edge headers, no geolocation service needed
+- **Unique visitor approximation** — `ip_hash` (SHA-256, never raw IP) lets you estimate distinct visitors without storing personal data
+- **Bot visibility** — `is_bot` and `bot_name` tell you which crawlers are hitting you (Googlebot, GPTBot, etc.) and how often, separate from human traffic
+
+View raw data anytime in [Supabase Studio](https://supabase.com/dashboard) → your project → **Table Editor → page_views**. You can also query it directly: top pages by hits, traffic by country, daily trend, human vs. bot ratio.
+
+#### Analytics env vars
+
+| Variable | Where to find it | Required |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_DOMAIN` | Your domain, e.g. `yoursite.dev` | Yes |
+| `NEXT_PUBLIC_CF_BEACON_TOKEN` | Cloudflare dashboard → Web Analytics → your site → token | No |
+| `NEXT_PUBLIC_GSC_VERIFICATION` | Google Search Console → Verify → HTML tag → token value only | No |
+
+### 8. Update the README badges
 
 The CI badges at the top of this file point to the original repo. Replace `Zaqttack/portfolio` in the three badge URLs with your GitHub username and repo name to track your own deployments.
 

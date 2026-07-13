@@ -1,13 +1,12 @@
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Footer from '@/components/Footer';
 import LeftRail from '@/components/LeftRail';
 import MobileNav from '@/components/MobileNav';
-import ProjectImageCarousel from '@/components/ProjectImageCarousel';
 import TopNav from '@/components/TopNav';
-import { getProfile, getProfileLinks, getProjectBySlug } from '@/lib/db';
+import { getPostBySlug, getProfile, getProfileLinks } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,25 +16,26 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const [project, profile] = await Promise.all([
-    getProjectBySlug(slug).catch(() => null),
+  const [post, profile] = await Promise.all([
+    getPostBySlug(slug).catch(() => null),
     getProfile().catch(() => null),
   ]);
-  if (!project) return {};
+  if (!post) return {};
   const name = profile?.name ?? 'Portfolio';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_DOMAIN
     ? `https://${process.env.NEXT_PUBLIC_SITE_DOMAIN}`
     : 'http://localhost:3000';
   return {
-    title: `${project.title} | ${name}`,
-    description: project.summary ?? undefined,
+    title: `${post.title} | ${name}`,
+    description: post.excerpt ?? undefined,
     openGraph: {
-      title: `${project.title} | ${name}`,
-      description: project.summary ?? undefined,
-      url: `${siteUrl}/projects/${project.slug}`,
-      type: 'website',
-      ...(project.cover_image
-        ? { images: [{ url: project.cover_image, width: 1200, height: 630 }] }
+      title: `${post.title} | ${name}`,
+      description: post.excerpt ?? undefined,
+      url: `${siteUrl}/writing/${post.slug}`,
+      type: 'article',
+      ...(post.published_at ? { publishedTime: post.published_at } : {}),
+      ...(post.cover_image
+        ? { images: [{ url: post.cover_image, width: 1200, height: 630 }] }
         : {}),
     },
     twitter: { card: 'summary_large_image' },
@@ -45,36 +45,24 @@ export async function generateMetadata({
 function md2html(text: string): string {
   let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  // fenced code blocks — protect from further substitutions
   const codeBlocks: string[] = [];
   s = s.replace(/```(?:\w+)?\n([\s\S]*?)```/g, (_, code: string) => {
     codeBlocks.push(code);
     return `\x00CODE${codeBlocks.length - 1}\x00`;
   });
 
-  // headings
   s = s.replace(/^### (.+)$/gm, '<h4>$1</h4>');
   s = s.replace(/^## (.+)$/gm, '<h3>$1</h3>');
   s = s.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-
-  // inline code
   s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-
-  // bold + italic
   s = s.replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>');
   s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-
-  // links
   s = s.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
   );
-
-  // horizontal rules
   s = s.replace(/^---$/gm, '<hr>');
-
-  // unordered lists: collect consecutive list lines into one <ul>
   s = s.replace(/((?:^[-*] .+\n?)+)/gm, (match) => {
     const items = match
       .trim()
@@ -84,11 +72,7 @@ function md2html(text: string): string {
       .join('');
     return `<ul>${items}</ul>\n`;
   });
-
-  // blockquotes
   s = s.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-
-  // paragraphs
   s = s
     .split(/\n{2,}/)
     .map((block) => {
@@ -98,18 +82,15 @@ function md2html(text: string): string {
       return `<p>${t.replace(/\n/g, ' ')}</p>`;
     })
     .join('\n');
-
-  // restore code blocks
   s = s.replace(
     /\x00CODE(\d+)\x00/g,
     (_, n: string) => `<pre><code>${codeBlocks[parseInt(n)]}</code></pre>`,
   );
-
   return s;
 }
 
-function buildProjectJsonLd(
-  project: NonNullable<Awaited<ReturnType<typeof getProjectBySlug>>>,
+function buildPostJsonLd(
+  post: NonNullable<Awaited<ReturnType<typeof getPostBySlug>>>,
   profile: Awaited<ReturnType<typeof getProfile>> | null,
 ) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_DOMAIN
@@ -120,41 +101,45 @@ function buildProjectJsonLd(
     : undefined;
   return JSON.stringify({
     '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    name: project.title,
-    ...(project.summary ? { description: project.summary } : {}),
-    url: `${siteUrl}/projects/${project.slug}`,
-    ...(project.live_url ? { downloadUrl: project.live_url } : {}),
-    ...(project.repo_url ? { codeRepository: project.repo_url } : {}),
-    keywords: project.tags.join(', '),
+    '@type': 'Article',
+    headline: post.title,
+    ...(post.excerpt ? { description: post.excerpt } : {}),
+    url: `${siteUrl}/writing/${post.slug}`,
+    ...(post.published_at ? { datePublished: post.published_at } : {}),
+    dateModified: post.updated_at,
     ...(author ? { author } : {}),
-    ...(project.cover_image ? { image: project.cover_image } : {}),
-    dateModified: project.updated_at,
-    ...(project.started_at ? { dateCreated: project.started_at } : {}),
+    ...(post.cover_image ? { image: post.cover_image } : {}),
+    keywords: post.tags.join(', '),
   });
 }
 
-export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+export default async function PostDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [project, profile, profileLinks] = await Promise.all([
-    getProjectBySlug(slug).catch(() => null),
+  const [post, profile, profileLinks] = await Promise.all([
+    getPostBySlug(slug).catch(() => null),
     getProfile().catch(() => null),
     getProfileLinks().catch(() => []),
   ]);
 
-  if (!project) notFound();
-  if (profile && profile.projects_enabled === false) notFound();
+  if (!post) notFound();
+  if (profile && profile.writing_enabled === false) notFound();
 
   const resumeUrl = profile?.resume_download_enabled
     ? '/api/resume'
     : (profile?.resume_url ?? null);
-  const jsonLd = buildProjectJsonLd(project, profile);
-  const tag = project.tags.includes('side') ? 'side' : 'product';
-  const stack = project.tags.filter((t) => t !== 'product' && t !== 'side');
-  const year = `'${new Date(project.created_at).getFullYear().toString().slice(2)}`;
+  const jsonLd = buildPostJsonLd(post, profile);
+  const tags = post.tags.filter(Boolean);
 
   const railItems = [
-    { href: '/projects', label: '← projects', active: false },
+    { href: '/writing', label: '← writing', active: false },
     { href: '/', label: 'home', active: false, isBack: true },
   ];
 
@@ -188,7 +173,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
         <article style={{ padding: '56px 56px 96px 40px', maxWidth: '800px' }}>
           <Link
-            href="/projects"
+            href="/writing"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -198,149 +183,99 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               textDecoration: 'none',
               transition: 'color .3s',
             }}
-            onMouseEnter={undefined}
-            onMouseLeave={undefined}
           >
-            <ArrowLeft size={12} /> projects
+            <ArrowLeft size={12} /> writing
           </Link>
 
-          <div style={{ marginTop: '24px', marginBottom: '32px' }}>
+          {post.cover_image && (
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: '12px',
-                flexWrap: 'wrap',
+                marginTop: '28px',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                border: '1px solid var(--border-1)',
               }}
             >
-              <h1
-                style={{
-                  fontWeight: 700,
-                  fontSize: '40px',
-                  letterSpacing: '-.03em',
-                  margin: 0,
-                  lineHeight: 1.1,
-                }}
-              >
-                {project.title}
-              </h1>
-              <span
-                style={{
-                  font: '500 9px var(--font-mono), monospace',
-                  letterSpacing: '.06em',
-                  color: tag === 'product' ? 'var(--accent)' : 'var(--text-3)',
-                  border: tag === 'product' ? '1px solid #3a2a1e' : '1px solid var(--border-3)',
-                  background: tag === 'product' ? '#1a1310' : 'transparent',
-                  borderRadius: '20px',
-                  padding: '3px 10px',
-                }}
-              >
-                {tag.toUpperCase()}
-              </span>
-              <span
-                style={{
-                  font: '500 11px var(--font-mono), monospace',
-                  color: 'var(--text-4)',
-                }}
-              >
-                {year}
-              </span>
+              <img
+                src={post.cover_image}
+                alt={post.title}
+                style={{ width: '100%', display: 'block', maxHeight: '360px', objectFit: 'cover' }}
+              />
             </div>
+          )}
 
-            {project.summary && (
-              <p
-                style={{
-                  fontSize: '17px',
-                  lineHeight: 1.65,
-                  color: 'var(--text-2)',
-                  margin: '0 0 20px',
-                  maxWidth: '40em',
-                }}
-              >
-                {project.summary}
-              </p>
-            )}
+          <div style={{ marginTop: post.cover_image ? '32px' : '24px', marginBottom: '32px' }}>
+            <h1
+              style={{
+                fontWeight: 700,
+                fontSize: '40px',
+                letterSpacing: '-.03em',
+                margin: '0 0 14px',
+                lineHeight: 1.1,
+              }}
+            >
+              {post.title}
+            </h1>
 
             <div
               style={{
                 display: 'flex',
-                gap: '10px',
                 alignItems: 'center',
+                gap: '12px',
                 flexWrap: 'wrap',
               }}
             >
-              {project.live_url && (
-                <a
-                  href={project.live_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    font: '600 13px var(--font-space), sans-serif',
-                    color: 'var(--canvas)',
-                    background: 'var(--accent)',
-                    textDecoration: 'none',
-                    padding: '9px 16px',
-                    borderRadius: '8px',
-                  }}
-                >
-                  Visit <ArrowUpRight size={13} />
-                </a>
-              )}
-              {project.repo_url && (
-                <a
-                  href={project.repo_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    font: '600 13px var(--font-space), sans-serif',
-                    color: 'var(--text-1)',
-                    textDecoration: 'none',
-                    padding: '9px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-3)',
-                  }}
-                >
-                  Repo <ArrowUpRight size={13} />
-                </a>
-              )}
-              {stack.map((s) => (
+              {post.published_at && (
                 <span
-                  key={s}
+                  style={{
+                    font: '400 12px var(--font-mono), monospace',
+                    color: 'var(--text-4)',
+                  }}
+                >
+                  {formatDate(post.published_at)}
+                </span>
+              )}
+              {tags.length > 0 && post.published_at && (
+                <span style={{ color: 'var(--border-2)' }}>·</span>
+              )}
+              {tags.map((tag) => (
+                <span
+                  key={tag}
                   style={{
                     font: '500 10.5px var(--font-mono), monospace',
                     color: 'var(--text-3)',
                     border: '1px solid var(--border-2)',
                     borderRadius: '5px',
-                    padding: '4px 9px',
+                    padding: '3px 8px',
                   }}
                 >
-                  {s}
+                  {tag}
                 </span>
               ))}
             </div>
+
+            {post.excerpt && (
+              <p
+                style={{
+                  fontSize: '17px',
+                  lineHeight: 1.65,
+                  color: 'var(--text-2)',
+                  margin: '18px 0 0',
+                  maxWidth: '40em',
+                  borderLeft: '2px solid var(--border-2)',
+                  paddingLeft: '16px',
+                  fontStyle: 'italic',
+                }}
+              >
+                {post.excerpt}
+              </p>
+            )}
           </div>
 
-          {(project.project_images?.length ?? 0) > 0 && (
-            <div style={{ borderTop: '1px solid var(--border-1)', paddingTop: '36px' }}>
-              <ProjectImageCarousel images={project.project_images!} />
-            </div>
-          )}
-
-          {project.body && (
+          {post.body && (
             <div
-              style={{
-                borderTop:
-                  (project.project_images?.length ?? 0) > 0 ? 'none' : '1px solid var(--border-1)',
-                paddingTop: '36px',
-              }}
-              dangerouslySetInnerHTML={{ __html: md2html(project.body) }}
+              style={{ borderTop: '1px solid var(--border-1)', paddingTop: '36px' }}
+              dangerouslySetInnerHTML={{ __html: md2html(post.body) }}
             />
           )}
         </article>

@@ -2265,6 +2265,11 @@ function Toast({
 
 const SECTION_GROUPS = [
   {
+    key: 'dashboard',
+    label: 'Dashboard',
+    tabs: [] as { key: keyof typeof SCHEMAS; label: string }[],
+  },
+  {
     key: 'home',
     label: 'Home',
     tabs: [
@@ -2274,14 +2279,12 @@ const SECTION_GROUPS = [
     ],
   },
   {
-    key: 'projects',
-    label: 'Projects',
-    tabs: [{ key: 'projects' as const, label: 'Projects' }],
-  },
-  {
-    key: 'writing',
-    label: 'Writing',
-    tabs: [{ key: 'posts' as const, label: 'Posts' }],
+    key: 'content',
+    label: 'Content',
+    tabs: [
+      { key: 'projects' as const, label: 'Projects' },
+      { key: 'posts' as const, label: 'Writing' },
+    ],
   },
   {
     key: 'experience',
@@ -2295,17 +2298,18 @@ const SECTION_GROUPS = [
       { key: 'companies' as const, label: 'Companies' },
     ],
   },
+  // { key: 'import', label: 'Import Queue', tabs: [{ key: 'staging' as const, label: 'Queue' }] },
   {
-    key: 'import',
-    label: 'Import Queue',
-    tabs: [{ key: 'staging' as const, label: 'Queue' }],
+    key: 'analytics',
+    label: 'Analytics',
+    tabs: [] as { key: keyof typeof SCHEMAS; label: string }[],
   },
 ];
 
 export default function AdminPage() {
   const router = useRouter();
   const [section, setSection] = useState<keyof typeof SCHEMAS>('profile');
-  const [activeGroup, setActiveGroup] = useState('home');
+  const [activeGroup, setActiveGroup] = useState('dashboard');
   const [lists, setLists] = useState<Record<string, Record<string, unknown>[]>>({});
   const [profileData, setProfileData] = useState<Record<string, unknown>>({});
   const [pageSettingsForm, setPageSettingsForm] = useState<Record<string, unknown>>({});
@@ -2321,6 +2325,20 @@ export default function AdminPage() {
     name: string;
     onAdd: (name: string) => void;
   } | null>(null);
+  const [analyticsRows, setAnalyticsRows] = useState<Record<string, unknown>[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState<{
+    projects: number;
+    posts: number;
+    experience: number;
+    viewsLast30: number;
+    activity: Record<string, unknown>[];
+    name: string;
+    projectsEnabled: boolean;
+    writingEnabled: boolean;
+  } | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const dragIdx = useRef<number | null>(null);
   const pendingNavRef = useRef<(() => void) | null>(null);
   const autoGenSlugRef = useRef('');
@@ -2368,6 +2386,58 @@ export default function AdminPage() {
     setPageSettingsForm(form);
     setIsPageSettingsDirty(false);
   }, [section, profileData]);
+
+  useEffect(() => {
+    if (!isCustomView) return;
+    setAnalyticsLoading(true);
+    supabase
+      .from('page_views')
+      .select('ts, path, referrer, country, is_bot, bot_name, ip_hash')
+      .order('ts', { ascending: false })
+      .limit(5000)
+      .then(({ data }) => {
+        setAnalyticsRows(data ?? []);
+        setAnalyticsLoading(false);
+      });
+  }, [activeGroup]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeGroup !== 'dashboard') return;
+    setDashboardLoading(true);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    Promise.all([
+      supabase
+        .from('projects')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'published'),
+      supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+      supabase.from('experience').select('id', { count: 'exact', head: true }),
+      supabase
+        .from('page_views')
+        .select('id', { count: 'exact', head: true })
+        .gte('ts', thirtyDaysAgo)
+        .eq('is_bot', false),
+      supabase.from('admin_activity').select('*').order('ts', { ascending: false }).limit(6),
+      supabase.from('profile').select('name, writing_enabled, projects_enabled').single(),
+    ]).then(([proj, post, exp, views, activity, profile]) => {
+      const p = profile.data as {
+        name?: string;
+        writing_enabled?: boolean;
+        projects_enabled?: boolean;
+      } | null;
+      setDashboardData({
+        projects: proj.count ?? 0,
+        posts: post.count ?? 0,
+        experience: exp.count ?? 0,
+        viewsLast30: views.count ?? 0,
+        activity: activity.data ?? [],
+        name: p?.name ?? '',
+        projectsEnabled: p?.projects_enabled ?? true,
+        writingEnabled: p?.writing_enabled ?? true,
+      });
+      setDashboardLoading(false);
+    });
+  }, [activeGroup]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const guardNav = (action: () => void) => {
     if (isDirty || isPageSettingsDirty) {
@@ -2527,7 +2597,7 @@ export default function AdminPage() {
     const group = SECTION_GROUPS.find((g) => g.key === groupKey);
     if (!group) return;
     setActiveGroup(groupKey);
-    goSection(group.tabs[0].key);
+    if (group.tabs.length > 0) goSection(group.tabs[0].key);
   };
 
   const startNew = () => {
@@ -2546,6 +2616,28 @@ export default function AdminPage() {
     });
     setEditing(blank);
     setView('form');
+  };
+
+  const openNew = (groupKey: string, sectionKey: keyof typeof SCHEMAS) => {
+    const s = SCHEMAS[sectionKey];
+    const blank: Record<string, unknown> = {};
+    s.fields.forEach((f) => {
+      blank[f.key] =
+        f.defaultValue !== undefined
+          ? f.defaultValue
+          : f.type === 'toggle'
+            ? false
+            : f.type === 'tags'
+              ? []
+              : '';
+    });
+    autoGenSlugRef.current = '';
+    setActiveGroup(groupKey);
+    setSection(sectionKey);
+    setView('form');
+    setEditing(blank);
+    setIsDirty(false);
+    setMobileNavOpen(false);
   };
 
   const startEdit = (row: Record<string, unknown>) => {
@@ -2947,20 +3039,20 @@ export default function AdminPage() {
     outline: 'none',
   };
 
-  const currentGroup = SECTION_GROUPS.find((g) => g.tabs.some((t) => t.key === section));
-  const groupCount = (g: (typeof SECTION_GROUPS)[0]) => {
-    if (g.tabs.length === 1 && SCHEMAS[g.tabs[0].key].singleton) return '·';
-    const total = g.tabs.reduce((n, t) => n + (lists[t.key]?.length ?? 0), 0);
-    return total > 0 ? String(total) : '—';
-  };
+  const isCustomView = activeGroup === 'analytics' || activeGroup === 'dashboard';
 
-  const pageTitle = isSingleton
-    ? 'About'
-    : view === 'list'
-      ? schema.label
-      : editing?.id && rows.find((r) => r.id === editing?.id)
-        ? `Edit ${schema.singular}`
-        : `New ${schema.singular}`;
+  const pageTitle =
+    activeGroup === 'dashboard'
+      ? 'Dashboard'
+      : activeGroup === 'analytics'
+        ? 'Analytics'
+        : isSingleton
+          ? 'About'
+          : view === 'list'
+            ? schema.label
+            : editing?.id && rows.find((r) => r.id === editing?.id)
+              ? `Edit ${schema.singular}`
+              : `New ${schema.singular}`;
 
   if (loadingData) {
     return (
@@ -2989,11 +3081,208 @@ export default function AdminPage() {
     transition: 'filter .2s',
   };
 
+  const renderNavItems = (onAfterNav?: () => void): React.ReactNode => (
+    <nav style={{ display: 'flex', flexDirection: 'column', padding: '0 12px' }}>
+      {SECTION_GROUPS.map((g) => {
+        if (g.tabs.length > 0) {
+          return (
+            <div key={g.key} style={{ marginBottom: '6px' }}>
+              <div
+                style={{
+                  font: '500 9px var(--font-mono), monospace',
+                  letterSpacing: '.1em',
+                  color: 'var(--text-5)',
+                  padding: '10px 12px 5px',
+                  userSelect: 'none',
+                }}
+              >
+                {g.label.toUpperCase()}
+              </div>
+              {g.tabs.map((tab) => {
+                const tabActive = section === tab.key && activeGroup === g.key;
+                return (
+                  <a
+                    key={tab.key}
+                    href="#"
+                    className="anav-child"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      guardNav(() => {
+                        onAfterNav?.();
+                        setActiveGroup(g.key);
+                        goSection(tab.key);
+                      });
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '3px',
+                        height: '14px',
+                        borderRadius: '2px',
+                        flexShrink: 0,
+                        background: tabActive ? 'var(--accent)' : 'transparent',
+                      }}
+                    />
+                    <span
+                      style={{
+                        font: '500 13px var(--font-space), sans-serif',
+                        color: tabActive ? 'var(--text-1)' : 'var(--text-3)',
+                      }}
+                    >
+                      {tab.label}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          );
+        }
+        const active = activeGroup === g.key;
+        return (
+          <a
+            key={g.key}
+            href="#"
+            className={`anav-direct${active ? ' active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              guardNav(() => {
+                onAfterNav?.();
+                goGroup(g.key);
+              });
+            }}
+          >
+            <span
+              style={{
+                width: '3px',
+                height: '16px',
+                borderRadius: '2px',
+                flexShrink: 0,
+                background: active ? 'var(--accent)' : 'transparent',
+              }}
+            />
+            <span
+              style={{
+                font: '500 13.5px var(--font-space), sans-serif',
+                color: active ? 'var(--text-1)' : 'var(--text-2)',
+              }}
+            >
+              {g.label}
+            </span>
+          </a>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <div
       className="admin-layout"
       style={{ display: 'grid', gridTemplateColumns: '224px 1fr', minHeight: '100vh' }}
     >
+      <style>{`
+        .anav-child { display:flex; align-items:center; gap:10px; text-decoration:none; padding:7px 12px 7px 18px; border-radius:7px; transition:background .15s; }
+        .anav-child:hover { background:#15171B; }
+        .anav-direct { display:flex; align-items:center; gap:10px; text-decoration:none; padding:9px 12px; border-radius:8px; transition:background .15s; margin-bottom:2px; }
+        .anav-direct:hover, .anav-direct.active { background:#15171B; }
+        .admin-hamburger { display:none; }
+        @media (max-width: 767px) {
+          .admin-layout { grid-template-columns: 1fr !important; }
+          .admin-sidebar { display: none !important; }
+          .admin-hamburger { display: flex !important; }
+        }
+      `}</style>
+
+      {mobileNavOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            background: '#0C0D10',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '22px 20px',
+              borderBottom: '1px solid var(--border-1)',
+            }}
+          >
+            <div style={{ font: '700 14px var(--font-mono), monospace' }}>
+              zq<span style={{ color: 'var(--accent)' }}>.</span>admin
+            </div>
+            <button
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-2)',
+                fontSize: '20px',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+            {renderNavItems(() => setMobileNavOpen(false))}
+          </div>
+          <div
+            style={{
+              padding: '8px 12px 32px',
+              borderTop: '1px solid var(--border-1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+            }}
+          >
+            <a
+              href="/api/resume"
+              download
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                textDecoration: 'none',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                color: 'var(--text-3)',
+                font: '500 12.5px var(--font-space), sans-serif',
+              }}
+            >
+              <span style={{ width: '3px', height: '16px' }} />
+              Resume PDF ↓
+            </a>
+            <button
+              onClick={signOut}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'transparent',
+                border: 'none',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                color: 'var(--text-3)',
+                font: '500 12.5px var(--font-space), sans-serif',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ width: '3px', height: '16px' }} />
+              Sign out ↗
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* SIDEBAR */}
       <aside
         className="admin-sidebar"
@@ -3024,61 +3313,7 @@ export default function AdminPage() {
               content management
             </div>
           </div>
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '0 12px' }}>
-            {SECTION_GROUPS.map((g) => {
-              const active = activeGroup === g.key;
-              return (
-                <a
-                  key={g.key}
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    guardNav(() => goGroup(g.key));
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    textDecoration: 'none',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    background: active ? '#15171B' : 'transparent',
-                    transition: 'background .2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.background = '#15171B';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span
-                      style={{
-                        width: '3px',
-                        height: '16px',
-                        borderRadius: '2px',
-                        background: active ? 'var(--accent)' : 'transparent',
-                      }}
-                    />
-                    <span
-                      style={{
-                        font: '500 13.5px var(--font-space), sans-serif',
-                        color: active ? 'var(--text-1)' : 'var(--text-2)',
-                      }}
-                    >
-                      {g.label}
-                    </span>
-                  </span>
-                  <span
-                    style={{ font: '500 10px var(--font-mono), monospace', color: 'var(--text-4)' }}
-                  >
-                    {groupCount(g)}
-                  </span>
-                </a>
-              );
-            })}
-          </nav>
+          {renderNavItems()}
         </div>
         <div style={{ padding: '0 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <a
@@ -3181,7 +3416,7 @@ export default function AdminPage() {
             <h1 style={{ fontWeight: 600, fontSize: '20px', letterSpacing: '-.01em', margin: 0 }}>
               {pageTitle}
             </h1>
-            {view === 'list' && !isSingleton && (
+            {view === 'list' && !isSingleton && !isCustomView && (
               <span
                 style={{
                   font: '500 11px var(--font-mono), monospace',
@@ -3259,7 +3494,7 @@ export default function AdminPage() {
                   </button>
                 ) : null}
               </>
-            ) : view === 'list' && !isSingleton && !isReadOnly ? (
+            ) : view === 'list' && !isSingleton && !isReadOnly && !isCustomView ? (
               <button
                 onClick={startNew}
                 style={{
@@ -3274,51 +3509,549 @@ export default function AdminPage() {
                 + New {schema.singular}
               </button>
             ) : null}
+            <button
+              className="admin-hamburger"
+              onClick={() => setMobileNavOpen(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-2)',
+                cursor: 'pointer',
+                padding: '4px 6px',
+                fontSize: '20px',
+                lineHeight: 1,
+                borderRadius: '6px',
+                flexShrink: 0,
+              }}
+            >
+              ☰
+            </button>
           </div>
         </div>
 
-        {/* SUB-TABS */}
-        {currentGroup && currentGroup.tabs.length > 1 && (view !== 'form' || isSingleton) && (
-          <div
-            style={{
-              display: 'flex',
-              gap: '0',
-              borderBottom: '1px solid var(--border-1)',
-              padding: '0 32px',
-              background: 'rgba(11,12,14,0.6)',
-            }}
-          >
-            {currentGroup.tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => guardNav(() => goSection(tab.key))}
+        {/* DASHBOARD */}
+        {activeGroup === 'dashboard' &&
+          (() => {
+            if (dashboardLoading || !dashboardData) {
+              return (
+                <div
+                  style={{
+                    padding: '48px 32px',
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-4)',
+                  }}
+                >
+                  loading…
+                </div>
+              );
+            }
+            const hour = new Date().getHours();
+            const greeting =
+              hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+            const firstName = dashboardData.name.split(' ')[0];
+            return (
+              <div style={{ padding: '32px 32px 80px' }}>
+                <div style={{ marginBottom: '28px' }}>
+                  <div
+                    style={{
+                      font: '700 22px var(--font-space), sans-serif',
+                      letterSpacing: '-.02em',
+                    }}
+                  >
+                    {greeting}
+                    {firstName ? `, ${firstName}` : ''}
+                  </div>
+                  <div
+                    style={{
+                      font: '400 13px var(--font-space), sans-serif',
+                      color: 'var(--text-4)',
+                      marginTop: '4px',
+                    }}
+                  >
+                    Here&apos;s what&apos;s going on with your site.
+                  </div>
+                </div>
+
+                <div
+                  style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}
+                >
+                  {(
+                    [
+                      {
+                        label: 'PROJECTS',
+                        value: dashboardData.projects,
+                        disabled: !dashboardData.projectsEnabled,
+                      },
+                      {
+                        label: 'POSTS',
+                        value: dashboardData.posts,
+                        disabled: !dashboardData.writingEnabled,
+                      },
+                      { label: 'EXPERIENCE', value: dashboardData.experience, disabled: false },
+                      { label: '30-DAY VIEWS', value: dashboardData.viewsLast30, disabled: false },
+                    ] as { label: string; value: number; disabled: boolean }[]
+                  ).map(({ label, value, disabled }) => (
+                    <div
+                      key={label}
+                      style={{
+                        background: '#0C0D10',
+                        border: '1px solid var(--border-1)',
+                        borderRadius: '12px',
+                        padding: '18px 22px',
+                        flex: 1,
+                        minWidth: '120px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            font: '500 9.5px var(--font-mono), monospace',
+                            letterSpacing: '.08em',
+                            color: 'var(--text-4)',
+                          }}
+                        >
+                          {label}
+                        </span>
+                        {disabled && (
+                          <span
+                            style={{
+                              font: '500 8.5px var(--font-mono), monospace',
+                              letterSpacing: '.06em',
+                              color: '#E05252',
+                              border: '1px solid #5C2020',
+                              borderRadius: '4px',
+                              padding: '1px 5px',
+                            }}
+                          >
+                            disabled
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          font: '700 26px var(--font-space), sans-serif',
+                          letterSpacing: '-.02em',
+                          color: disabled ? 'var(--text-4)' : 'inherit',
+                        }}
+                      >
+                        {value.toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
+                  <div
+                    style={{
+                      background: '#0C0D10',
+                      border: '1px solid var(--border-1)',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '13px 20px',
+                        borderBottom: '1px solid var(--border-1)',
+                        font: '500 9.5px var(--font-mono), monospace',
+                        letterSpacing: '.08em',
+                        color: 'var(--text-4)',
+                      }}
+                    >
+                      QUICK ACTIONS
+                    </div>
+                    {(
+                      [
+                        { label: '+ New Post', action: () => openNew('content', 'posts') },
+                        { label: '+ New Project', action: () => openNew('content', 'projects') },
+                        { label: '+ Add Skill', action: () => openNew('home', 'skills') },
+                        {
+                          label: '+ Add Experience',
+                          action: () => openNew('experience', 'experience'),
+                        },
+                        { label: 'View Analytics', action: () => goGroup('analytics') },
+                      ] as { label: string; action: () => void }[]
+                    ).map(({ label, action }, i) => (
+                      <button
+                        key={label}
+                        onClick={action}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: 'transparent',
+                          border: 'none',
+                          borderTop: i > 0 ? '1px solid #141518' : 'none',
+                          padding: '11px 20px',
+                          cursor: 'pointer',
+                          color: 'var(--text-2)',
+                          font: '500 13px var(--font-space), sans-serif',
+                          transition: 'color .15s, background .15s',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#15171B';
+                          e.currentTarget.style.color = 'var(--text-1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = 'var(--text-2)';
+                        }}
+                      >
+                        {label}
+                        <span style={{ color: 'var(--text-5)', fontSize: '12px' }}>→</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div
+                    style={{
+                      background: '#0C0D10',
+                      border: '1px solid var(--border-1)',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '13px 20px',
+                        borderBottom: '1px solid var(--border-1)',
+                        font: '500 9.5px var(--font-mono), monospace',
+                        letterSpacing: '.08em',
+                        color: 'var(--text-4)',
+                      }}
+                    >
+                      RECENT ACTIVITY
+                    </div>
+                    {dashboardData.activity.length === 0 ? (
+                      <div
+                        style={{
+                          padding: '20px',
+                          font: '500 12px var(--font-mono), monospace',
+                          color: 'var(--text-5)',
+                        }}
+                      >
+                        No activity yet
+                      </div>
+                    ) : (
+                      dashboardData.activity.map((a, i) => (
+                        <div
+                          key={String(a.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '11px 20px',
+                            borderTop: i > 0 ? '1px solid #141518' : 'none',
+                          }}
+                        >
+                          <div>
+                            <span
+                              style={{
+                                font: '500 13px var(--font-space), sans-serif',
+                                color: 'var(--text-1)',
+                                textTransform: 'capitalize',
+                              }}
+                            >
+                              {String(a.action)}
+                            </span>
+                            <span
+                              style={{
+                                font: '400 13px var(--font-space), sans-serif',
+                                color: 'var(--text-3)',
+                              }}
+                            >
+                              {' '}
+                              · {String(a.table_name).replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              font: '500 11px var(--font-mono), monospace',
+                              color: 'var(--text-4)',
+                              flexShrink: 0,
+                              marginLeft: '16px',
+                            }}
+                          >
+                            {new Date(String(a.ts)).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+        {/* ANALYTICS */}
+        {activeGroup === 'analytics' &&
+          (() => {
+            if (analyticsLoading) {
+              return (
+                <div
+                  style={{
+                    padding: '48px 32px',
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-4)',
+                  }}
+                >
+                  loading…
+                </div>
+              );
+            }
+            const all = analyticsRows;
+            const humans = all.filter((r) => !r.is_bot);
+            const bots = all.filter((r) => r.is_bot);
+            const uniqueIps = new Set(humans.filter((r) => r.ip_hash).map((r) => r.ip_hash)).size;
+
+            const topBy = (rows: typeof all, key: string, n = 8) => {
+              const map: Record<string, number> = {};
+              rows.forEach((r) => {
+                const v = String(r[key] ?? '').trim();
+                if (v) map[v] = (map[v] ?? 0) + 1;
+              });
+              return Object.entries(map)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, n);
+            };
+
+            const topPages = topBy(humans, 'path');
+            const topReferrers = topBy(humans, 'referrer', 6);
+            const topCountries = topBy(humans, 'country', 6);
+            const topBots = topBy(bots, 'bot_name', 6);
+
+            const last14 = Array.from({ length: 14 }, (_, i) => {
+              const d = new Date();
+              d.setDate(d.getDate() - (13 - i));
+              return d.toISOString().slice(0, 10);
+            });
+            const dailyMap: Record<string, number> = {};
+            humans.forEach((r) => {
+              const day = String(r.ts ?? '').slice(0, 10);
+              if (day) dailyMap[day] = (dailyMap[day] ?? 0) + 1;
+            });
+            const dailyCounts = last14.map((day) => ({ day, count: dailyMap[day] ?? 0 }));
+            const maxDay = Math.max(...dailyCounts.map((d) => d.count), 1);
+
+            const statCard = (label: string, value: string | number) => (
+              <div
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  borderBottom:
-                    section === tab.key ? '2px solid var(--accent)' : '2px solid transparent',
-                  padding: '12px 16px',
-                  color: section === tab.key ? 'var(--text-1)' : 'var(--text-3)',
-                  font: '500 13px var(--font-space), sans-serif',
-                  cursor: 'pointer',
-                  transition: 'color .2s, border-color .2s',
-                  marginBottom: '-1px',
-                }}
-                onMouseEnter={(e) => {
-                  if (section !== tab.key) e.currentTarget.style.color = 'var(--text-2)';
-                }}
-                onMouseLeave={(e) => {
-                  if (section !== tab.key) e.currentTarget.style.color = 'var(--text-3)';
+                  background: '#0C0D10',
+                  border: '1px solid var(--border-1)',
+                  borderRadius: '12px',
+                  padding: '20px 24px',
+                  flex: 1,
                 }}
               >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+                <div
+                  style={{
+                    font: '500 9.5px var(--font-mono), monospace',
+                    letterSpacing: '.08em',
+                    color: 'var(--text-4)',
+                    marginBottom: '10px',
+                  }}
+                >
+                  {label}
+                </div>
+                <div
+                  style={{
+                    font: '700 28px var(--font-space), sans-serif',
+                    letterSpacing: '-.02em',
+                  }}
+                >
+                  {value}
+                </div>
+              </div>
+            );
+
+            const tableSection = (
+              title: string,
+              rows: [string, number][],
+              valueLabel = 'VIEWS',
+            ) => (
+              <div
+                style={{
+                  background: '#0C0D10',
+                  border: '1px solid var(--border-1)',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '14px 20px',
+                    borderBottom: '1px solid var(--border-1)',
+                    font: '500 9.5px var(--font-mono), monospace',
+                    letterSpacing: '.08em',
+                    color: 'var(--text-4)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>{title}</span>
+                  <span>{valueLabel}</span>
+                </div>
+                {rows.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '20px',
+                      font: '500 12px var(--font-mono), monospace',
+                      color: 'var(--text-5)',
+                    }}
+                  >
+                    —
+                  </div>
+                ) : (
+                  rows.map(([label, count], i) => (
+                    <div
+                      key={label}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '10px 20px',
+                        borderTop: i > 0 ? '1px solid #141518' : 'none',
+                      }}
+                    >
+                      <span
+                        style={{
+                          font: '500 13px var(--font-space), sans-serif',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '70%',
+                        }}
+                      >
+                        {label}
+                      </span>
+                      <span
+                        style={{
+                          font: '600 13px var(--font-mono), monospace',
+                          color: 'var(--accent)',
+                          flexShrink: 0,
+                          marginLeft: '12px',
+                        }}
+                      >
+                        {count}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            );
+
+            return (
+              <div style={{ padding: '28px 32px 80px' }}>
+                <div
+                  style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}
+                >
+                  {statCard('TOTAL VIEWS', all.length.toLocaleString())}
+                  {statCard('HUMAN VIEWS', humans.length.toLocaleString())}
+                  {statCard('BOT REQUESTS', bots.length.toLocaleString())}
+                  {statCard('~UNIQUE VISITORS', uniqueIps.toLocaleString())}
+                </div>
+
+                <div
+                  style={{
+                    background: '#0C0D10',
+                    border: '1px solid var(--border-1)',
+                    borderRadius: '12px',
+                    padding: '20px 24px',
+                    marginBottom: '24px',
+                  }}
+                >
+                  <div
+                    style={{
+                      font: '500 9.5px var(--font-mono), monospace',
+                      letterSpacing: '.08em',
+                      color: 'var(--text-4)',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    DAILY TREND — LAST 14 DAYS (HUMAN)
+                  </div>
+                  <div
+                    style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '72px' }}
+                  >
+                    {dailyCounts.map(({ day, count }) => (
+                      <div
+                        key={day}
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '100%',
+                            background: count > 0 ? 'var(--accent)' : '#1E2026',
+                            borderRadius: '3px 3px 0 0',
+                            height: `${Math.max((count / maxDay) * 52, count > 0 ? 4 : 0)}px`,
+                            opacity: count > 0 ? 0.85 : 1,
+                            transition: 'height .3s',
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}
+                  >
+                    <span
+                      style={{
+                        font: '500 9px var(--font-mono), monospace',
+                        color: 'var(--text-5)',
+                      }}
+                    >
+                      {last14[0]}
+                    </span>
+                    <span
+                      style={{
+                        font: '500 9px var(--font-mono), monospace',
+                        color: 'var(--text-5)',
+                      }}
+                    >
+                      {last14[13]}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '16px',
+                    marginBottom: '16px',
+                  }}
+                >
+                  {tableSection('TOP PAGES', topPages)}
+                  {tableSection('TOP REFERRERS', topReferrers)}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {tableSection('COUNTRIES', topCountries)}
+                  {tableSection('CRAWLERS', topBots)}
+                </div>
+              </div>
+            );
+          })()}
 
         {/* PAGE SETTINGS */}
-        {view === 'list' && !isSingleton && schema.pageSettings && (
+        {!isCustomView && view === 'list' && !isSingleton && schema.pageSettings && (
           <div style={{ padding: '26px 32px 0' }}>
             <div
               style={{
@@ -3394,7 +4127,7 @@ export default function AdminPage() {
         )}
 
         {/* LIST */}
-        {view === 'list' && !isSingleton && (
+        {!isCustomView && view === 'list' && !isSingleton && (
           <div style={{ padding: '26px 32px 60px' }}>
             {rows.length > 0 ? (
               <div
@@ -3684,7 +4417,7 @@ export default function AdminPage() {
         )}
 
         {/* FORM */}
-        {view === 'form' && editing && (
+        {!isCustomView && view === 'form' && editing && (
           <div style={{ padding: '28px 32px 80px', maxWidth: '720px' }}>
             <div
               className="admin-form-grid"
