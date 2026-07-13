@@ -561,14 +561,7 @@ export default function HomeClient({
               borderTop: '1px solid var(--border-1)',
             }}
           >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                gap: '48px',
-                alignItems: 'start',
-              }}
-            >
+            <div className="section-grid">
               <div
                 style={{
                   font: '500 11px var(--font-mono), monospace',
@@ -720,14 +713,7 @@ export default function HomeClient({
               borderTop: '1px solid var(--border-1)',
             }}
           >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                gap: '48px',
-                alignItems: 'start',
-              }}
-            >
+            <div className="section-grid">
               <div
                 style={{
                   font: '500 11px var(--font-mono), monospace',
