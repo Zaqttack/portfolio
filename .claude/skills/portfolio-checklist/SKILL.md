@@ -68,7 +68,7 @@ Feature flags (`writing_enabled`, `projects_enabled`) must be consistent across 
 
 - [ ] **Bundle size** — Cloudflare Workers free plan has a **3 MiB gzip** total upload limit. The CI `build` job checks `handler.mjs` uncompressed size against a 10 MiB proxy threshold and will fail before the dry-run if exceeded.
 - [ ] **WASM packages are red flags** — `@vercel/og` / `next/og` (`ImageResponse`) bundles `resvg.wasm` (~1.3 MiB), `yoga.wasm` (~70 KiB), and a font (~123 KiB) into the Worker. That alone can push the bundle over the free plan limit. Do not add it without upgrading the Cloudflare plan first.
-- [ ] **Dynamic OG images** — The three `opengraph-image.tsx` files (`src/app/`, `projects/[slug]/`, `writing/[slug]/`) were removed because they pulled in `next/og`. Restore them only after upgrading to Workers paid plan or finding a WASM-free alternative.
+- [ ] **Dynamic OG images and icon** — `src/app/icon.tsx`, `src/app/opengraph-image.tsx`, `src/app/(public)/projects/[slug]/opengraph-image.tsx`, and `src/app/(public)/writing/[slug]/opengraph-image.tsx` were all removed because they pulled in `next/og`. `icon.tsx` was replaced with a static `src/app/icon.svg`. Restore the others only after upgrading to Workers paid plan or finding a WASM-free alternative.
 
 ### New analytics coverage area
 
