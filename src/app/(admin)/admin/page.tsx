@@ -2265,6 +2265,11 @@ function Toast({
 
 const SECTION_GROUPS = [
   {
+    key: 'dashboard',
+    label: 'Dashboard',
+    tabs: [] as { key: keyof typeof SCHEMAS; label: string }[],
+  },
+  {
     key: 'home',
     label: 'Home',
     tabs: [
@@ -2274,14 +2279,12 @@ const SECTION_GROUPS = [
     ],
   },
   {
-    key: 'projects',
-    label: 'Projects',
-    tabs: [{ key: 'projects' as const, label: 'Projects' }],
-  },
-  {
-    key: 'writing',
-    label: 'Writing',
-    tabs: [{ key: 'posts' as const, label: 'Posts' }],
+    key: 'content',
+    label: 'Content',
+    tabs: [
+      { key: 'projects' as const, label: 'Projects' },
+      { key: 'posts' as const, label: 'Writing' },
+    ],
   },
   {
     key: 'experience',
@@ -2306,7 +2309,7 @@ const SECTION_GROUPS = [
 export default function AdminPage() {
   const router = useRouter();
   const [section, setSection] = useState<keyof typeof SCHEMAS>('profile');
-  const [activeGroup, setActiveGroup] = useState('home');
+  const [activeGroup, setActiveGroup] = useState('dashboard');
   const [lists, setLists] = useState<Record<string, Record<string, unknown>[]>>({});
   const [profileData, setProfileData] = useState<Record<string, unknown>>({});
   const [pageSettingsForm, setPageSettingsForm] = useState<Record<string, unknown>>({});
@@ -2324,6 +2327,18 @@ export default function AdminPage() {
   } | null>(null);
   const [analyticsRows, setAnalyticsRows] = useState<Record<string, unknown>[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState<{
+    projects: number;
+    posts: number;
+    experience: number;
+    viewsLast30: number;
+    activity: Record<string, unknown>[];
+    name: string;
+    projectsEnabled: boolean;
+    writingEnabled: boolean;
+  } | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const dragIdx = useRef<number | null>(null);
   const pendingNavRef = useRef<(() => void) | null>(null);
   const autoGenSlugRef = useRef('');
@@ -2373,7 +2388,7 @@ export default function AdminPage() {
   }, [section, profileData]);
 
   useEffect(() => {
-    if (activeGroup !== 'analytics') return;
+    if (!isCustomView) return;
     setAnalyticsLoading(true);
     supabase
       .from('page_views')
@@ -2384,6 +2399,44 @@ export default function AdminPage() {
         setAnalyticsRows(data ?? []);
         setAnalyticsLoading(false);
       });
+  }, [activeGroup]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeGroup !== 'dashboard') return;
+    setDashboardLoading(true);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    Promise.all([
+      supabase
+        .from('projects')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'published'),
+      supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+      supabase.from('experience').select('id', { count: 'exact', head: true }),
+      supabase
+        .from('page_views')
+        .select('id', { count: 'exact', head: true })
+        .gte('ts', thirtyDaysAgo)
+        .eq('is_bot', false),
+      supabase.from('admin_activity').select('*').order('ts', { ascending: false }).limit(6),
+      supabase.from('profile').select('name, writing_enabled, projects_enabled').single(),
+    ]).then(([proj, post, exp, views, activity, profile]) => {
+      const p = profile.data as {
+        name?: string;
+        writing_enabled?: boolean;
+        projects_enabled?: boolean;
+      } | null;
+      setDashboardData({
+        projects: proj.count ?? 0,
+        posts: post.count ?? 0,
+        experience: exp.count ?? 0,
+        viewsLast30: views.count ?? 0,
+        activity: activity.data ?? [],
+        name: p?.name ?? '',
+        projectsEnabled: p?.projects_enabled ?? true,
+        writingEnabled: p?.writing_enabled ?? true,
+      });
+      setDashboardLoading(false);
+    });
   }, [activeGroup]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const guardNav = (action: () => void) => {
@@ -2563,6 +2616,28 @@ export default function AdminPage() {
     });
     setEditing(blank);
     setView('form');
+  };
+
+  const openNew = (groupKey: string, sectionKey: keyof typeof SCHEMAS) => {
+    const s = SCHEMAS[sectionKey];
+    const blank: Record<string, unknown> = {};
+    s.fields.forEach((f) => {
+      blank[f.key] =
+        f.defaultValue !== undefined
+          ? f.defaultValue
+          : f.type === 'toggle'
+            ? false
+            : f.type === 'tags'
+              ? []
+              : '';
+    });
+    autoGenSlugRef.current = '';
+    setActiveGroup(groupKey);
+    setSection(sectionKey);
+    setView('form');
+    setEditing(blank);
+    setIsDirty(false);
+    setMobileNavOpen(false);
   };
 
   const startEdit = (row: Record<string, unknown>) => {
@@ -2964,16 +3039,20 @@ export default function AdminPage() {
     outline: 'none',
   };
 
+  const isCustomView = activeGroup === 'analytics' || activeGroup === 'dashboard';
+
   const pageTitle =
-    activeGroup === 'analytics'
-      ? 'Analytics'
-      : isSingleton
-        ? 'About'
-        : view === 'list'
-          ? schema.label
-          : editing?.id && rows.find((r) => r.id === editing?.id)
-            ? `Edit ${schema.singular}`
-            : `New ${schema.singular}`;
+    activeGroup === 'dashboard'
+      ? 'Dashboard'
+      : activeGroup === 'analytics'
+        ? 'Analytics'
+        : isSingleton
+          ? 'About'
+          : view === 'list'
+            ? schema.label
+            : editing?.id && rows.find((r) => r.id === editing?.id)
+              ? `Edit ${schema.singular}`
+              : `New ${schema.singular}`;
 
   if (loadingData) {
     return (
@@ -3002,11 +3081,208 @@ export default function AdminPage() {
     transition: 'filter .2s',
   };
 
+  const renderNavItems = (onAfterNav?: () => void): React.ReactNode => (
+    <nav style={{ display: 'flex', flexDirection: 'column', padding: '0 12px' }}>
+      {SECTION_GROUPS.map((g) => {
+        if (g.tabs.length > 0) {
+          return (
+            <div key={g.key} style={{ marginBottom: '6px' }}>
+              <div
+                style={{
+                  font: '500 9px var(--font-mono), monospace',
+                  letterSpacing: '.1em',
+                  color: 'var(--text-5)',
+                  padding: '10px 12px 5px',
+                  userSelect: 'none',
+                }}
+              >
+                {g.label.toUpperCase()}
+              </div>
+              {g.tabs.map((tab) => {
+                const tabActive = section === tab.key && activeGroup === g.key;
+                return (
+                  <a
+                    key={tab.key}
+                    href="#"
+                    className="anav-child"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      guardNav(() => {
+                        onAfterNav?.();
+                        setActiveGroup(g.key);
+                        goSection(tab.key);
+                      });
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '3px',
+                        height: '14px',
+                        borderRadius: '2px',
+                        flexShrink: 0,
+                        background: tabActive ? 'var(--accent)' : 'transparent',
+                      }}
+                    />
+                    <span
+                      style={{
+                        font: '500 13px var(--font-space), sans-serif',
+                        color: tabActive ? 'var(--text-1)' : 'var(--text-3)',
+                      }}
+                    >
+                      {tab.label}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          );
+        }
+        const active = activeGroup === g.key;
+        return (
+          <a
+            key={g.key}
+            href="#"
+            className={`anav-direct${active ? ' active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              guardNav(() => {
+                onAfterNav?.();
+                goGroup(g.key);
+              });
+            }}
+          >
+            <span
+              style={{
+                width: '3px',
+                height: '16px',
+                borderRadius: '2px',
+                flexShrink: 0,
+                background: active ? 'var(--accent)' : 'transparent',
+              }}
+            />
+            <span
+              style={{
+                font: '500 13.5px var(--font-space), sans-serif',
+                color: active ? 'var(--text-1)' : 'var(--text-2)',
+              }}
+            >
+              {g.label}
+            </span>
+          </a>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <div
       className="admin-layout"
       style={{ display: 'grid', gridTemplateColumns: '224px 1fr', minHeight: '100vh' }}
     >
+      <style>{`
+        .anav-child { display:flex; align-items:center; gap:10px; text-decoration:none; padding:7px 12px 7px 18px; border-radius:7px; transition:background .15s; }
+        .anav-child:hover { background:#15171B; }
+        .anav-direct { display:flex; align-items:center; gap:10px; text-decoration:none; padding:9px 12px; border-radius:8px; transition:background .15s; margin-bottom:2px; }
+        .anav-direct:hover, .anav-direct.active { background:#15171B; }
+        .admin-hamburger { display:none; }
+        @media (max-width: 767px) {
+          .admin-layout { grid-template-columns: 1fr !important; }
+          .admin-sidebar { display: none !important; }
+          .admin-hamburger { display: flex !important; }
+        }
+      `}</style>
+
+      {mobileNavOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            background: '#0C0D10',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '22px 20px',
+              borderBottom: '1px solid var(--border-1)',
+            }}
+          >
+            <div style={{ font: '700 14px var(--font-mono), monospace' }}>
+              zq<span style={{ color: 'var(--accent)' }}>.</span>admin
+            </div>
+            <button
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-2)',
+                fontSize: '20px',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+            {renderNavItems(() => setMobileNavOpen(false))}
+          </div>
+          <div
+            style={{
+              padding: '8px 12px 32px',
+              borderTop: '1px solid var(--border-1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+            }}
+          >
+            <a
+              href="/api/resume"
+              download
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                textDecoration: 'none',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                color: 'var(--text-3)',
+                font: '500 12.5px var(--font-space), sans-serif',
+              }}
+            >
+              <span style={{ width: '3px', height: '16px' }} />
+              Resume PDF ↓
+            </a>
+            <button
+              onClick={signOut}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'transparent',
+                border: 'none',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                color: 'var(--text-3)',
+                font: '500 12.5px var(--font-space), sans-serif',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ width: '3px', height: '16px' }} />
+              Sign out ↗
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* SIDEBAR */}
       <aside
         className="admin-sidebar"
@@ -3037,123 +3313,7 @@ export default function AdminPage() {
               content management
             </div>
           </div>
-          <nav style={{ display: 'flex', flexDirection: 'column', padding: '0 12px' }}>
-            {SECTION_GROUPS.map((g) => {
-              if (g.tabs.length > 1) {
-                return (
-                  <div key={g.key} style={{ marginBottom: '6px' }}>
-                    <div
-                      style={{
-                        font: '500 9px var(--font-mono), monospace',
-                        letterSpacing: '.1em',
-                        color: 'var(--text-5)',
-                        padding: '10px 12px 5px',
-                        userSelect: 'none',
-                      }}
-                    >
-                      {g.label.toUpperCase()}
-                    </div>
-                    {g.tabs.map((tab) => {
-                      const tabActive = section === tab.key && activeGroup === g.key;
-                      return (
-                        <a
-                          key={tab.key}
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            guardNav(() => {
-                              setActiveGroup(g.key);
-                              goSection(tab.key);
-                            });
-                          }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            textDecoration: 'none',
-                            padding: '7px 12px 7px 18px',
-                            borderRadius: '7px',
-                            background: 'transparent',
-                            transition: 'background .2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!tabActive) e.currentTarget.style.background = '#15171B';
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!tabActive) e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: '3px',
-                              height: '14px',
-                              borderRadius: '2px',
-                              flexShrink: 0,
-                              background: tabActive ? 'var(--accent)' : 'transparent',
-                            }}
-                          />
-                          <span
-                            style={{
-                              font: '500 13px var(--font-space), sans-serif',
-                              color: tabActive ? 'var(--text-1)' : 'var(--text-3)',
-                            }}
-                          >
-                            {tab.label}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-                );
-              }
-              const active = activeGroup === g.key;
-              return (
-                <a
-                  key={g.key}
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    guardNav(() => goGroup(g.key));
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    textDecoration: 'none',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    background: active ? '#15171B' : 'transparent',
-                    transition: 'background .2s',
-                    marginBottom: '2px',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.background = '#15171B';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  <span
-                    style={{
-                      width: '3px',
-                      height: '16px',
-                      borderRadius: '2px',
-                      flexShrink: 0,
-                      background: active ? 'var(--accent)' : 'transparent',
-                    }}
-                  />
-                  <span
-                    style={{
-                      font: '500 13.5px var(--font-space), sans-serif',
-                      color: active ? 'var(--text-1)' : 'var(--text-2)',
-                    }}
-                  >
-                    {g.label}
-                  </span>
-                </a>
-              );
-            })}
-          </nav>
+          {renderNavItems()}
         </div>
         <div style={{ padding: '0 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <a
@@ -3256,7 +3416,7 @@ export default function AdminPage() {
             <h1 style={{ fontWeight: 600, fontSize: '20px', letterSpacing: '-.01em', margin: 0 }}>
               {pageTitle}
             </h1>
-            {view === 'list' && !isSingleton && activeGroup !== 'analytics' && (
+            {view === 'list' && !isSingleton && !isCustomView && (
               <span
                 style={{
                   font: '500 11px var(--font-mono), monospace',
@@ -3334,7 +3494,7 @@ export default function AdminPage() {
                   </button>
                 ) : null}
               </>
-            ) : view === 'list' && !isSingleton && !isReadOnly && activeGroup !== 'analytics' ? (
+            ) : view === 'list' && !isSingleton && !isReadOnly && !isCustomView ? (
               <button
                 onClick={startNew}
                 style={{
@@ -3349,8 +3509,291 @@ export default function AdminPage() {
                 + New {schema.singular}
               </button>
             ) : null}
+            <button
+              className="admin-hamburger"
+              onClick={() => setMobileNavOpen(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-2)',
+                cursor: 'pointer',
+                padding: '4px 6px',
+                fontSize: '20px',
+                lineHeight: 1,
+                borderRadius: '6px',
+                flexShrink: 0,
+              }}
+            >
+              ☰
+            </button>
           </div>
         </div>
+
+        {/* DASHBOARD */}
+        {activeGroup === 'dashboard' &&
+          (() => {
+            if (dashboardLoading || !dashboardData) {
+              return (
+                <div
+                  style={{
+                    padding: '48px 32px',
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-4)',
+                  }}
+                >
+                  loading…
+                </div>
+              );
+            }
+            const hour = new Date().getHours();
+            const greeting =
+              hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+            const firstName = dashboardData.name.split(' ')[0];
+            return (
+              <div style={{ padding: '32px 32px 80px' }}>
+                <div style={{ marginBottom: '28px' }}>
+                  <div
+                    style={{
+                      font: '700 22px var(--font-space), sans-serif',
+                      letterSpacing: '-.02em',
+                    }}
+                  >
+                    {greeting}
+                    {firstName ? `, ${firstName}` : ''}
+                  </div>
+                  <div
+                    style={{
+                      font: '400 13px var(--font-space), sans-serif',
+                      color: 'var(--text-4)',
+                      marginTop: '4px',
+                    }}
+                  >
+                    Here&apos;s what&apos;s going on with your site.
+                  </div>
+                </div>
+
+                <div
+                  style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}
+                >
+                  {(
+                    [
+                      {
+                        label: 'PROJECTS',
+                        value: dashboardData.projects,
+                        disabled: !dashboardData.projectsEnabled,
+                      },
+                      {
+                        label: 'POSTS',
+                        value: dashboardData.posts,
+                        disabled: !dashboardData.writingEnabled,
+                      },
+                      { label: 'EXPERIENCE', value: dashboardData.experience, disabled: false },
+                      { label: '30-DAY VIEWS', value: dashboardData.viewsLast30, disabled: false },
+                    ] as { label: string; value: number; disabled: boolean }[]
+                  ).map(({ label, value, disabled }) => (
+                    <div
+                      key={label}
+                      style={{
+                        background: '#0C0D10',
+                        border: '1px solid var(--border-1)',
+                        borderRadius: '12px',
+                        padding: '18px 22px',
+                        flex: 1,
+                        minWidth: '120px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            font: '500 9.5px var(--font-mono), monospace',
+                            letterSpacing: '.08em',
+                            color: 'var(--text-4)',
+                          }}
+                        >
+                          {label}
+                        </span>
+                        {disabled && (
+                          <span
+                            style={{
+                              font: '500 8.5px var(--font-mono), monospace',
+                              letterSpacing: '.06em',
+                              color: '#E05252',
+                              border: '1px solid #5C2020',
+                              borderRadius: '4px',
+                              padding: '1px 5px',
+                            }}
+                          >
+                            disabled
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          font: '700 26px var(--font-space), sans-serif',
+                          letterSpacing: '-.02em',
+                          color: disabled ? 'var(--text-4)' : 'inherit',
+                        }}
+                      >
+                        {value.toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
+                  <div
+                    style={{
+                      background: '#0C0D10',
+                      border: '1px solid var(--border-1)',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '13px 20px',
+                        borderBottom: '1px solid var(--border-1)',
+                        font: '500 9.5px var(--font-mono), monospace',
+                        letterSpacing: '.08em',
+                        color: 'var(--text-4)',
+                      }}
+                    >
+                      QUICK ACTIONS
+                    </div>
+                    {(
+                      [
+                        { label: '+ New Post', action: () => openNew('content', 'posts') },
+                        { label: '+ New Project', action: () => openNew('content', 'projects') },
+                        { label: '+ Add Skill', action: () => openNew('home', 'skills') },
+                        {
+                          label: '+ Add Experience',
+                          action: () => openNew('experience', 'experience'),
+                        },
+                        { label: 'View Analytics', action: () => goGroup('analytics') },
+                      ] as { label: string; action: () => void }[]
+                    ).map(({ label, action }, i) => (
+                      <button
+                        key={label}
+                        onClick={action}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: 'transparent',
+                          border: 'none',
+                          borderTop: i > 0 ? '1px solid #141518' : 'none',
+                          padding: '11px 20px',
+                          cursor: 'pointer',
+                          color: 'var(--text-2)',
+                          font: '500 13px var(--font-space), sans-serif',
+                          transition: 'color .15s, background .15s',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#15171B';
+                          e.currentTarget.style.color = 'var(--text-1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = 'var(--text-2)';
+                        }}
+                      >
+                        {label}
+                        <span style={{ color: 'var(--text-5)', fontSize: '12px' }}>→</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div
+                    style={{
+                      background: '#0C0D10',
+                      border: '1px solid var(--border-1)',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '13px 20px',
+                        borderBottom: '1px solid var(--border-1)',
+                        font: '500 9.5px var(--font-mono), monospace',
+                        letterSpacing: '.08em',
+                        color: 'var(--text-4)',
+                      }}
+                    >
+                      RECENT ACTIVITY
+                    </div>
+                    {dashboardData.activity.length === 0 ? (
+                      <div
+                        style={{
+                          padding: '20px',
+                          font: '500 12px var(--font-mono), monospace',
+                          color: 'var(--text-5)',
+                        }}
+                      >
+                        No activity yet
+                      </div>
+                    ) : (
+                      dashboardData.activity.map((a, i) => (
+                        <div
+                          key={String(a.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '11px 20px',
+                            borderTop: i > 0 ? '1px solid #141518' : 'none',
+                          }}
+                        >
+                          <div>
+                            <span
+                              style={{
+                                font: '500 13px var(--font-space), sans-serif',
+                                color: 'var(--text-1)',
+                                textTransform: 'capitalize',
+                              }}
+                            >
+                              {String(a.action)}
+                            </span>
+                            <span
+                              style={{
+                                font: '400 13px var(--font-space), sans-serif',
+                                color: 'var(--text-3)',
+                              }}
+                            >
+                              {' '}
+                              · {String(a.table_name).replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              font: '500 11px var(--font-mono), monospace',
+                              color: 'var(--text-4)',
+                              flexShrink: 0,
+                              marginLeft: '16px',
+                            }}
+                          >
+                            {new Date(String(a.ts)).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
         {/* ANALYTICS */}
         {activeGroup === 'analytics' &&
@@ -3608,7 +4051,7 @@ export default function AdminPage() {
           })()}
 
         {/* PAGE SETTINGS */}
-        {activeGroup !== 'analytics' && view === 'list' && !isSingleton && schema.pageSettings && (
+        {!isCustomView && view === 'list' && !isSingleton && schema.pageSettings && (
           <div style={{ padding: '26px 32px 0' }}>
             <div
               style={{
@@ -3684,7 +4127,7 @@ export default function AdminPage() {
         )}
 
         {/* LIST */}
-        {activeGroup !== 'analytics' && view === 'list' && !isSingleton && (
+        {!isCustomView && view === 'list' && !isSingleton && (
           <div style={{ padding: '26px 32px 60px' }}>
             {rows.length > 0 ? (
               <div
@@ -3974,7 +4417,7 @@ export default function AdminPage() {
         )}
 
         {/* FORM */}
-        {activeGroup !== 'analytics' && view === 'form' && editing && (
+        {!isCustomView && view === 'form' && editing && (
           <div style={{ padding: '28px 32px 80px', maxWidth: '720px' }}>
             <div
               className="admin-form-grid"
