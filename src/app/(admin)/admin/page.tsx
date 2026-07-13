@@ -2964,14 +2964,6 @@ export default function AdminPage() {
     outline: 'none',
   };
 
-  const currentGroup = SECTION_GROUPS.find((g) => g.tabs.some((t) => t.key === section));
-  const groupCount = (g: (typeof SECTION_GROUPS)[0]) => {
-    if (g.key === 'analytics') return analyticsRows.length > 0 ? String(analyticsRows.length) : '—';
-    if (g.tabs.length === 1 && SCHEMAS[g.tabs[0].key].singleton) return '·';
-    const total = g.tabs.reduce((n, t) => n + (lists[t.key]?.length ?? 0), 0);
-    return total > 0 ? String(total) : '—';
-  };
-
   const pageTitle =
     activeGroup === 'analytics'
       ? 'Analytics'
@@ -3045,8 +3037,75 @@ export default function AdminPage() {
               content management
             </div>
           </div>
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '0 12px' }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', padding: '0 12px' }}>
             {SECTION_GROUPS.map((g) => {
+              if (g.tabs.length > 1) {
+                return (
+                  <div key={g.key} style={{ marginBottom: '6px' }}>
+                    <div
+                      style={{
+                        font: '500 9px var(--font-mono), monospace',
+                        letterSpacing: '.1em',
+                        color: 'var(--text-5)',
+                        padding: '10px 12px 5px',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {g.label.toUpperCase()}
+                    </div>
+                    {g.tabs.map((tab) => {
+                      const tabActive = section === tab.key && activeGroup === g.key;
+                      return (
+                        <a
+                          key={tab.key}
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            guardNav(() => {
+                              setActiveGroup(g.key);
+                              goSection(tab.key);
+                            });
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            textDecoration: 'none',
+                            padding: '7px 12px 7px 18px',
+                            borderRadius: '7px',
+                            background: 'transparent',
+                            transition: 'background .2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!tabActive) e.currentTarget.style.background = '#15171B';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!tabActive) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '3px',
+                              height: '14px',
+                              borderRadius: '2px',
+                              flexShrink: 0,
+                              background: tabActive ? 'var(--accent)' : 'transparent',
+                            }}
+                          />
+                          <span
+                            style={{
+                              font: '500 13px var(--font-space), sans-serif',
+                              color: tabActive ? 'var(--text-1)' : 'var(--text-3)',
+                            }}
+                          >
+                            {tab.label}
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                );
+              }
               const active = activeGroup === g.key;
               return (
                 <a
@@ -3059,12 +3118,13 @@ export default function AdminPage() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    gap: '10px',
                     textDecoration: 'none',
                     padding: '9px 12px',
                     borderRadius: '8px',
                     background: active ? '#15171B' : 'transparent',
                     transition: 'background .2s',
+                    marginBottom: '2px',
                   }}
                   onMouseEnter={(e) => {
                     if (!active) e.currentTarget.style.background = '#15171B';
@@ -3073,28 +3133,22 @@ export default function AdminPage() {
                     if (!active) e.currentTarget.style.background = 'transparent';
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span
-                      style={{
-                        width: '3px',
-                        height: '16px',
-                        borderRadius: '2px',
-                        background: active ? 'var(--accent)' : 'transparent',
-                      }}
-                    />
-                    <span
-                      style={{
-                        font: '500 13.5px var(--font-space), sans-serif',
-                        color: active ? 'var(--text-1)' : 'var(--text-2)',
-                      }}
-                    >
-                      {g.label}
-                    </span>
-                  </span>
                   <span
-                    style={{ font: '500 10px var(--font-mono), monospace', color: 'var(--text-4)' }}
+                    style={{
+                      width: '3px',
+                      height: '16px',
+                      borderRadius: '2px',
+                      flexShrink: 0,
+                      background: active ? 'var(--accent)' : 'transparent',
+                    }}
+                  />
+                  <span
+                    style={{
+                      font: '500 13.5px var(--font-space), sans-serif',
+                      color: active ? 'var(--text-1)' : 'var(--text-2)',
+                    }}
                   >
-                    {groupCount(g)}
+                    {g.label}
                   </span>
                 </a>
               );
@@ -3297,49 +3351,6 @@ export default function AdminPage() {
             ) : null}
           </div>
         </div>
-
-        {/* SUB-TABS */}
-        {activeGroup !== 'analytics' &&
-          currentGroup &&
-          currentGroup.tabs.length > 1 &&
-          (view !== 'form' || isSingleton) && (
-            <div
-              style={{
-                display: 'flex',
-                gap: '0',
-                borderBottom: '1px solid var(--border-1)',
-                padding: '0 32px',
-                background: 'rgba(11,12,14,0.6)',
-              }}
-            >
-              {currentGroup.tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => guardNav(() => goSection(tab.key))}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    borderBottom:
-                      section === tab.key ? '2px solid var(--accent)' : '2px solid transparent',
-                    padding: '12px 16px',
-                    color: section === tab.key ? 'var(--text-1)' : 'var(--text-3)',
-                    font: '500 13px var(--font-space), sans-serif',
-                    cursor: 'pointer',
-                    transition: 'color .2s, border-color .2s',
-                    marginBottom: '-1px',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (section !== tab.key) e.currentTarget.style.color = 'var(--text-2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (section !== tab.key) e.currentTarget.style.color = 'var(--text-3)';
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          )}
 
         {/* ANALYTICS */}
         {activeGroup === 'analytics' &&
