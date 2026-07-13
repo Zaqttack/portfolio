@@ -14,3 +14,9 @@ ADMIN_USER_ID=
 
 # Cloudflare Turnstile
 TURNSTILE_SECRET_KEY=
+
+# Google Search Console (optional — HTML tag verification)
+# NEXT_PUBLIC_GSC_VERIFICATION=
+
+# Cloudflare Web Analytics (optional)
+# NEXT_PUBLIC_CF_BEACON_TOKEN=

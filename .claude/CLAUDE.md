@@ -1,5 +1,8 @@
 # Portfolio — Project Instructions
 
+## Skills
+- `/portfolio-checklist` — run before finalizing any change that touches public routes, DB tables, feature flags, analytics, or design tokens. Ensures nothing gets missed across SEO, admin, and analytics surfaces.
+
 ## Stack
 - Next.js 14 App Router, TypeScript
 - Supabase (postgres) for all data + auth + storage

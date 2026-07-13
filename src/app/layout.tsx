@@ -37,6 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile().catch(() => null);
   const name = profile?.name ?? process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'Portfolio';
   const description = profile?.tagline ?? '';
+
   return {
     title: name,
     description,
@@ -49,12 +50,59 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: 'en_US',
       type: 'website',
     },
+    twitter: {
+      card: 'summary_large_image',
+    },
+    ...(process.env.NEXT_PUBLIC_GSC_VERIFICATION
+      ? { verification: { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION } }
+      : {}),
   };
+}
+
+function buildJsonLd(profile: Awaited<ReturnType<typeof getProfile>> | null) {
+  const name = profile?.name ?? '';
+  const description = profile?.bio ?? profile?.tagline ?? '';
+
+  const sameAs: string[] = [];
+  if (profile?.github) sameAs.push(`https://github.com/${profile.github.replace(/^@/, '')}`);
+  if (profile?.linkedin)
+    sameAs.push(`https://linkedin.com/in/${profile.linkedin.replace(/^@/, '')}`);
+  if (profile?.twitter) sameAs.push(`https://x.com/${profile.twitter.replace(/^@/, '')}`);
+  if (profile?.website && profile.website !== siteUrl) sameAs.push(profile.website);
+
+  const person = {
+    '@type': 'Person',
+    name,
+    ...(description ? { description } : {}),
+    url: siteUrl,
+    ...(profile?.email ? { email: profile.email } : {}),
+    ...(profile?.location ? { homeLocation: { '@type': 'Place', name: profile.location } } : {}),
+    ...(profile?.avatar_url ? { image: profile.avatar_url } : {}),
+    ...(sameAs.length > 0 ? { sameAs } : {}),
+  };
+
+  const website = {
+    '@type': 'WebSite',
+    name,
+    url: siteUrl,
+    author: person,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${siteUrl}/api/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': [person, website] });
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile().catch(() => null);
   const accentColor = profile?.accent_color ?? '#ec6a2c';
+  const jsonLd = buildJsonLd(profile);
 
   return (
     <html
@@ -66,6 +114,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
+        {process.env.NEXT_PUBLIC_CF_BEACON_TOKEN && (
+          <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={`{"token": "${process.env.NEXT_PUBLIC_CF_BEACON_TOKEN}"}`}
+          />
+        )}
       </head>
       <body>{children}</body>
     </html>

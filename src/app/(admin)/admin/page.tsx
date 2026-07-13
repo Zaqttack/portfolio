@@ -2295,10 +2295,11 @@ const SECTION_GROUPS = [
       { key: 'companies' as const, label: 'Companies' },
     ],
   },
+  // { key: 'import', label: 'Import Queue', tabs: [{ key: 'staging' as const, label: 'Queue' }] },
   {
-    key: 'import',
-    label: 'Import Queue',
-    tabs: [{ key: 'staging' as const, label: 'Queue' }],
+    key: 'analytics',
+    label: 'Analytics',
+    tabs: [] as { key: keyof typeof SCHEMAS; label: string }[],
   },
 ];
 
@@ -2321,6 +2322,8 @@ export default function AdminPage() {
     name: string;
     onAdd: (name: string) => void;
   } | null>(null);
+  const [analyticsRows, setAnalyticsRows] = useState<Record<string, unknown>[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const dragIdx = useRef<number | null>(null);
   const pendingNavRef = useRef<(() => void) | null>(null);
   const autoGenSlugRef = useRef('');
@@ -2368,6 +2371,20 @@ export default function AdminPage() {
     setPageSettingsForm(form);
     setIsPageSettingsDirty(false);
   }, [section, profileData]);
+
+  useEffect(() => {
+    if (activeGroup !== 'analytics') return;
+    setAnalyticsLoading(true);
+    supabase
+      .from('page_views')
+      .select('ts, path, referrer, country, is_bot, bot_name, ip_hash')
+      .order('ts', { ascending: false })
+      .limit(5000)
+      .then(({ data }) => {
+        setAnalyticsRows(data ?? []);
+        setAnalyticsLoading(false);
+      });
+  }, [activeGroup]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const guardNav = (action: () => void) => {
     if (isDirty || isPageSettingsDirty) {
@@ -2527,7 +2544,7 @@ export default function AdminPage() {
     const group = SECTION_GROUPS.find((g) => g.key === groupKey);
     if (!group) return;
     setActiveGroup(groupKey);
-    goSection(group.tabs[0].key);
+    if (group.tabs.length > 0) goSection(group.tabs[0].key);
   };
 
   const startNew = () => {
@@ -2949,18 +2966,22 @@ export default function AdminPage() {
 
   const currentGroup = SECTION_GROUPS.find((g) => g.tabs.some((t) => t.key === section));
   const groupCount = (g: (typeof SECTION_GROUPS)[0]) => {
+    if (g.key === 'analytics') return analyticsRows.length > 0 ? String(analyticsRows.length) : '—';
     if (g.tabs.length === 1 && SCHEMAS[g.tabs[0].key].singleton) return '·';
     const total = g.tabs.reduce((n, t) => n + (lists[t.key]?.length ?? 0), 0);
     return total > 0 ? String(total) : '—';
   };
 
-  const pageTitle = isSingleton
-    ? 'About'
-    : view === 'list'
-      ? schema.label
-      : editing?.id && rows.find((r) => r.id === editing?.id)
-        ? `Edit ${schema.singular}`
-        : `New ${schema.singular}`;
+  const pageTitle =
+    activeGroup === 'analytics'
+      ? 'Analytics'
+      : isSingleton
+        ? 'About'
+        : view === 'list'
+          ? schema.label
+          : editing?.id && rows.find((r) => r.id === editing?.id)
+            ? `Edit ${schema.singular}`
+            : `New ${schema.singular}`;
 
   if (loadingData) {
     return (
@@ -3259,7 +3280,7 @@ export default function AdminPage() {
                   </button>
                 ) : null}
               </>
-            ) : view === 'list' && !isSingleton && !isReadOnly ? (
+            ) : view === 'list' && !isSingleton && !isReadOnly && activeGroup !== 'analytics' ? (
               <button
                 onClick={startNew}
                 style={{
@@ -3317,8 +3338,263 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ANALYTICS */}
+        {activeGroup === 'analytics' &&
+          (() => {
+            if (analyticsLoading) {
+              return (
+                <div
+                  style={{
+                    padding: '48px 32px',
+                    font: '500 12px var(--font-mono), monospace',
+                    color: 'var(--text-4)',
+                  }}
+                >
+                  loading…
+                </div>
+              );
+            }
+            const all = analyticsRows;
+            const humans = all.filter((r) => !r.is_bot);
+            const bots = all.filter((r) => r.is_bot);
+            const uniqueIps = new Set(humans.filter((r) => r.ip_hash).map((r) => r.ip_hash)).size;
+
+            const topBy = (rows: typeof all, key: string, n = 8) => {
+              const map: Record<string, number> = {};
+              rows.forEach((r) => {
+                const v = String(r[key] ?? '').trim();
+                if (v) map[v] = (map[v] ?? 0) + 1;
+              });
+              return Object.entries(map)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, n);
+            };
+
+            const topPages = topBy(humans, 'path');
+            const topReferrers = topBy(humans, 'referrer', 6);
+            const topCountries = topBy(humans, 'country', 6);
+            const topBots = topBy(bots, 'bot_name', 6);
+
+            const last14 = Array.from({ length: 14 }, (_, i) => {
+              const d = new Date();
+              d.setDate(d.getDate() - (13 - i));
+              return d.toISOString().slice(0, 10);
+            });
+            const dailyMap: Record<string, number> = {};
+            humans.forEach((r) => {
+              const day = String(r.ts ?? '').slice(0, 10);
+              if (day) dailyMap[day] = (dailyMap[day] ?? 0) + 1;
+            });
+            const dailyCounts = last14.map((day) => ({ day, count: dailyMap[day] ?? 0 }));
+            const maxDay = Math.max(...dailyCounts.map((d) => d.count), 1);
+
+            const statCard = (label: string, value: string | number) => (
+              <div
+                style={{
+                  background: '#0C0D10',
+                  border: '1px solid var(--border-1)',
+                  borderRadius: '12px',
+                  padding: '20px 24px',
+                  flex: 1,
+                }}
+              >
+                <div
+                  style={{
+                    font: '500 9.5px var(--font-mono), monospace',
+                    letterSpacing: '.08em',
+                    color: 'var(--text-4)',
+                    marginBottom: '10px',
+                  }}
+                >
+                  {label}
+                </div>
+                <div
+                  style={{
+                    font: '700 28px var(--font-space), sans-serif',
+                    letterSpacing: '-.02em',
+                  }}
+                >
+                  {value}
+                </div>
+              </div>
+            );
+
+            const tableSection = (
+              title: string,
+              rows: [string, number][],
+              valueLabel = 'VIEWS',
+            ) => (
+              <div
+                style={{
+                  background: '#0C0D10',
+                  border: '1px solid var(--border-1)',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '14px 20px',
+                    borderBottom: '1px solid var(--border-1)',
+                    font: '500 9.5px var(--font-mono), monospace',
+                    letterSpacing: '.08em',
+                    color: 'var(--text-4)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>{title}</span>
+                  <span>{valueLabel}</span>
+                </div>
+                {rows.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '20px',
+                      font: '500 12px var(--font-mono), monospace',
+                      color: 'var(--text-5)',
+                    }}
+                  >
+                    —
+                  </div>
+                ) : (
+                  rows.map(([label, count], i) => (
+                    <div
+                      key={label}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '10px 20px',
+                        borderTop: i > 0 ? '1px solid #141518' : 'none',
+                      }}
+                    >
+                      <span
+                        style={{
+                          font: '500 13px var(--font-space), sans-serif',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '70%',
+                        }}
+                      >
+                        {label}
+                      </span>
+                      <span
+                        style={{
+                          font: '600 13px var(--font-mono), monospace',
+                          color: 'var(--accent)',
+                          flexShrink: 0,
+                          marginLeft: '12px',
+                        }}
+                      >
+                        {count}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            );
+
+            return (
+              <div style={{ padding: '28px 32px 80px' }}>
+                <div
+                  style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}
+                >
+                  {statCard('TOTAL VIEWS', all.length.toLocaleString())}
+                  {statCard('HUMAN VIEWS', humans.length.toLocaleString())}
+                  {statCard('BOT REQUESTS', bots.length.toLocaleString())}
+                  {statCard('~UNIQUE VISITORS', uniqueIps.toLocaleString())}
+                </div>
+
+                <div
+                  style={{
+                    background: '#0C0D10',
+                    border: '1px solid var(--border-1)',
+                    borderRadius: '12px',
+                    padding: '20px 24px',
+                    marginBottom: '24px',
+                  }}
+                >
+                  <div
+                    style={{
+                      font: '500 9.5px var(--font-mono), monospace',
+                      letterSpacing: '.08em',
+                      color: 'var(--text-4)',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    DAILY TREND — LAST 14 DAYS (HUMAN)
+                  </div>
+                  <div
+                    style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '72px' }}
+                  >
+                    {dailyCounts.map(({ day, count }) => (
+                      <div
+                        key={day}
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '100%',
+                            background: count > 0 ? 'var(--accent)' : '#1E2026',
+                            borderRadius: '3px 3px 0 0',
+                            height: `${Math.max((count / maxDay) * 52, count > 0 ? 4 : 0)}px`,
+                            opacity: count > 0 ? 0.85 : 1,
+                            transition: 'height .3s',
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}
+                  >
+                    <span
+                      style={{
+                        font: '500 9px var(--font-mono), monospace',
+                        color: 'var(--text-5)',
+                      }}
+                    >
+                      {last14[0]}
+                    </span>
+                    <span
+                      style={{
+                        font: '500 9px var(--font-mono), monospace',
+                        color: 'var(--text-5)',
+                      }}
+                    >
+                      {last14[13]}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '16px',
+                    marginBottom: '16px',
+                  }}
+                >
+                  {tableSection('TOP PAGES', topPages)}
+                  {tableSection('TOP REFERRERS', topReferrers)}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {tableSection('COUNTRIES', topCountries)}
+                  {tableSection('CRAWLERS', topBots)}
+                </div>
+              </div>
+            );
+          })()}
+
         {/* PAGE SETTINGS */}
-        {view === 'list' && !isSingleton && schema.pageSettings && (
+        {activeGroup !== 'analytics' && view === 'list' && !isSingleton && schema.pageSettings && (
           <div style={{ padding: '26px 32px 0' }}>
             <div
               style={{
@@ -3394,7 +3670,7 @@ export default function AdminPage() {
         )}
 
         {/* LIST */}
-        {view === 'list' && !isSingleton && (
+        {activeGroup !== 'analytics' && view === 'list' && !isSingleton && (
           <div style={{ padding: '26px 32px 60px' }}>
             {rows.length > 0 ? (
               <div
@@ -3684,7 +3960,7 @@ export default function AdminPage() {
         )}
 
         {/* FORM */}
-        {view === 'form' && editing && (
+        {activeGroup !== 'analytics' && view === 'form' && editing && (
           <div style={{ padding: '28px 32px 80px', maxWidth: '720px' }}>
             <div
               className="admin-form-grid"

@@ -9,7 +9,23 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile().catch(() => null);
   const name = profile?.name ?? 'Portfolio';
-  return { title: `${name} | Writing` };
+  const description =
+    profile?.writing_subtitle ??
+    (name ? `Writing and blog posts by ${name}.` : 'Blog posts and writing on software.');
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_DOMAIN
+    ? `https://${process.env.NEXT_PUBLIC_SITE_DOMAIN}`
+    : 'http://localhost:3000';
+  return {
+    title: `${name} | Writing`,
+    description,
+    openGraph: {
+      title: `${name} | Writing`,
+      description,
+      url: `${siteUrl}/writing`,
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image' },
+  };
 }
 
 export default async function WritingPage() {

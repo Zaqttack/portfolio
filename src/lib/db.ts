@@ -143,6 +143,16 @@ export async function getPosts(): Promise<Post[]> {
   return data;
 }
 
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+  const { data } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle();
+  return data;
+}
+
 export async function getGallery(): Promise<GalleryImage[]> {
   const { data, error } = await supabase.from('gallery_images').select('*').order('display_order');
   if (error) throw error;

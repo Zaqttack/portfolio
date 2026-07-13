@@ -26,7 +26,25 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile().catch(() => null);
   const name = profile?.name ?? 'Portfolio';
-  return { title: `${name} | Experience` };
+  const description =
+    profile?.experience_subtitle ??
+    (name
+      ? `Work history and experience of ${name}.`
+      : 'Professional work history and experience.');
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_DOMAIN
+    ? `https://${process.env.NEXT_PUBLIC_SITE_DOMAIN}`
+    : 'http://localhost:3000';
+  return {
+    title: `${name} | Experience`,
+    description,
+    openGraph: {
+      title: `${name} | Experience`,
+      description,
+      url: `${siteUrl}/experience`,
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image' },
+  };
 }
 
 export default async function ExperiencePage() {
