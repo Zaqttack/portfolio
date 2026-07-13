@@ -215,6 +215,34 @@ ol {
   }
 }
 
+/* ─── Section layout ────────────────────────────────────────────────────── */
+.section-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.section-grid-3 {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+@media (max-width: 780px) {
+  .section-grid,
+  .section-grid-3 {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .section-outer {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 10px;

@@ -253,7 +253,7 @@ export default function ExperienceClient({
           resumeUrl={resumeUrl}
         />
 
-        <header style={{ padding: '56px 56px 12px 40px' }}>
+        <header className="section-outer" style={{ padding: '56px 56px 12px 40px' }}>
           <Link
             href="/"
             style={{
@@ -341,15 +341,12 @@ export default function ExperienceClient({
         </header>
 
         {/* WORK HISTORY */}
-        <section id="history" style={{ scrollMarginTop: '20px', padding: '44px 56px 30px 40px' }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+        <section
+          id="history"
+          className="section-outer"
+          style={{ scrollMarginTop: '20px', padding: '44px 56px 30px 40px' }}
+        >
+          <div className="section-grid">
             <div
               style={{
                 font: '500 11px var(--font-mono), monospace',
@@ -546,20 +543,14 @@ export default function ExperienceClient({
         {/* LEADERSHIP */}
         <section
           id="community"
+          className="section-outer"
           style={{
             scrollMarginTop: '20px',
             padding: '36px 56px 30px 40px',
             borderTop: '1px solid var(--border-1)',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="section-grid">
             <div
               style={{
                 font: '500 11px var(--font-mono), monospace',
@@ -712,20 +703,14 @@ export default function ExperienceClient({
         {/* EDUCATION */}
         <section
           id="education"
+          className="section-outer"
           style={{
             scrollMarginTop: '20px',
             padding: '36px 56px 80px 40px',
             borderTop: '1px solid var(--border-1)',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="section-grid-3">
             <div
               style={{
                 font: '500 11px var(--font-mono), monospace',
@@ -794,20 +779,14 @@ export default function ExperienceClient({
         {/* AWARDS & ACHIEVEMENTS */}
         <section
           id="awards"
+          className="section-outer"
           style={{
             scrollMarginTop: '20px',
             padding: '36px 56px 80px 40px',
             borderTop: '1px solid var(--border-1)',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="section-grid">
             <div
               style={{
                 font: '500 11px var(--font-mono), monospace',
@@ -885,20 +864,14 @@ export default function ExperienceClient({
         {/* SKILLS — full breakdown */}
         <section
           id="skills"
+          className="section-outer"
           style={{
             scrollMarginTop: '20px',
             padding: '36px 56px 80px 40px',
             borderTop: '1px solid var(--border-1)',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '200px 1fr',
-              gap: '48px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="section-grid">
             <div
               style={{
                 font: '500 11px var(--font-mono), monospace',
