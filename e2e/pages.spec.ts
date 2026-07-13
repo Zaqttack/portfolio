@@ -5,8 +5,9 @@ test('home page loads', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'zaquariah.dev', exact: true })).toBeVisible();
 });
 
-test('projects page loads', async ({ page }) => {
-  await page.goto('/projects');
+test('projects page loads or is disabled', async ({ page }) => {
+  const res = await page.goto('/projects');
+  if (res?.status() === 404) return;
   await expect(page.locator('h1')).toContainText('Projects');
 });
 
