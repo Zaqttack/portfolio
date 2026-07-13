@@ -113,6 +113,7 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SITE_DOMAIN: ${{ vars.NEXT_PUBLIC_SITE_DOMAIN }}
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
         with:

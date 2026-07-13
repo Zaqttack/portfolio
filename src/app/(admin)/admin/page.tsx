@@ -3,6 +3,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import ThemeToggle from '@/components/ThemeToggle';
 import { US_CITIES } from '@/lib/us-cities';
 
 const US_STATES = [
@@ -3176,8 +3177,15 @@ export default function AdminPage() {
 
   return (
     <div
+      data-theme="dark"
       className="admin-layout"
-      style={{ display: 'grid', gridTemplateColumns: '224px 1fr', minHeight: '100vh' }}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '224px 1fr',
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        color: 'var(--text)',
+      }}
     >
       <style>{`
         .anav-child { display:flex; align-items:center; gap:10px; text-decoration:none; padding:7px 12px 7px 18px; border-radius:7px; transition:background .15s; }
@@ -3316,6 +3324,9 @@ export default function AdminPage() {
           {renderNavItems()}
         </div>
         <div style={{ padding: '0 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ padding: '6px 12px 10px' }}>
+            <ThemeToggle />
+          </div>
           <a
             href="/api/resume"
             download
