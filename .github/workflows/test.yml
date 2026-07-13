@@ -46,6 +46,24 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Check Worker bundle size
+        run: |
+          HANDLER=".open-next/server-functions/default/handler.mjs"
+          if [ ! -f "$HANDLER" ]; then
+            echo "handler.mjs not found, skipping size check"
+            exit 0
+          fi
+          RAW_KB=$(( $(wc -c < "$HANDLER") / 1024 ))
+          GZ_KB=$(( $(gzip -c "$HANDLER" | wc -c) / 1024 ))
+          echo "handler.mjs: ${RAW_KB} KiB uncompressed / ${GZ_KB} KiB gzip"
+          # Free plan limit is 3 MiB gzip total upload. handler.mjs at 10 MiB
+          # uncompressed is the practical threshold before the total exceeds 3 MiB.
+          if [ "$RAW_KB" -gt 10240 ]; then
+            echo "❌ Worker bundle too large (${RAW_KB} KiB). Free plan gzip limit is 3 MiB."
+            echo "   Common cause: @vercel/og / next/og adds ~1.5 MiB WASM to the bundle."
+            exit 1
+          fi
+          echo "✅ Bundle size OK (${RAW_KB} KiB / 10240 KiB proxy limit)"
       - name: Dry-run deploy
         env:
           WORKER_NAME: ${{ vars.WORKER_NAME || 'portfolio' }}
