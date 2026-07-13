@@ -3299,44 +3299,47 @@ export default function AdminPage() {
         </div>
 
         {/* SUB-TABS */}
-        {currentGroup && currentGroup.tabs.length > 1 && (view !== 'form' || isSingleton) && (
-          <div
-            style={{
-              display: 'flex',
-              gap: '0',
-              borderBottom: '1px solid var(--border-1)',
-              padding: '0 32px',
-              background: 'rgba(11,12,14,0.6)',
-            }}
-          >
-            {currentGroup.tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => guardNav(() => goSection(tab.key))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  borderBottom:
-                    section === tab.key ? '2px solid var(--accent)' : '2px solid transparent',
-                  padding: '12px 16px',
-                  color: section === tab.key ? 'var(--text-1)' : 'var(--text-3)',
-                  font: '500 13px var(--font-space), sans-serif',
-                  cursor: 'pointer',
-                  transition: 'color .2s, border-color .2s',
-                  marginBottom: '-1px',
-                }}
-                onMouseEnter={(e) => {
-                  if (section !== tab.key) e.currentTarget.style.color = 'var(--text-2)';
-                }}
-                onMouseLeave={(e) => {
-                  if (section !== tab.key) e.currentTarget.style.color = 'var(--text-3)';
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+        {activeGroup !== 'analytics' &&
+          currentGroup &&
+          currentGroup.tabs.length > 1 &&
+          (view !== 'form' || isSingleton) && (
+            <div
+              style={{
+                display: 'flex',
+                gap: '0',
+                borderBottom: '1px solid var(--border-1)',
+                padding: '0 32px',
+                background: 'rgba(11,12,14,0.6)',
+              }}
+            >
+              {currentGroup.tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => guardNav(() => goSection(tab.key))}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    borderBottom:
+                      section === tab.key ? '2px solid var(--accent)' : '2px solid transparent',
+                    padding: '12px 16px',
+                    color: section === tab.key ? 'var(--text-1)' : 'var(--text-3)',
+                    font: '500 13px var(--font-space), sans-serif',
+                    cursor: 'pointer',
+                    transition: 'color .2s, border-color .2s',
+                    marginBottom: '-1px',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (section !== tab.key) e.currentTarget.style.color = 'var(--text-2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (section !== tab.key) e.currentTarget.style.color = 'var(--text-3)';
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
 
         {/* ANALYTICS */}
         {activeGroup === 'analytics' &&
