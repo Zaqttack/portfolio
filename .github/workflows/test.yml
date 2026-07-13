@@ -46,6 +46,36 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Check Worker bundle size
+        run: |
+          HANDLER=".open-next/server-functions/default/handler.mjs"
+          if [ ! -f "$HANDLER" ]; then
+            echo "handler.mjs not found, skipping size check"
+            exit 0
+          fi
+          RAW_KB=$(( $(wc -c < "$HANDLER") / 1024 ))
+          GZ_KB=$(( $(gzip -c "$HANDLER" | wc -c) / 1024 ))
+          echo "handler.mjs: ${RAW_KB} KiB uncompressed / ${GZ_KB} KiB gzip"
+          # Free plan limit is 3 MiB gzip total upload. handler.mjs at 10 MiB
+          # uncompressed is the practical threshold before the total exceeds 3 MiB.
+          if [ "$RAW_KB" -gt 10240 ]; then
+            echo "❌ Worker bundle too large (${RAW_KB} KiB uncompressed)."
+            echo ""
+            echo "   Cloudflare Workers free plan has a 3 MiB gzip upload limit."
+            echo "   Common cause: @vercel/og / next/og bundles ~1.5 MiB of WASM into the Worker."
+            echo ""
+            echo "   PATH FORWARD:"
+            echo "   1. Upgrade to Cloudflare Workers paid plan (~\$5/mo, limit rises to 10 MiB):"
+            echo "      https://dash.cloudflare.com -> Workers & Pages -> your account -> Plans"
+            echo "   2. Once upgraded, remove the 'Check Worker bundle size' step from"
+            echo "      .github/workflows/test.yml (or raise the threshold to 102400 KiB)."
+            echo "   3. Restore opengraph-image.tsx files from git history:"
+            echo "      git show HEAD~1:src/app/opengraph-image.tsx"
+            echo "      git show HEAD~1:src/app/\(public\)/projects/\[slug\]/opengraph-image.tsx"
+            echo "      git show HEAD~1:src/app/\(public\)/writing/\[slug\]/opengraph-image.tsx"
+            exit 1
+          fi
+          echo "✅ Bundle size OK (${RAW_KB} KiB / 10240 KiB proxy limit)"
       - name: Dry-run deploy
         env:
           WORKER_NAME: ${{ vars.WORKER_NAME || 'portfolio' }}

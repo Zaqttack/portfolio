@@ -15,6 +15,18 @@ A self-hosted developer portfolio with a database-driven admin panel. All conten
 - **Tests** — Vitest (unit), Playwright (E2E)
 - **CI/CD** — GitHub Actions: lint → unit → smoke → build → deploy
 
+## Running costs
+
+Everything runs within free tiers as of current deployment:
+
+| Service | Plan | Constraint to watch |
+|---|---|---|
+| Cloudflare Workers | Free | **3 MiB gzip** bundle limit. CI enforces this with a size gate on every PR. Adding `next/og` or other WASM-heavy packages pushes past this — upgrade to Workers Paid (~$5/mo, 10 MiB limit) before adding dynamic OG images back. |
+| Supabase | Free | 500 MB database, 1 GB file storage, 50k monthly active users. The keep-alive workflow pings the project to prevent free-tier pauses. |
+| GitHub Actions | Free (public repo) | Unlimited minutes for public repos. |
+| Cloudflare Web Analytics | Free | Unlimited, no cookies, no GDPR banner needed. |
+| Google Search Console | Free | No limits relevant here. |
+
 ## Features
 
 - Admin portal at `/admin` — CRUD for all content, protected by Supabase Auth + user ID allowlist
@@ -133,7 +145,7 @@ Everything below is generated from your profile data and content — no code cha
 | Open Graph + Twitter card | On every public page — title, description, image | Profile data changes |
 | JSON-LD `Person` + `WebSite` | Root layout — powers Google Knowledge Panel eligibility | Profile data changes |
 | JSON-LD `SoftwareApplication` | Each project detail page | Per project |
-| OG images | `/opengraph-image` (root, uses avatar + name) and `/projects/[slug]/opengraph-image` (cover image or generated card) | Profile / project data |
+| OG images | Currently disabled — `next/og` pushes the Worker bundle past Cloudflare's free plan 3 MiB limit. See **Running costs** above for the upgrade path. | — |
 
 **Feature flags are consistent across all SEO surfaces.** If you disable writing or projects in the admin UI, those sections are automatically excluded from the sitemap, disallowed in robots.txt, and omitted from llms.txt. Toggle in admin → no code changes needed.
 
