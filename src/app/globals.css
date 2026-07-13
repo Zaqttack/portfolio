@@ -59,7 +59,34 @@
 }
 
 /* ─── Dark theme (explicit) ──────────────────────────────────────────────── */
+/* Re-declares all tokens so this can pin a subtree to dark even when <html> is light */
 [data-theme="dark"] {
+  --bg: #0b0c0e;
+  --bg-panel: #0e0f12;
+  --bg-panel-2: #121317;
+  --bg-hover: #101114;
+  --bg-selected: #17181c;
+  --bg-track: #1a1c20;
+  --text: #e7e8ea;
+  --text-strong: #c7cbd1;
+  --text-body: #9a9ea6;
+  --text-meta: #7e838c;
+  --text-meta-2: #565b64;
+  --text-faint: #4a4e56;
+  --border-1: #191b1f;
+  --border-2: #23262c;
+  --border-3: #2c3037;
+  --accent-soft-bg: #1a1310;
+  --accent-soft-border: #3a2a1e;
+  --shadow-rgb: 0, 0, 0;
+  --canvas: var(--bg);
+  --panel-1: var(--bg-panel);
+  --panel-2: var(--bg-panel-2);
+  --text-1: var(--text);
+  --text-2: var(--text-body);
+  --text-3: var(--text-meta);
+  --text-4: var(--text-meta-2);
+  --text-5: var(--text-faint);
   color-scheme: dark;
 }
 

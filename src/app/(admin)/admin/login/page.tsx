@@ -51,6 +51,7 @@ function LoginForm() {
 
   return (
     <div
+      data-theme="dark"
       style={{
         minHeight: '100vh',
         display: 'flex',
