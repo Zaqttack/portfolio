@@ -3202,7 +3202,7 @@ export default function AdminPage() {
             <h1 style={{ fontWeight: 600, fontSize: '20px', letterSpacing: '-.01em', margin: 0 }}>
               {pageTitle}
             </h1>
-            {view === 'list' && !isSingleton && (
+            {view === 'list' && !isSingleton && activeGroup !== 'analytics' && (
               <span
                 style={{
                   font: '500 11px var(--font-mono), monospace',
