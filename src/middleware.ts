@@ -74,7 +74,10 @@ export async function middleware(request: NextRequest) {
     const analyticsUrl = new URL('/api/analytics', request.url);
     fetch(analyticsUrl.toString(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Analytics-Token': process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+      },
       body: JSON.stringify({
         path: pathname,
         referrer,

@@ -4,7 +4,7 @@
 [![Deploy](https://github.com/Zaqttack/portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/Zaqttack/portfolio/actions/workflows/deploy.yml)
 [![Keep Supabase Alive](https://github.com/Zaqttack/portfolio/actions/workflows/keep-alive.yml/badge.svg)](https://github.com/Zaqttack/portfolio/actions/workflows/keep-alive.yml)
 
-A self-hosted developer portfolio with a database-driven admin panel. All content — name, bio, experience, projects, writing, skills, links — is managed through the admin UI with no code changes required. Built to be forked and made your own.
+A self-hosted developer portfolio with a database-driven admin panel. All content (name, bio, experience, projects, writing, skills, links) is managed through the admin UI with no code changes required. Built to be forked and made your own.
 
 ## Stack
 
@@ -21,7 +21,7 @@ Everything runs within free tiers as of current deployment:
 
 | Service | Plan | Constraint to watch |
 |---|---|---|
-| Cloudflare Workers | Free | **3 MiB gzip** bundle limit. CI enforces this with a size gate on every PR. Adding `next/og` or other WASM-heavy packages pushes past this — upgrade to Workers Paid (~$5/mo, 10 MiB limit) before adding dynamic OG images back. |
+| Cloudflare Workers | Free | **3 MiB gzip** bundle limit. CI enforces this with a size gate on every PR. Adding `next/og` or other WASM-heavy packages pushes past this; upgrade to Workers Paid (~$5/mo, 10 MiB limit) before adding dynamic OG images back. |
 | Supabase | Free | 500 MB database, 1 GB file storage, 50k monthly active users. The keep-alive workflow pings the project to prevent free-tier pauses. |
 | GitHub Actions | Free (public repo) | Unlimited minutes for public repos. |
 | Cloudflare Web Analytics | Free | Unlimited, no cookies, no GDPR banner needed. |
@@ -44,8 +44,8 @@ Everything runs within free tiers as of current deployment:
 
 1. Create a project at [supabase.com](https://supabase.com)
 2. Copy your project ref, URL, publishable key, and service role key
-3. **Authentication → URL Configuration** — once you know your Worker domain from step 2, set **Site URL** to `https://your-worker.workers.dev` and add `https://your-worker.workers.dev/admin/auth/callback` to **Redirect URLs**. Also add `http://localhost:3000/admin/auth/callback` for local dev. Without this, magic links point to localhost and sign-in fails on the deployed site.
-4. **Authentication → URL Configuration → Auth flow type** — set to **PKCE**. The callback route exchanges a `?code=` param; Implicit flow puts tokens in the URL fragment instead and will land on an error page.
+3. **Authentication → URL Configuration**: set **Site URL** to your Worker domain from step 2 (e.g. `https://your-worker.workers.dev`) and add `https://your-worker.workers.dev/admin/auth/callback` to **Redirect URLs**. Also add `http://localhost:3000/admin/auth/callback` for local dev. Without this, magic links point to localhost and sign-in fails on the deployed site.
+4. **Authentication → URL Configuration → Auth flow type**: set to **PKCE**. The callback route exchanges a `?code=` param; Implicit flow puts tokens in the URL fragment and will land on an error page.
 
 ### 2. Cloudflare Workers
 
@@ -61,7 +61,7 @@ Copy `.env.example` to `.env` and fill in your values:
 cp .env.example .env
 ```
 
-Variables are needed in three places — local dev, CI, and the deployed Worker. The table below shows which is which.
+Variables are needed in three places: local dev, CI, and the deployed Worker.
 
 #### Local `.env`
 
@@ -75,25 +75,33 @@ All variables for `npm run dev` and manual local deploys.
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API |
 | `SUPABASE_PROJECT_ID` | Your Supabase project ref |
 | `ADMIN_USER_ID` | Set after first login (step 5) |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile → Add site |
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile → Add site |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | *(Optional)* Cloudflare Turnstile → Add site — see [bot protection](#bot-protection-optional--cloudflare-turnstile) |
+| `TURNSTILE_SECRET_KEY` | *(Optional)* Cloudflare Turnstile → Add site — see [bot protection](#bot-protection-optional--cloudflare-turnstile) |
 | `NEXT_PUBLIC_GSC_VERIFICATION` | *(Optional)* Google Search Console → Verify → HTML tag → content value |
 
-#### GitHub Actions — repository secrets
+#### GitHub Actions — secrets and variables
 
-Set at **repo → Settings → Secrets and variables → Actions**. These are used by the CI/CD workflows for building and deploying.
+Set at **repo → Settings → Secrets and variables → Actions**.
+
+**Secrets** (encrypted, for sensitive values):
 
 | Secret | Purpose |
 |---|---|
-| `NEXT_PUBLIC_SITE_DOMAIN` | Baked into the JS bundle during CI build |
 | `NEXT_PUBLIC_SUPABASE_URL` | Baked into the JS bundle during CI build |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Baked into the JS bundle during CI build |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | *(Optional)* Baked into the bundle; required for the Turnstile widget |
 | `SUPABASE_ACCESS_TOKEN` | Authenticates Supabase CLI for migration jobs (supabase.com → Account → Access Tokens) |
 | `SUPABASE_DB_PASSWORD` | DB password for migration push (Supabase → Settings → Database) |
 | `SUPABASE_PROJECT_ID` | Project ref for `supabase link` in migration jobs |
 | `CLOUDFLARE_API_TOKEN` | Authenticates `wrangler deploy` (from step 2) |
 | `CLOUDFLARE_ACCOUNT_ID` | Target Cloudflare account for deploy (from step 2) |
-| `WORKER_NAME` | *(Optional Actions variable, not a secret)* — name for the deployed Worker. Defaults to `portfolio` if unset. Set at **repo → Settings → Secrets and variables → Actions → Variables**. |
+
+**Variables** (non-secret, set under the Variables tab):
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SITE_DOMAIN` | Your domain, baked into the bundle at build time |
+| `WORKER_NAME` | *(Optional)* Name for the deployed Worker. Defaults to `portfolio` if unset. |
 
 #### Cloudflare Worker — runtime secrets
 
@@ -105,7 +113,18 @@ Server-side-only variables accessed at request time by the deployed Worker. Set 
 |---|---|
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API |
 | `ADMIN_USER_ID` | Your Supabase auth UUID (set after first login) |
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile → Add site |
+| `TURNSTILE_SECRET_KEY` | *(Optional)* Cloudflare Turnstile → Add site — see [bot protection](#bot-protection-optional--cloudflare-turnstile) |
+
+#### Bot protection (optional — Cloudflare Turnstile)
+
+Adds a bot challenge to the admin login form, blocking scripted magic-link requests before they reach Supabase. Optional: the login works without it, with Supabase's own rate limiting as the fallback.
+
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Turnstile → Add site**
+2. Choose **Managed** mode
+3. Copy the **Site Key** → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (add to `.env`, GitHub Actions secrets, and `.dev.vars` for local Worker preview)
+4. Copy the **Secret Key** → `TURNSTILE_SECRET_KEY` (add to `.env`, `.dev.vars`, and Cloudflare Worker runtime secrets)
+
+Both keys must be set for Turnstile to activate. If either is missing, the widget is hidden and login works normally.
 
 ### 4. Run migrations
 
@@ -119,12 +138,12 @@ This applies all migrations in `supabase/migrations/` in order, including the de
 
 ### 5. First login and admin user
 
-Sign-in is locked to existing users — new accounts can't be created from the login page. You need to create your account first, then configure the allowlist before you can actually reach `/admin`.
+Sign-in only works for existing users — new accounts can't be created from the login page. You need to create your account first, then configure the allowlist before you can reach `/admin`.
 
 1. In the Supabase dashboard → **Authentication → Users → Invite user**, enter your email. This creates your account.
 2. Copy your user UUID from the **Users** table — you'll need it before clicking any link.
 3. Set `ADMIN_USER_ID=<that-uuid>` in your Cloudflare Worker secrets (see step 3) and redeploy via CI or `npm run deploy`.
-4. Once the redeploy is live, go to `/admin/login` and request a fresh magic link. (The invite link from step 1 may have expired or routed to the wrong URL — always use a fresh link from the login page.)
+4. Once the redeploy is live, go to `/admin/login` and request a fresh magic link. (The invite link from step 1 may have expired or routed to the wrong URL; always use a fresh link from the login page.)
 5. *(Optional)* Enable TOTP MFA in **Supabase Auth → Configuration → Multi-factor authentication** for a second factor.
 
 ### 6. Fill in your content
@@ -135,7 +154,7 @@ Go to `/admin` and fill out your profile — name, bio, tagline, social links, e
 
 #### What's automatic
 
-Everything below is generated from your profile data and content — no code changes required for a fork.
+Everything below is generated from your profile data and content. No code changes required for a fork.
 
 | What | Where | Updates when |
 |---|---|---|
@@ -147,14 +166,14 @@ Everything below is generated from your profile data and content — no code cha
 | JSON-LD `SoftwareApplication` | Each project detail page | Per project |
 | OG images | Currently disabled — `next/og` pushes the Worker bundle past Cloudflare's free plan 3 MiB limit. See **Running costs** above for the upgrade path. | — |
 
-**Feature flags are consistent across all SEO surfaces.** If you disable writing or projects in the admin UI, those sections are automatically excluded from the sitemap, disallowed in robots.txt, and omitted from llms.txt. Toggle in admin → no code changes needed.
+**Feature flags are consistent across all SEO surfaces.** Disabling writing or projects in the admin UI automatically removes those sections from the sitemap, robots.txt, and llms.txt.
 
 #### Google Search Console
 
 Search Console tells Google your site exists, shows you what search terms surface it, and flags indexing errors.
 
-1. Go to [search.google.com/search-console](https://search.google.com/search-console) and add a **Domain** property (not URL prefix — Domain covers all subdomains and both http/https)
-2. Verify ownership via **DNS TXT record** — this is the simplest method if your domain is on Cloudflare:
+1. Go to [search.google.com/search-console](https://search.google.com/search-console) and add a **Domain** property (not URL prefix; Domain covers all subdomains and both http/https)
+2. Verify ownership via **DNS TXT record** (simplest if your domain is on Cloudflare):
    - Copy the `google-site-verification=...` TXT record value from Search Console
    - In [Cloudflare dashboard](https://dash.cloudflare.com) → your domain → **DNS → Records → Add record**
    - Type: `TXT`, Name: `@`, Content: the full `google-site-verification=...` string, TTL: Auto
@@ -188,7 +207,7 @@ The script only loads when `NEXT_PUBLIC_CF_BEACON_TOKEN` is present, so local de
 
 #### Custom page view analytics *(built-in, no setup required)*
 
-The site logs every public page hit to the `page_views` Supabase table automatically. Unlike Cloudflare Web Analytics (which gives aggregates), this gives you raw, queryable data:
+The site logs every public page hit to the `page_views` Supabase table automatically. Cloudflare Web Analytics gives you aggregates; this gives you raw, queryable data:
 
 - **Which pages get traffic** — see if a specific project page is getting hits
 - **Where traffic comes from** — `referrer` shows if Google, LinkedIn, or someone's GitHub README is sending visitors
@@ -196,7 +215,7 @@ The site logs every public page hit to the `page_views` Supabase table automatic
 - **Unique visitor approximation** — `ip_hash` (SHA-256, never raw IP) lets you estimate distinct visitors without storing personal data
 - **Bot visibility** — `is_bot` and `bot_name` tell you which crawlers are hitting you (Googlebot, GPTBot, etc.) and how often, separate from human traffic
 
-View raw data anytime in [Supabase Studio](https://supabase.com/dashboard) → your project → **Table Editor → page_views**. You can also query it directly: top pages by hits, traffic by country, daily trend, human vs. bot ratio.
+View raw data in [Supabase Studio](https://supabase.com/dashboard) → your project → **Table Editor → page_views**, or query it directly for top pages, traffic by country, daily trend, or bot vs. human ratio.
 
 #### Analytics env vars
 
@@ -218,7 +237,7 @@ The magic link email is sending users to `http://localhost:3000`. Fix: Supabase 
 
 ### Magic link callback lands on `?error=no_code`
 
-The URL hitting `/admin/auth/callback` has no `?code=` parameter. This means Supabase is using Implicit flow instead of PKCE. Fix: Supabase dashboard → **Authentication → URL Configuration → Auth flow type** → set to **PKCE**, then request a fresh magic link from `/admin/login`.
+The URL hitting `/admin/auth/callback` has no `?code=` parameter. Supabase is using Implicit flow instead of PKCE. Fix: Supabase dashboard → **Authentication → URL Configuration → Auth flow type** → set to **PKCE**, then request a fresh magic link from `/admin/login`.
 
 ### Magic link callback lands on `?error=auth_error`
 
@@ -234,7 +253,7 @@ The code exchange failed. Most common causes:
 
 ```bash
 npm install
-npm run dev       # Next.js dev server — reads from .env
+npm run dev       # Next.js dev server, reads from .env
 ```
 
 To run the actual Cloudflare Worker locally (closer to production):
@@ -245,7 +264,7 @@ cp .dev.vars.example .dev.vars
 npm run preview   # builds the Worker and runs it via wrangler dev
 ```
 
-`.dev.vars` is the Wrangler equivalent of `.env` — it holds runtime secrets for local Worker execution. The `NEXT_PUBLIC_*` vars still come from `.env` since they're baked at build time.
+`.dev.vars` is the Wrangler equivalent of `.env` for runtime secrets. The `NEXT_PUBLIC_*` vars still come from `.env` since they're baked at build time.
 
 ```bash
 npm run lint        # Biome lint check
