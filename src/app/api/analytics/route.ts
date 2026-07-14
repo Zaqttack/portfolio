@@ -41,6 +41,9 @@ export async function POST(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!serviceKey || !supabaseUrl) return NextResponse.json({}, { status: 200 });
 
+  const token = req.headers.get('x-analytics-token');
+  if (!token || token !== serviceKey) return NextResponse.json({}, { status: 200 });
+
   const body = (await req.json().catch(() => null)) as PageViewPayload | null;
   if (!body?.path) return NextResponse.json({}, { status: 200 });
 

@@ -1,9 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+process.env.ADMIN_USER_ID = 'test-admin-id';
+
 const mockFrom = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
   supabase: { from: mockFrom },
+}));
+
+vi.mock('next/headers', () => ({
+  cookies: () => ({ getAll: () => [] }),
+}));
+
+vi.mock('@supabase/ssr', () => ({
+  createServerClient: () => ({
+    auth: {
+      getUser: () => Promise.resolve({ data: { user: { id: 'test-admin-id' } } }),
+    },
+  }),
+}));
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: () => ({ from: mockFrom }),
 }));
 
 function chainFor(resolveWith: unknown) {

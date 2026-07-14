@@ -1,39 +1,54 @@
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const turnstileKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const [cfToken, setCfToken] = useState(!turnstileKey ? 'skip' : '');
   const inputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
   const authError = searchParams.get('error');
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  );
+  useEffect(() => {
+    if (!turnstileKey) return;
+    (window as any).__ptSolve = (token: string) => setCfToken(token);
+    (window as any).__ptExpire = () => setCfToken('');
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    s.async = true;
+    document.head.appendChild(s);
+    return () => {
+      delete (window as any).__ptSolve;
+      delete (window as any).__ptExpire;
+    };
+  }, [turnstileKey]);
 
   const send = async () => {
     if (!email.trim()) return;
+    if (!cfToken) {
+      setErr('Complete the security check first.');
+      return;
+    }
     setLoading(true);
     setErr('');
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/admin/auth/callback`,
-        shouldCreateUser: false,
-      },
+    const res = await fetch('/api/admin/magic-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, cfToken }),
     });
     setLoading(false);
-    if (error) {
-      setErr(error.message);
-    } else {
+    if (res.ok) {
       setSent(true);
+    } else {
+      const json = await res.json().catch(() => ({}));
+      setErr(json.error ?? 'Something went wrong');
+      (window as any).turnstile?.reset();
+      setCfToken('');
     }
   };
 
@@ -158,19 +173,29 @@ function LoginForm() {
                   {err}
                 </div>
               )}
+              {turnstileKey && (
+                <div
+                  className="cf-turnstile"
+                  data-sitekey={turnstileKey}
+                  data-callback="__ptSolve"
+                  data-expired-callback="__ptExpire"
+                  data-theme="dark"
+                  style={{ marginTop: '14px' }}
+                />
+              )}
               <button
                 onClick={send}
-                disabled={loading}
+                disabled={loading || !cfToken}
                 style={{
                   width: '100%',
-                  marginTop: '16px',
-                  background: loading ? '#3a2a1e' : 'var(--accent)',
+                  marginTop: '12px',
+                  background: loading || !cfToken ? '#3a2a1e' : 'var(--accent)',
                   color: 'var(--canvas)',
                   border: 'none',
                   borderRadius: '9px',
                   padding: '12px',
                   font: '600 13px var(--font-space), sans-serif',
-                  cursor: loading ? 'not-allowed' : 'pointer',
+                  cursor: loading || !cfToken ? 'not-allowed' : 'pointer',
                   transition: 'filter .2s',
                 }}
                 onMouseEnter={(e) => {

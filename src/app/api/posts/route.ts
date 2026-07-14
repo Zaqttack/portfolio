@@ -1,6 +1,8 @@
+import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getPosts } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
@@ -11,10 +13,34 @@ export async function GET() {
   }
 }
 
+async function requireAdmin(): Promise<{ error: NextResponse } | { admin: any }> {
+  const cookieStore = await cookies();
+  const session = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } },
+  );
+  const {
+    data: { user },
+  } = await session.auth.getUser();
+  if (!user || user.id !== process.env.ADMIN_USER_ID) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+  }
+  return {
+    admin: createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } },
+    ),
+  };
+}
+
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
   try {
     const body = await req.json();
-    const { data, error } = await supabase.from('posts').insert(body).select().single();
+    const { data, error } = await auth.admin.from('posts').insert(body).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(data, { status: 201 });
   } catch {
@@ -23,13 +49,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
   try {
-    const body = await req.json();
+    const body = (await req.json()) as Record<string, unknown>;
     const { id, ...fields } = body;
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
-    const { data, error } = await supabase
+    const { data, error } = await auth.admin
       .from('posts')
-      .update(fields)
+      .update(fields as Record<string, unknown>)
       .eq('id', id)
       .select()
       .single();
@@ -41,10 +69,12 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
   try {
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
-    const { error } = await supabase.from('posts').delete().eq('id', id);
+    const { error } = await auth.admin.from('posts').delete().eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ ok: true });
   } catch {
