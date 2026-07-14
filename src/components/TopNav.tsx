@@ -10,6 +10,7 @@ interface TopNavProps {
   projectsEnabled?: boolean;
   resumeUrl?: string | null;
   sticky?: boolean;
+  paddingLeft?: string;
 }
 
 export default function TopNav({
@@ -18,6 +19,7 @@ export default function TopNav({
   projectsEnabled = true,
   resumeUrl,
   sticky = false,
+  paddingLeft = '40px',
 }: TopNavProps) {
   const pathname = usePathname();
 
@@ -50,12 +52,18 @@ export default function TopNav({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderBottom: '1px solid var(--border-1)',
-        padding: '13px 40px',
+        padding: `13px 40px 13px ${paddingLeft}`,
         font: '500 11.5px var(--font-mono), monospace',
         letterSpacing: '.02em',
-        background: 'var(--bg)',
-        ...(sticky ? { position: 'sticky', top: 0, zIndex: 30 } : {}),
+        ...(sticky
+          ? {
+              position: 'sticky',
+              top: 0,
+              zIndex: 30,
+              background: 'var(--bg)',
+              borderBottom: '1px solid var(--border-1)',
+            }
+          : {}),
       }}
     >
       <Link href="/" style={{ textDecoration: 'none', color: 'var(--text-meta-2)' }}>

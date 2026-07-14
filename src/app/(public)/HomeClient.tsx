@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import CmdK from '@/components/CmdK';
 import type { HeroVariant } from '@/components/HeroCard';
 import HeroCard from '@/components/HeroCard';
@@ -56,6 +56,101 @@ function fmtPeriod(start: string, end: string | null): string {
 function fmtPostDate(d: string): string {
   const dt = new Date(d);
   return `${dt.getFullYear()} · ${String(dt.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function SkillsRow({ names }: { names: string[] }) {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [hiddenCount, setHiddenCount] = useState(0);
+
+  useLayoutEffect(() => {
+    const outer = outerRef.current;
+    const text = textRef.current;
+    if (!outer || !text) return;
+
+    const measure = () => {
+      const outerW = outer.clientWidth;
+      const items = Array.from(text.querySelectorAll<HTMLElement>('[data-s]'));
+      if (!items.length) return;
+
+      const totalW = items.reduce((sum, el) => sum + el.offsetWidth, 0);
+      if (totalW <= outerW) {
+        setHiddenCount(0);
+        return;
+      }
+
+      // Reserve space for the badge and gap
+      const BADGE_RESERVE = 48;
+      const budget = outerW - BADGE_RESERVE;
+      let used = 0;
+      let visible = 0;
+      for (const item of items) {
+        if (used + item.offsetWidth > budget) break;
+        used += item.offsetWidth;
+        visible++;
+      }
+      setHiddenCount(items.length - visible);
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(outer);
+    return () => ro.disconnect();
+  }, [names]);
+
+  const overflowing = hiddenCount > 0;
+
+  return (
+    <div
+      ref={outerRef}
+      style={{ display: 'flex', alignItems: 'baseline', gap: '6px', overflow: 'hidden' }}
+    >
+      <div
+        ref={textRef}
+        style={
+          {
+            display: 'flex',
+            overflow: 'hidden',
+            flex: 1,
+            minWidth: 0,
+            ...(overflowing
+              ? {
+                  WebkitMaskImage: 'linear-gradient(to right, black 50%, transparent 85%)',
+                  maskImage: 'linear-gradient(to right, black 50%, transparent 85%)',
+                }
+              : {}),
+          } as React.CSSProperties
+        }
+      >
+        {names.map((name, i) => (
+          <span
+            key={name}
+            data-s=""
+            style={{
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              font: '500 13px var(--font-mono), monospace',
+              color: 'var(--text-strong)',
+            }}
+          >
+            {i > 0 && <span style={{ color: 'var(--text-meta-2)' }}>{' · '}</span>}
+            {name}
+          </span>
+        ))}
+      </div>
+      {overflowing && (
+        <span
+          style={{
+            flexShrink: 0,
+            font: '500 10.5px var(--font-mono), monospace',
+            color: 'var(--text-meta)',
+          }}
+        >
+          +{hiddenCount}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function HomeClient({
@@ -283,9 +378,6 @@ export default function HomeClient({
       return acc;
     }, {}),
   );
-  // Home preview: first 3 skill names total (flat), no category grouping
-  const previewSkillNames = skills.slice(0, 3).map((s) => s.name);
-
   return (
     <>
       {/* Cursor glow */}
@@ -300,7 +392,8 @@ export default function HomeClient({
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 1,
-          background: 'radial-gradient(circle, rgba(236,106,44,0.06), rgba(236,106,44,0) 60%)',
+          background:
+            'radial-gradient(circle, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%)',
           transform: 'translate(-50%,-50%)',
           willChange: 'transform',
         }}
@@ -512,19 +605,30 @@ export default function HomeClient({
                   No skills listed yet.
                 </p>
               )}
-              {previewSkillNames.length > 0 && (
+              {skillsByCategory.map(([cat, names]) => (
                 <div
+                  key={cat}
                   data-reveal
                   style={{
+                    display: 'grid',
+                    gridTemplateColumns: '160px 1fr',
+                    gap: '20px',
                     padding: '15px 0',
                     borderBottom: '1px solid var(--border-1)',
-                    font: '500 13px var(--font-mono), monospace',
-                    color: 'var(--text-strong)',
                   }}
                 >
-                  {previewSkillNames.join(' · ')}
+                  <span
+                    style={{
+                      font: '500 10.5px var(--font-mono), monospace',
+                      letterSpacing: '.08em',
+                      color: 'var(--text-meta-2)',
+                    }}
+                  >
+                    {cat}
+                  </span>
+                  <SkillsRow names={names} />
                 </div>
-              )}
+              ))}
               {skills.length > 0 && (
                 <div style={{ paddingTop: '14px' }}>
                   <Link
@@ -536,12 +640,12 @@ export default function HomeClient({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      transition: 'color .3s',
+                      transition: 'color .15s',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
                   >
-                    → full breakdown on Experience <ArrowRight size={12} />
+                    full breakdown on Experience <ArrowRight size={12} />
                   </Link>
                 </div>
               )}
@@ -597,6 +701,9 @@ export default function HomeClient({
                       color: 'var(--text-body)',
                       textDecoration: 'none',
                       transition: 'color .3s',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
@@ -669,29 +776,12 @@ export default function HomeClient({
                       </span>
                       <span
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'flex-end',
-                          gap: '8px',
-                          textAlign: 'right',
+                          font: '500 11px var(--font-mono), monospace',
+                          color: 'var(--text-meta-2)',
+                          flexShrink: 0,
                         }}
                       >
-                        <span
-                          style={{
-                            font: '500 11px var(--font-mono), monospace',
-                            color: 'var(--text-meta-2)',
-                          }}
-                        >
-                          {`'${new Date(p.created_at).getFullYear().toString().slice(2)}`}
-                        </span>
-                        <span
-                          style={{
-                            font: '500 10.5px var(--font-mono), monospace',
-                            color: 'var(--text-meta)',
-                          }}
-                        >
-                          {p.tags.filter((t) => t !== 'product' && t !== 'side').join(' · ')}
-                        </span>
+                        {`'${new Date(p.created_at).getFullYear().toString().slice(2)}`}
                       </span>
                     </Link>
                   ))}
@@ -749,6 +839,9 @@ export default function HomeClient({
                       color: 'var(--text-body)',
                       textDecoration: 'none',
                       transition: 'color .3s',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
@@ -869,6 +962,9 @@ export default function HomeClient({
                     color: 'var(--text-body)',
                     textDecoration: 'none',
                     transition: 'color .3s',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-body)')}

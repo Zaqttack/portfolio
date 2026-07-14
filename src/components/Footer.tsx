@@ -3,12 +3,20 @@
 import { ArrowUpRight } from 'lucide-react';
 import type { ProfileLink } from '@/types';
 
-export default function Footer({ profileLinks }: { profileLinks: ProfileLink[] }) {
+export default function Footer({
+  profileLinks,
+  marginLeft = 'var(--rail-w)',
+  paddingLeft = '40px',
+}: {
+  profileLinks: ProfileLink[];
+  marginLeft?: string;
+  paddingLeft?: string;
+}) {
   return (
     <footer
       style={{
-        marginLeft: 'var(--rail-w)',
-        padding: '26px 56px 26px 40px',
+        marginLeft,
+        padding: `26px 56px 26px ${paddingLeft}`,
         borderTop: '1px solid var(--border-1)',
         display: 'flex',
         justifyContent: 'space-between',

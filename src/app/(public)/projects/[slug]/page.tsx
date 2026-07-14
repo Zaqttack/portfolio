@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Footer from '@/components/Footer';
-import LeftRail from '@/components/LeftRail';
 import MobileNav from '@/components/MobileNav';
 import ProjectImageCarousel from '@/components/ProjectImageCarousel';
 import TopNav from '@/components/TopNav';
@@ -169,7 +168,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         resumeUrl={resumeUrl}
       />
 
-      <LeftRail items={railItems} name={profile?.name} />
+      <TopNav
+        writingEnabled={profile?.writing_enabled ?? true}
+        projectsEnabled={profile?.projects_enabled ?? true}
+        resumeUrl={resumeUrl}
+        sticky
+        paddingLeft="calc(max(var(--main-ml), calc((100vw - var(--content-max-w)) / 2)) + 40px)"
+      />
 
       <main
         style={{
@@ -179,13 +184,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           maxWidth: 'var(--content-max-w)',
         }}
       >
-        <TopNav
-          writingEnabled={profile?.writing_enabled ?? true}
-          projectsEnabled={profile?.projects_enabled ?? true}
-          resumeUrl={resumeUrl}
-          sticky
-        />
-
         <article style={{ padding: '56px 56px 96px 40px', maxWidth: '800px' }}>
           <Link
             href="/projects"
@@ -364,7 +362,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         `}</style>
       </main>
 
-      <Footer profileLinks={profileLinks} />
+      <Footer
+        profileLinks={profileLinks}
+        marginLeft="0"
+        paddingLeft="calc(max(var(--main-ml), calc((100vw - var(--content-max-w)) / 2)) + 40px)"
+      />
     </>
   );
 }

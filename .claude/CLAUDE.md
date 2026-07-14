@@ -1,3 +1,5 @@
+@../AGENTS.md
+
 # Portfolio — Project Instructions
 
 ## Skills
