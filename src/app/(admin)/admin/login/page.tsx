@@ -18,13 +18,16 @@ function LoginForm() {
     if (!turnstileKey) return;
     (window as any).__ptSolve = (token: string) => setCfToken(token);
     (window as any).__ptExpire = () => setCfToken('');
-    const s = document.createElement('script');
-    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    s.async = true;
-    document.head.appendChild(s);
+    if (!document.querySelector('script[src*="turnstile"]')) {
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      s.async = true;
+      document.head.appendChild(s);
+    }
     return () => {
       delete (window as any).__ptSolve;
       delete (window as any).__ptExpire;
+      (window as any).turnstile?.remove('.cf-turnstile');
     };
   }, [turnstileKey]);
 
