@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -32,11 +32,26 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Send magic link via Supabase
-  const supabase = createClient(
+  // Send magic link via Supabase — use createServerClient so the PKCE
+  // code verifier is stored in a cookie on the response, matching the
+  // callback handler which expects exchangeCodeForSession.
+  const response = NextResponse.json({ ok: true });
+
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { persistSession: false } },
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          for (const { name, value, options } of cookiesToSet) {
+            response.cookies.set(name, value, options);
+          }
+        },
+      },
+    },
   );
 
   const { error } = await supabase.auth.signInWithOtp({
@@ -51,5 +66,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true });
+  return response;
 }
