@@ -23,7 +23,7 @@
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.2",
     "lucide-react": "^1.24.0",
-    "next": "^16.3.0-preview.5",
+    "next": "^16.3.0-preview.6",
     "postcss": "^8.5.10",
     "postcss-preset-env": "^11.3.2",
     "rclone.js": "^0.6.6",
